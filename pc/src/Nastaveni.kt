@@ -113,7 +113,7 @@ class Nastaveni(private val soubor: File = File(Nastroje.slozka, "aplikace.prope
         /** Stejné barvy jako na Android TV (Prefs.TEXT_COLORS). */
         val BARVY = listOf("Bílá" to 0xFFFFFF, "Žlutá" to 0xFFE066, "Zelená" to 0xA8F0A8, "Modrá" to 0x9FD8FF)
         val ZDROJE = listOf("chiaki" to "chiaki-ng v Titulkách PS5", "okno" to "Jiný program", "ukazka" to "Ukázková hra")
-        val VYSTUPY = listOf("pc" to Os.text("Pruh na PC"), "tv" to "TV LG / Samsung", "oboje" to Os.text("PC i TV"))
+        val VYSTUPY = listOf("pc" to Os.text("Pruh na PC"), "tv" to "Jen TV", "oboje" to Os.text("PC i TV"))
         val POUZITI = listOf("pc" to Os.text("Hraji na PC"), "ctecka" to "Čtečka pro TV (hra na PS5 v TV)")
     }
 }

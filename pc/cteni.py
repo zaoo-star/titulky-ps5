@@ -51,6 +51,7 @@ import codecs
 import ctypes
 import io
 import random
+import re
 import sys
 import time
 
@@ -443,12 +444,37 @@ class Prekladac:
         self.detok = MosesDetokenizer(lang=cil)
 
     def preloz(self, text):
-        kusy = self.bpe.process_line(self.tok.tokenize(text, return_str=True, escape=True)).split()
-        if not kusy:
+        # Model Argos z více vět najednou občas tu další vynechá („…problem, huh? You pissing me off!“
+        # → jen první věta, 25. 11. 2026). Každá věta se proto překládá zvlášť (v jedné dávce).
+        vety = vety_textu(text)
+        davka = [self.bpe.process_line(self.tok.tokenize(v, return_str=True, escape=True)).split() for v in vety]
+        davka = [k for k in davka if k]
+        if not davka:
             return ""
-        r = self.model.translate_batch([kusy], beam_size=4, max_decoding_length=160)
-        slova = " ".join(r[0].hypotheses[0]).replace("@@ ", "").replace("@@", "").split()
-        return self.detok.detokenize(slova)
+        r = self.model.translate_batch(davka, beam_size=4, max_decoding_length=160)
+        vysledek = []
+        for v in r:
+            slova = " ".join(v.hypotheses[0]).replace("@@ ", "").replace("@@", "").split()
+            vysledek.append(self.detok.detokenize(slova))
+        return " ".join(x for x in vysledek if x)
+
+
+def vety_textu(text):
+    """Rozdělí titulek na věty. Čtečka mezeru za „?“, „!“ a „.“ často spolkne („huh?You“),
+    proto se nejdřív doplní – ale ne v číslech („1.5“) ani ve zkratkách s tečkou uvnitř („U.S.“)."""
+    text = re.sub(r"([?!])(?=[A-Za-z\"'])", r"\1 ", text)
+    text = re.sub(r"(?<=[a-z]{2})\.(?=[A-Z][a-z])", ". ", text)
+    vety = []
+    for v in re.split(r"(?<=[.?!…])\s+(?=[\"'A-Z0-9¿¡])", text):
+        v = v.strip()
+        if not v:
+            continue
+        # „Mr. Smith“: za zkratkou titulu věta nekončí
+        if vety and re.search(r"(?:^|\s)(?:Mr|Mrs|Ms|Dr|St|Jr|Sr|vs|Lt|Sgt|Capt|Det|Prof)\.$", vety[-1]):
+            vety[-1] += " " + v
+        else:
+            vety.append(v)
+    return vety or [text.strip()]
 
 
 def velka(text):

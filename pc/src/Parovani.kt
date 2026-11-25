@@ -183,7 +183,7 @@ class Parovani(
             "$ZELENA Herní účet – ten, na kterém se hraje</html>", 15, B.MUTED).vlevo()
         if (u != null) {
             return sloupec(Karta().apply { add(rUcet) }, Box.createVerticalStrut(14),
-                if (ctecka) legenda else popisek("Hlavní účet · ten, na kterém se na PS5 hraje", 15, B.MUTED).vlevo(),
+                if (ctecka) legenda else popisek("Stejný účet, na kterém je na PS5 kód ze Spárovat zařízení", 15, B.MUTED).vlevo(),
                 Box.createVerticalGlue())
         }
         val qr = server?.let { s -> mojeAdresa(ps5?.adresa)?.let { PhoneLogin.pageUrl(PhoneLogin.Target(it, s.port, s.key)) } }
@@ -204,7 +204,7 @@ class Parovani(
                 add(Tlacitko("Přihlásit v prohlížeči") { prihlasitVPc() })
             },
             Box.createVerticalStrut(12),
-            popisek("<html>1. " + (if (ctecka) "$MODRA Účet pro Titulky PS5, ne herní" else "Hlavní účet PS5") +
+            popisek("<html>1. " + (if (ctecka) "$MODRA Účet pro Titulky PS5, ne herní" else "Účet s kódem na PS5") +
                 "<br>2. Passkey → Remind Me Later<br>3. Zkopírovat adresu<br>&nbsp;&nbsp;&nbsp;&nbsp;stránky „redirect“</html>", 15, B.MUTED).vlevo(),
         )
         val dvaSloupce = JPanel().apply {
@@ -495,7 +495,7 @@ class Parovani(
                     if (herni) sb.append("<p class=\"bad\">Tohle je 🟢 herní účet · přihlásit 🔵 účtem pro Titulky PS5</p>")
                     else if (ok == false) sb.append("<p class=\"bad\">Adresa neplatí nebo vypršela · přihlásit znovu</p>")
                     sb.append(if (ctecka) "<div class=\"card note\">🔵 Účet pro Titulky PS5 · druhý uživatel na PS5, ne 🟢 herní účet</div><div class=\"card\">"
-                        else "<div class=\"card note\">Hlavní účet PlayStation · ten, na kterém se na PS5 hraje</div><div class=\"card\">")
+                        else "<div class=\"card note\">Stejný účet, na kterém je na PS5 kód ze Spárovat zařízení</div><div class=\"card\">")
                         .append("<p>1. Přihlášení u Sony (nová karta)</p>")
                         .append("<a id=\"l\" class=\"btn\" target=\"_blank\" rel=\"noopener\" href=\"").append(e(PsnPc.LOGIN_URL)).append("\">Přihlásit se u PlayStation</a>")
                         .append("<p class=\"muted\">Passkey → Remind Me Later. Na konci zůstane prázdná stránka „redirect“.</p>")

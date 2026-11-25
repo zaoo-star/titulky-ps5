@@ -759,7 +759,7 @@ private class Aplikace {
         obnovPreklad(s, pripravuje, pripraveno)
 
         // TV LG / Samsung podle ohlášení aplikace v TV
-        val tv = nast.tvNazev.ifEmpty { "TV LG / Samsung" }
+        val tv = nast.tvNazev.ifEmpty { "TV" }
         when {
             bezi && s.televize > 0 -> rVystup.nastav(B.OK, "$tv · připojeno")
             bezi -> rVystup.nastav(B.WARN, "$tv · nepřipojeno")
@@ -1217,7 +1217,7 @@ private class Aplikace {
             })
             // čtečka pro TV posílá jen do TV (uložená volba pro hraní na PC se nemění)
             add(Radek("Výstup", {
-                if (nast.ctecka) "TV LG / Samsung"
+                if (nast.ctecka) "Jen TV"
                 else Nastaveni.VYSTUPY.firstOrNull { v -> v.first == nast.vystup }?.second ?: Os.text("Pruh na PC")
             }) { r ->
                 if (!nast.ctecka) vyber(r, Nastaveni.VYSTUPY.map { it.second },
