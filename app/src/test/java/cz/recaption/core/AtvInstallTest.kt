@@ -42,12 +42,12 @@ class AtvInstallTest {
         Activity Resolver Table:
           Non-Data Actions:
               android.intent.action.MAIN:
-                1a2b3c cz.recaption/.MainActivity filter 4d5e6f
+                1a2b3c cz.titulkyps5/.MainActivity filter 4d5e6f
         Packages:
-          Package [cz.recaption] (8f1e2d3):
+          Package [cz.titulkyps5] (8f1e2d3):
             userId=10142
-            pkg=Package{9a8b7c cz.recaption}
-            codePath=/data/app/~~abc==/cz.recaption-xyz==
+            pkg=Package{9a8b7c cz.titulkyps5}
+            codePath=/data/app/~~abc==/cz.titulkyps5-xyz==
             versionCode=158 minSdk=26 targetSdk=34
             versionName=0.97.61
             signatures=PackageSignatures{...}
@@ -61,12 +61,12 @@ class AtvInstallTest {
         assertEquals(158L, i.code)
         assertEquals("0.97.61", i.name)
         // ReCaption v TV není
-        assertNull(AtvInstall.installed("Dexopt state:\n  Unable to find package: cz.recaption\n"))
+        assertNull(AtvInstall.installed("Dexopt state:\n  Unable to find package: cz.titulkyps5\n"))
         assertNull(AtvInstall.installed(""))
         // jiný balíček se stejným začátkem se nepočítá
-        assertNull(AtvInstall.installed("Packages:\n  Package [cz.recaption.test] (1):\n    versionCode=3\n"))
+        assertNull(AtvInstall.installed("Packages:\n  Package [cz.titulkyps5.test] (1):\n    versionCode=3\n"))
         // oddíl bez čísla verze = nic nepřepisovat
-        try { AtvInstall.installed("Packages:\n  Package [cz.recaption] (1):\n    userId=1\n"); fail() } catch (e: AtvException) { assertEquals(AtvError.UNKNOWN_VERSION, e.code) }
+        try { AtvInstall.installed("Packages:\n  Package [cz.titulkyps5] (1):\n    userId=1\n"); fail() } catch (e: AtvException) { assertEquals(AtvError.UNKNOWN_VERSION, e.code) }
     }
 
     @Test fun nikdyNesnizovat() {
@@ -77,7 +77,7 @@ class AtvInstallTest {
     }
 
     @Test fun chybyInstalace() {
-        assertEquals(AtvError.SIGNATURE, AtvInstall.installError("Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: Package cz.recaption signatures do not match]").code)
+        assertEquals(AtvError.SIGNATURE, AtvInstall.installError("Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: Package cz.titulkyps5 signatures do not match]").code)
         assertEquals("INSTALL_FAILED_INSUFFICIENT_STORAGE", AtvInstall.installError("Failure [INSTALL_FAILED_INSUFFICIENT_STORAGE]").detail)
         assertEquals(AtvError.STORAGE, AtvInstall.installError("Failure [INSTALL_FAILED_INSUFFICIENT_STORAGE]").code)
         assertEquals(AtvError.OLD_ANDROID, AtvInstall.installError("Failure [INSTALL_FAILED_OLDER_SDK: Requires newer sdk version #26]").code)
@@ -91,9 +91,9 @@ class AtvInstallTest {
     }
 
     @Test fun spusteni() {
-        assertTrue(AtvInstall.launched("Starting: Intent { cmp=cz.recaption/.MainActivity }"))
-        assertTrue(AtvInstall.launched("Starting: Intent { cmp=cz.recaption/.MainActivity }\nWarning: Activity not started, its current task has been brought to the front"))
-        assertFalse(AtvInstall.launched("Error: Activity class {cz.recaption/cz.recaption.MainActivity} does not exist."))
+        assertTrue(AtvInstall.launched("Starting: Intent { cmp=cz.titulkyps5/.MainActivity }"))
+        assertTrue(AtvInstall.launched("Starting: Intent { cmp=cz.titulkyps5/.MainActivity }\nWarning: Activity not started, its current task has been brought to the front"))
+        assertFalse(AtvInstall.launched("Error: Activity class {cz.titulkyps5/cz.titulkyps5.MainActivity} does not exist."))
     }
 
     @Test fun model() {
