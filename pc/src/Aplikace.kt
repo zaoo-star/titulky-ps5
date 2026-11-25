@@ -1379,6 +1379,12 @@ fun main() {
     // příkazy z příkazové řádky i z hotové aplikace (ReCaption.app nemá vlastní java):
     // JAVA_TOOL_OPTIONS=-Drecaption.prikaz=--zkouska-mac,--nechat (slova dělí čárka nebo mezera) … viz Main.kt
     System.getProperty("recaption.prikaz")?.let { main(it.split(' ', ',').filter { c -> c.isNotEmpty() }.toTypedArray()); return }
+    // jen jedno okno aplikace (25. 11. 2026: tři spuštěné kopie se praly o PS5 i o port pro TV)
+    if (!JedinaKopie.zamkni()) {
+        javax.swing.JOptionPane.showMessageDialog(null, "Titulky PS5 už běží – okno najdeš na liště dole.", "Titulky PS5",
+            javax.swing.JOptionPane.INFORMATION_MESSAGE)
+        return
+    }
     // seznam her (jména, postavy, menu) ze serveru – bez uloženého se na něj chvilku počká, ať je v nabídce her
     SeznamHer.priprav()
     // Okno aplikace se zvětšuje podle Windows (na handheldu bývá 150–200 %); pruh si polohu okna
@@ -1405,4 +1411,16 @@ fun main() {
         UIManager.put("Button.foreground", B.TEXT)
         Aplikace()
     }
+}
+
+
+/** Zámek souboru ve složce nástrojů: drží ho běžící aplikace, druhá kopie ho nedostane. */
+private object JedinaKopie {
+    @Suppress("unused") private var zamek: java.nio.channels.FileLock? = null
+    fun zamkni(): Boolean = try {
+        Nastroje.slozka.mkdirs()
+        val ch = java.io.RandomAccessFile(java.io.File(Nastroje.slozka, "bezi.zamek"), "rw").channel
+        zamek = ch.tryLock()
+        zamek != null
+    } catch (_: java.nio.channels.OverlappingFileLockException) { false } catch (_: Exception) { true }
 }

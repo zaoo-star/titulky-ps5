@@ -163,6 +163,9 @@ private class Helper(python: String, script: File, model: String, lang: String, 
 
     private fun zlomky(b: FloatArray) = b.take(4).joinToString("\t") { String.format(java.util.Locale.ROOT, "%.5f", it) }
 
+    /** Jen sejmout obraz okna (druhý pomocník pro telefon); false = obraz není. */
+    fun snimek(): Boolean = ask("SNIMEK").startsWith("OK")
+
     override fun rozmer(): IntArray? {
         val p = ask("ROZMER").split('\t')
         if (p[0] != "OK" || p.size < 5) return null
@@ -298,6 +301,7 @@ class Ctecka(
         val demo = okno.isEmpty()
         var sender: TvSender? = null
         var helper: Helper? = null
+        var telHelper: Helper? = null
         try {
             zmena(stav)
             val model = Nastroje.model(jazyk) ?: error("chybí překladový model pro jazyk $jazyk")
@@ -323,7 +327,11 @@ class Ctecka(
             hlas((if (demo) "Běží ukázka (bez PlayStationu)." else if (okno == CEKA_NA_OKNO) "Čeká na obraz z PS5." else "Čtu okno „$okno“.") +
                 (if (deepl) " Překlad DeepL online + offline." else " Překlad offline."))
             stav = Stav(Stav.Faze.BEZI)
-            smycka(helper, sender, demo)
+            // telefon ve hře se čte ve vlastním pomocníkovi a vlákně – titulky na jeho čtení (s DeepL i pár sekund) nečekají
+            if (sender != null && !demo && GameProfiles.of(hra).phoneSpots.isNotEmpty()) telHelper = try {
+                Helper(python, pomocnik, model.path, jazyk, okno, null, null)
+            } catch (e: Throwable) { hlas("telefon: pomocník se nespustil (${e.message})"); null }
+            smycka(helper, sender, demo, telHelper)
             stav = Stav(Stav.Faze.STOJI)
         } catch (e: Throwable) {
             hlas("Chyba: ${e.message}")
@@ -333,6 +341,7 @@ class Ctecka(
             pruhUkolu?.schovej()
             sender?.hide(); sender?.stop()
             helper?.stop()
+            telHelper?.stop()
             ulozPamet()
             runCatching { zapisovac?.close() }
             zapisovac = null
@@ -357,7 +366,7 @@ class Ctecka(
         runCatching { if (souborPameti.exists()) pamet.load(souborPameti.readText(Charsets.UTF_8)) }
     }
 
-    private fun ulozPamet() {
+    private fun ulozPamet() = synchronized(pamet) {
         if (pamet.dirty == 0) return
         runCatching {
             souborPameti.parentFile?.mkdirs()
@@ -372,18 +381,20 @@ class Ctecka(
      * schované za značky (nepřekládají se), slang → spisovná angličtina, u češtiny tykání ([Natural]).
      */
     private fun prelozOffline(helper: Helper, text: String): String? {
-        pamet.get(text)?.let { return it }
+        synchronized(pamet) { pamet.get(text) }?.let { return it }
         slovnik.sentence(text)?.let { return it }
         val p = slovnik.prepare(text)
         var vysledek: String? = null
         if (p.names.isNotEmpty()) helper.translate(p.protectedText)?.let { vysledek = OfflinePrep.finish(p, it) }
         val hotovo = (vysledek ?: helper.translate(p.plain) ?: return null).let { Natural.fix(lang, text, it) }
-        pamet.put(text, hotovo)
-        if (pamet.dirty >= 20) ulozPamet()
+        synchronized(pamet) {
+            pamet.put(text, hotovo)
+            if (pamet.dirty >= 20) ulozPamet()
+        }
         return hotovo
     }
 
-    private fun smycka(helper: Helper, sender: TvSender?, demo: Boolean) {
+    private fun smycka(helper: Helper, sender: TvSender?, demo: Boolean, telHelper: Helper?) {
         val tracker = SubtitleTracker(hideAfterEmpty = 3, fastComplete = true)
         val start = System.currentTimeMillis()
         var hideAt = 0L
@@ -455,11 +466,33 @@ class Ctecka(
 
         fun schovejUkol() { pruhUkolu?.schovej(); sender?.sendObjective(TvSender.objectiveMessage(null)) }
 
-        // telefon ve hře (GTA VI): čte se jen pro TV – panel s překladem kreslí aplikace v TV
-        val telefon = if (sender != null) TelefonPc(profil, lang, { t ->
-            translateSegments(t, sDeepl = deepl)?.let { TextLogic.joinSegments(it) }?.replace('\n', ' ') ?: t
-        }, { m -> zapis(m); if (m.startsWith("TELEFON brana") || (m.startsWith("TELEFON ") && "→" in m)) log(m) }).takeIf { it.zapnuto } else null
-        fun telefonPryc() { if (sender != null) telefon?.schovej { sender.sendPhone(it) } }
+        // telefon ve hře (GTA VI): čte se jen pro TV – panel s překladem kreslí aplikace v TV; vlastní vlákno a pomocník
+        fun prelozTelefon(h: Helper, texty: List<String>, mluvci: List<String?>): List<String> {
+            val tela = texty.map { TextLogic.normalizeCase(it) }
+            val online = if (deepl && tela.isNotEmpty()) DeeplPc.preloz(lang, tela.map { TextLogic.forTranslator(it) }, slovnik) else null
+            return tela.indices.map { i ->
+                val body = tela[i]
+                val raw = QuickWords.lookup(jazyk, body) ?: online?.getOrNull(i)?.let { Natural.fix(lang, body, it) }
+                    ?: prelozOffline(h, TextLogic.forTranslator(body)) ?: return@map texty[i]
+                TextLogic.finishTranslation(body, slovnik.genders(lang, body, raw, mluvci.getOrNull(i)))
+            }
+        }
+        val telefon = if (sender != null && telHelper != null) TelefonPc(profil, lang, { t, m -> prelozTelefon(telHelper, t, m) },
+            { m -> zapis(m); if (m.startsWith("TELEFON brana") || (m.startsWith("TELEFON ") && "→" in m)) log(m) }).takeIf { it.zapnuto } else null
+        fun telefonPryc() { telefon?.schovejPozdeji() }
+        val oknoTel = java.util.concurrent.atomic.AtomicReference<String?>(null)
+        val telVlakno = if (telefon != null && telHelper != null && sender != null) kotlin.concurrent.thread(name = "telefon", isDaemon = true) {
+            while (!konec) {
+                try {
+                    oknoTel.getAndSet(null)?.let { o -> telHelper.window(o) }
+                    if (telHelper.snimek()) {
+                        val v = vzhled()
+                        telefon.tick(System.currentTimeMillis(), telHelper, if (v.pismo > 0) v.pismo else 22, v.pozadi) { sender.sendPhone(it) }
+                    }
+                } catch (e: Exception) { zapis("TELEFON chyba ${e.message}"); Thread.sleep(1000) }
+                Thread.sleep(150)
+            }
+        } else null
 
         /**
          * Úkol pod titulky jako na Androidu (`TranslatorService.handleObjective`): nový úkol přeložit a ukázat
@@ -553,6 +586,7 @@ class Ctecka(
             noveOkno?.let { o ->
                 noveOkno = null
                 helper.window(o)
+                oknoTel.set(o)
                 hideAt = 0; hide(); tracker.reset(); lastError = ""
                 if (o != CEKA_NA_OKNO) hlas("Čtu okno „$o“.")
             }
@@ -655,15 +689,6 @@ class Ctecka(
                                 if (tracker.isChanging && picked.text.isNotEmpty() && shown) { hideAt = 0; hide() }
                         }
                     }
-                }
-            }
-            if (r is Helper.Read.Frame || r == Helper.Read.Same) {
-                val t = telefon
-                if (t != null && sender != null) {
-                    val v = vzhled()
-                    try {
-                        t.tick(System.currentTimeMillis(), helper, if (v.pismo > 0) v.pismo else 22, v.pozadi) { sender.sendPhone(it) }
-                    } catch (e: Exception) { zapis("TELEFON chyba ${e.message}") }
                 }
             }
             if (hideAt in 1..System.currentTimeMillis()) { hideAt = 0; hide() }

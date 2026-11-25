@@ -26,6 +26,10 @@ MRIZKA <tab> vlevo <tab> nahoře <tab> vpravo <tab> dole <tab> sloupců <tab> ř
       -> OK <tab> jasy oddělené čárkou (řádek po řádku; z každého řádku mřížky vodorovný řez jeho středem,
          bod = průměr jasu přes šířku políčka – jako PhoneGate.sample v aplikaci)
       -> NIC                          žádný snímek
+  SNIMEK
+      -> OK <tab> šířka <tab> výška   jen sejme obraz okna (bez čtení) jako poslední snímek – druhý pomocník
+         jen pro telefon ve hře ho tak má vlastní a titulky nečekají
+      -> CHYBA <tab> popis
   ROZMER
       -> OK <tab> x0 <tab> y0 <tab> šířka <tab> výška   obraz hry v posledním snímku bez černých pruhů
          po stranách / nahoře a dole (okno chiaki-ng mívá jiný poměr stran než 16:9); MRIZKA a TELEFON
@@ -762,6 +766,17 @@ def main():
                 ven("OK", len(radky), w // krok, h // krok, int((time.time() - t0) * 1000))
                 for r in radky:
                     ven(*r)
+            elif cast[0] == "SNIMEK":
+                if isinstance(zdroj, Ukazka):
+                    ven("CHYBA", "ukázka")
+                    continue
+                obraz, chyba = zdroj.snimek()
+                if obraz is None:
+                    posledni = None
+                    ven("CHYBA", chyba)
+                else:
+                    posledni = obraz
+                    ven("OK", obraz.shape[1], obraz.shape[0])
             elif cast[0] == "ROZMER":
                 if posledni is None:
                     ven("NIC")
