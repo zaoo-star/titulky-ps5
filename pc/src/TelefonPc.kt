@@ -142,16 +142,22 @@ internal class TelefonPc(
         val isList = !read.card && read.names.count { it != null } >= PhoneScreen.LIST_MIN
         val side = PhoneScreen.panel(read)
         if (isList) {
-            val items = texts.indices.mapNotNull { i ->
-                read.boxes.getOrNull(i)?.takeIf { texts[i].isNotBlank() }?.let { b -> texts[i] to floatArrayOf(side[0], b[1], side[2], b[3]) }
-            }
-            return if (items.isEmpty()) null else TvSender.phoneOverMessage(items, pismo, beside = true)
+            // seznam konverzací stejným panelem jako konverzace (majitel 25. 11. 2026: náhledy u řádků „skákaly“ jinam
+            // než panel konverzace); nadpisy oddílů seznamu („Suggested“, „Messages“) se vynechají
+            val rows = texts.indices.filter { i -> texts[i].isNotBlank() && !ODDIL.matches(read.paragraphs[i].trim()) }
+                .map { i -> texts[i] to 's' }
+            return if (rows.isEmpty()) null else TvSender.phoneMessage(null, rows, side, pismo, pozadi)
         }
-        val keep = texts.indices.filter { i -> read.sides.getOrElse(i) { 's' } != 'c' && texts[i].isNotBlank() }
+        val keep = texts.indices.filter { i -> read.sides.getOrElse(i) { 's' } != 'c' && texts[i].isNotBlank() && !ODDIL.matches(read.paragraphs[i].trim()) }
         if (keep.isEmpty()) return null
         val msgs = keep.map { i -> texts[i] to read.sides.getOrElse(i) { 's' } }
         val barvy = if (profil.phoneOwn != 0 && profil.phoneIn != 0) intArrayOf(profil.phoneOwn, profil.phoneIn) else null
         return TvSender.phoneMessage(title, msgs, side, pismo, pozadi, barvy = barvy)
+    }
+
+    private companion object {
+        /** Nadpisy oddílů seznamu zpráv v telefonu – nepřekládají se ani neukazují. */
+        val ODDIL = Regex("(?i)(suggested|messages|contacts|recent|favorites)")
     }
 
     private fun tr(t: String): String = words.getOrPut(t) { preloz(t) }
