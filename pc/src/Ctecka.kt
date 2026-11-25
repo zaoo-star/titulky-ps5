@@ -78,7 +78,8 @@ object Nastroje {
 }
 
 /** Spojení s pomocníkem `cteni.py` (viz popis řádků tam). */
-private class Helper(python: String, script: File, model: String, lang: String, window: String, errors: File?, record: File?) : PhoneHelper {
+private class Helper(python: String, script: File, model: String, lang: String, window: String, errors: File?, record: File?,
+                     vedlejsi: Boolean = false) : PhoneHelper {
     sealed class Read {
         object Same : Read()
         data class Error(val text: String) : Read()
@@ -93,6 +94,7 @@ private class Helper(python: String, script: File, model: String, lang: String, 
         val cmd = mutableListOf(python, script.absolutePath, "--model", model, "--jazyk", lang)
         if (window.isNotEmpty()) { cmd += "--okno"; cmd += window }
         if (record != null) { cmd += "--zaznam"; cmd += record.absolutePath }
+        if (vedlejsi) cmd += "--vedlejsi"
         val pb = ProcessBuilder(cmd)
         // Mac: Python je uvnitř aplikace – své pomocné soubory (.pyc) nesmí zapisovat do ní (porušil by se její podpis)
         if (Os.mac) pb.environment()["PYTHONPYCACHEPREFIX"] = File(Nastroje.slozka, "pyc").path
@@ -330,7 +332,7 @@ class Ctecka(
             stav = Stav(Stav.Faze.BEZI)
             // telefon ve hře se čte ve vlastním pomocníkovi a vlákně – titulky na jeho čtení (s DeepL i pár sekund) nečekají
             if (sender != null && !demo && GameProfiles.of(hra).phoneSpots.isNotEmpty()) telHelper = try {
-                Helper(python, pomocnik, model.path, jazyk, okno, null, null)
+                Helper(python, pomocnik, model.path, jazyk, okno, null, null, vedlejsi = true)
             } catch (e: Throwable) { hlas("telefon: pomocník se nespustil (${e.message})"); null }
             smycka(helper, sender, demo, telHelper)
             stav = Stav(Stav.Faze.STOJI)

@@ -706,7 +706,15 @@ def main():
     p.add_argument("--okno", default="", help="část titulku okna s obrazem hry; bez toho běží ukázka")
     p.add_argument("--zaznam", default="", help="složka pro snímky hry (ladění); bez toho se nic neukládá")
     p.add_argument("--zaznam-s", type=float, default=2.0, help="nejkratší odstup snímků záznamu v sekundách")
+    p.add_argument("--vedlejsi", action="store_true",
+                   help="druhý pomocník (telefon, menu): nižší priorita a méně vláken, ať nebrzdí čtení titulků")
     a = p.parse_args()
+    if a.vedlejsi and sys.platform == "win32":
+        try:
+            import ctypes
+            ctypes.windll.kernel32.SetPriorityClass(ctypes.windll.kernel32.GetCurrentProcess(), 0x4000)  # BELOW_NORMAL
+        except Exception:
+            pass
     if a.okna:
         import Quartz
         print("povolení Nahrávání obrazovky:", bool(Quartz.CGPreflightScreenCaptureAccess()))
@@ -716,7 +724,13 @@ def main():
 
     from rapidocr_onnxruntime import RapidOCR
     # delší strana nejvýš 1280 bodů: čtení pásu s titulky pak trvá asi pětinu sekundy
-    ocr = RapidOCR(det_limit_side_len=1280, det_limit_type="max")
+    if a.vedlejsi:
+        try:
+            ocr = RapidOCR(det_limit_side_len=1280, det_limit_type="max", intra_op_num_threads=2, inter_op_num_threads=1)
+        except TypeError:
+            ocr = RapidOCR(det_limit_side_len=1280, det_limit_type="max")
+    else:
+        ocr = RapidOCR(det_limit_side_len=1280, det_limit_type="max")
     if a.rozbor:
         rozbor(ocr)
         return
