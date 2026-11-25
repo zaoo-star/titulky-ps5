@@ -22,6 +22,21 @@ Pouští ho čtečka (pc/src/Main.kt) a mluví s ním po řádcích přes standa
          horních 60 % posledního snímku, zmenšené na nejvýš 960 bodů na šířku (šířka × výška = celý
          zmenšený snímek); jas = průměrný jas pod řádkem 0–255 (vybraná položka menu má bílý pruh)
 
+MRIZKA <tab> vlevo <tab> nahoře <tab> vpravo <tab> dole <tab> sloupců <tab> řádků   (zlomky posledního snímku)
+      -> OK <tab> jasy oddělené čárkou (řádek po řádku; z každého řádku mřížky vodorovný řez jeho středem,
+         bod = průměr jasu přes šířku políčka – jako PhoneGate.sample v aplikaci)
+      -> NIC                          žádný snímek
+  ROZMER
+      -> OK <tab> x0 <tab> y0 <tab> šířka <tab> výška   obraz hry v posledním snímku bez černých pruhů
+         po stranách / nahoře a dole (okno chiaki-ng mívá jiný poměr stran než 16:9); MRIZKA a TELEFON
+         počítají zlomky i body v tomhle obdélníku
+      -> NIC                          žádný snímek
+  TELEFON <tab> vlevo <tab> nahoře <tab> vpravo <tab> dole     (zlomky posledního snímku)
+      -> OK <tab> N <tab> šířka <tab> výška <tab> ms  a za tím N řádků přečtených ve výřezu:
+         vlevo <tab> nahoře <tab> vpravo <tab> dole <tab> sklon <tab> vzorky <tab> text
+         (souřadnice v bodech celého snímku; sklon = dy/dx horní hrany; vzorky = jasy z rámečku řádku
+         jako PhoneScreen.samples – nejvýš 48 × 10, oddělené čárkou)
+
 Rozbor uložených snímků (--rozbor: bez modelu a bez okna, pouští ho pc/src/Rozbor.kt):
   SOUBOR <tab> cesta k obrázku
       -> OK <tab> N <tab> šířka <tab> výška <tab> ms  a za tím N řádků z celého obrázku:
@@ -509,6 +524,79 @@ def barva_jmena(obraz, obdelnik):
     return ("OK", int(rr), int(gg), int(bb))
 
 
+def obraz_hry(obraz):
+    """Obdélník obrazu hry 16:9 uprostřed snímku, když jsou kolem něj černé pruhy; jinak celý snímek."""
+    h, w = obraz.shape[:2]
+    if h < 10 or w < 10:
+        return 0, 0, w, h
+    if w * 9 > h * 16 + 16:
+        vw, vh = (h * 16 + 8) // 9, h
+    elif h * 16 > w * 9 + 16:
+        vw, vh = w, (w * 9 + 8) // 16
+    else:
+        return 0, 0, w, h
+    vx, vy = (w - vw) // 2, (h - vh) // 2
+    pruhy = [obraz[:, :vx], obraz[:, vx + vw:]] if vx > 0 else [obraz[:vy], obraz[vy + vh:]]
+    if all(p.size == 0 or p[::4, ::4].mean() < 14 for p in pruhy):
+        return vx, vy, vw, vh
+    return 0, 0, w, h
+
+
+def jas_bgr(obraz):
+    """Jas (luma) jako na Androidu – meze PhoneScreen / PhoneGate jsou vyladěné na něj, ne na prostý průměr barev."""
+    if obraz.ndim < 3:
+        return obraz.astype(np.float32)
+    o = obraz.astype(np.float32)
+    return o[..., 0] * 0.114 + o[..., 1] * 0.587 + o[..., 2] * 0.299
+
+
+def mrizka_jasu(obraz, box, sloupcu, radku):
+    """Mřížka jasu jako PhoneGate.sample (aplikace): řez středem každého řádku, průměr přes šířku políčka."""
+    h, w = obraz.shape[:2]
+    x0 = min(max(int(box[0] * w), 0), w - 1); x1 = min(max(int(box[2] * w), x0 + 1), w)
+    y0 = min(max(int(box[1] * h), 0), h - 1); y1 = min(max(int(box[3] * h), y0 + 1), h)
+    ven_ = []
+    for r in range(radku):
+        y = min(y0 + (y1 - y0) * (2 * r + 1) // (2 * radku), h - 1)
+        rez = jas_bgr(obraz[y, x0:x1])
+        for c in range(sloupcu):
+            a = (x1 - x0) * c // sloupcu
+            b = max(a + 1, (x1 - x0) * (c + 1) // sloupcu)
+            ven_.append(int(rez[a:b].mean()))
+    return ven_
+
+
+def vzorky_jasu(sedy, l, t, r, b):
+    """Jasy z rámečku řádku jako PhoneScreen.samples (nejvýš 48 × 10 bodů)."""
+    h, w = sedy.shape
+    x0 = min(max(l, 0), w - 1); x1 = min(max(r, x0 + 1), w)
+    y0 = min(max(t, 0), h - 1); y1 = min(max(b, y0 + 1), h)
+    sx = max(1, (x1 - x0) // 48); sy = max(1, (y1 - y0) // 10)
+    return sedy[y0:y1:sy, x0:x1:sx].astype(np.int32).ravel()
+
+
+def cti_telefon(ocr, obraz, box):
+    """Výřez kolem telefonu v plném rozlišení: řádky v bodech celého snímku se sklonem a vzorky jasu."""
+    h, w = obraz.shape[:2]
+    x0 = min(max(int(box[0] * w), 0), w - 1); x1 = min(max(int(box[2] * w), x0 + 8), w)
+    y0 = min(max(int(box[1] * h), 0), h - 1); y1 = min(max(int(box[3] * h), y0 + 8), h)
+    vyrez = obraz[y0:y1, x0:x1]
+    sedy = jas_bgr(obraz)
+    vysledek, _ = ocr(np.ascontiguousarray(vyrez), use_cls=False)
+    radky = []
+    for ctyruhelnik, text, jistota in (vysledek or []):
+        if jistota < 0.5:
+            continue
+        xs = [p[0] for p in ctyruhelnik]
+        ys = [p[1] for p in ctyruhelnik]
+        l, t, r, b = int(min(xs)) + x0, int(min(ys)) + y0, int(max(xs)) + x0, int(max(ys)) + y0
+        dx = float(ctyruhelnik[1][0] - ctyruhelnik[0][0])
+        sklon = float(ctyruhelnik[1][1] - ctyruhelnik[0][1]) / dx if dx > 8 else 0.0
+        vz = ",".join(str(int(v)) for v in vzorky_jasu(sedy, l, t, r, b))
+        radky.append((l, t, r, b, "%.4f" % sklon, vz, velka(text.replace("\t", " ").replace("\n", " "))))
+    return radky, w, h
+
+
 def rozbor_souboru(ocr, cesta):
     """Celý uložený snímek: řádky s polohou, jasem pod nimi a rámečky slov (rozbor dávek, Rozbor.kt)."""
     from PIL import Image
@@ -635,6 +723,28 @@ def main():
                     jas = int(sedy[max(0, t):max(t + 1, b), max(0, l):max(l + 1, r)].mean())
                     radky.append((l, t, r, b, jas, text.replace("\t", " ").replace("\n", " ")))
                 ven("OK", len(radky), w // krok, h // krok, int((time.time() - t0) * 1000))
+                for r in radky:
+                    ven(*r)
+            elif cast[0] == "ROZMER":
+                if posledni is None:
+                    ven("NIC")
+                    continue
+                vx, vy, vw, vh = obraz_hry(posledni)
+                ven("OK", vx, vy, vw, vh)
+            elif cast[0] == "MRIZKA":
+                if posledni is None:
+                    ven("NIC")
+                    continue
+                vx, vy, vw, vh = obraz_hry(posledni)
+                ven("OK", ",".join(str(v) for v in mrizka_jasu(posledni[vy:vy + vh, vx:vx + vw], [float(c) for c in cast[1:5]], int(cast[5]), int(cast[6]))))
+            elif cast[0] == "TELEFON":
+                if posledni is None:
+                    ven("OK", 0, 0, 0, 0)
+                    continue
+                t0 = time.time()
+                vx, vy, vw, vh = obraz_hry(posledni)
+                radky, w, h = cti_telefon(ocr, posledni[vy:vy + vh, vx:vx + vw], [float(c) for c in cast[1:5]])
+                ven("OK", len(radky), w, h, int((time.time() - t0) * 1000))
                 for r in radky:
                     ven(*r)
             elif cast[0] == "PRELOZ":

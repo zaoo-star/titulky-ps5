@@ -78,7 +78,7 @@ object Nastroje {
 }
 
 /** Spojení s pomocníkem `cteni.py` (viz popis řádků tam). */
-private class Helper(python: String, script: File, model: String, lang: String, window: String, errors: File?, record: File?) {
+private class Helper(python: String, script: File, model: String, lang: String, window: String, errors: File?, record: File?) : PhoneHelper {
     sealed class Read {
         object Same : Read()
         data class Error(val text: String) : Read()
@@ -159,6 +159,36 @@ private class Helper(python: String, script: File, model: String, lang: String, 
             if (p.size < 6) null else MenuLine(p[5], p[0].toInt(), p[1].toInt(), p[2].toInt(), p[3].toInt(), p[4].toInt())
         }
         return Menu(lines, head[2].toInt(), head[3].toInt(), head[4].toLong())
+    }
+
+    private fun zlomky(b: FloatArray) = b.take(4).joinToString("\t") { String.format(java.util.Locale.ROOT, "%.5f", it) }
+
+    override fun rozmer(): IntArray? {
+        val p = ask("ROZMER").split('\t')
+        if (p[0] != "OK" || p.size < 5) return null
+        return intArrayOf(p[1].toInt(), p[2].toInt(), p[3].toInt(), p[4].toInt())
+    }
+
+    override fun mrizka(box: FloatArray, cols: Int, rows: Int): IntArray? {
+        val p = ask("MRIZKA", zlomky(box), "$cols", "$rows").split('\t')
+        if (p[0] != "OK" || p.size < 2) return null
+        val v = p[1].split(',').mapNotNull { it.toIntOrNull() }
+        return if (v.size == cols * rows) v.toIntArray() else null
+    }
+
+    override fun telefon(box: FloatArray): PhoneCrop? {
+        val head = ask("TELEFON", zlomky(box)).split('\t')
+        if (head[0] != "OK" || head.size < 5) return null
+        val n = head[1].toInt()
+        val lines = (0 until n).mapNotNull {
+            val p = (input.readLine() ?: error("pomocník cteni.py skončil")).split('\t', limit = 7)
+            if (p.size < 7) null else {
+                val vz = if (p[5].isEmpty()) IntArray(0) else p[5].split(',').mapNotNull { it.toIntOrNull() }.toIntArray()
+                MenuLine(p[6], p[0].toInt(), p[1].toInt(), p[2].toInt(), p[3].toInt(), -1, angle = p[4].toFloatOrNull() ?: 0f) to vz
+            }
+        }
+        val w = head[2].toInt(); val h = head[3].toInt()
+        return if (w <= 0 || h <= 0) null else PhoneCrop(lines, w, h, head[4].toLong())
     }
 
     fun stop() { try { process.destroy() } catch (_: Throwable) {} }
@@ -417,6 +447,12 @@ class Ctecka(
 
         fun schovejUkol() { pruhUkolu?.schovej(); sender?.sendObjective(TvSender.objectiveMessage(null)) }
 
+        // telefon ve hře (GTA VI): čte se jen pro TV – panel s překladem kreslí aplikace v TV
+        val telefon = if (sender != null) TelefonPc(profil, lang, { t ->
+            translateSegments(t)?.let { TextLogic.joinSegments(it) }?.replace('\n', ' ') ?: t
+        }, { m -> zapis(m); if (m.startsWith("TELEFON brana") || (m.startsWith("TELEFON ") && "→" in m)) log(m) }).takeIf { it.zapnuto } else null
+        fun telefonPryc() { if (sender != null) telefon?.schovej { sender.sendPhone(it) } }
+
         /**
          * Úkol pod titulky jako na Androidu (`TranslatorService.handleObjective`): nový úkol přeložit a ukázat
          * přes anglický úkol, drží se, dokud ho čtení vidí; s vypnutou volbou se jen vyčlení z titulků.
@@ -528,6 +564,7 @@ class Ctecka(
             val r = helper.read(force = !tracker.isSettled, demoText = demoText)
             // menu hry otevřené → jeho překlad vedle menu, titulky se nečtou
             if (r !is Helper.Read.Error && menu(now)) {
+                telefonPryc()
                 Thread.sleep(max(20L, INTERVAL_MS - (System.currentTimeMillis() - now)))
                 continue
             }
@@ -539,14 +576,21 @@ class Ctecka(
                     stav = stav.copy(faze = Stav.Faze.BEZ_OKNA, chyba = r.text)
                     hideAt = 0; hide(); tracker.reset()
                     if (ukoly.current != null) { ukoly.reset(); schovejUkol() }
+                    telefonPryc()
                 }
                 is Helper.Read.Frame -> {
+                    // text z displeje telefonu není titulek (bubliny zpráv ve spodní třetině obrazu)
+                    val pb = telefon?.boxVeSnimku(r.w, r.h)
+                    val radky = if (pb == null || r.w <= 0 || r.h <= 0) r.lines else r.lines.filterNot { l ->
+                        val cx = (r.x0 + (l.left + l.right) / 2f) / r.w; val cy = (r.y0 + (l.top + l.bottom) / 2f) / r.h
+                        cx in (pb[0] - 0.02f)..(pb[2] + 0.02f) && cy in (pb[1] - 0.02f)..(pb[3] + 0.04f)
+                    }
                     if (lastError.isNotEmpty()) { lastError = ""; hlas("obraz je zpět (${r.w}×${r.h})") }
                     stav = stav.copy(faze = Stav.Faze.BEZI, chyba = "", ms = r.ms)
                     // Stejné hranice jako v aplikaci pro Android TV (TranslatorService.process).
-                    val foreign = TextLogic.looksForeign(r.lines.joinToString("\n") { it.text })
+                    val foreign = TextLogic.looksForeign(radky.joinToString("\n") { it.text })
                     val picked = if (foreign) Picked("", 0) else TextLogic.assemble(
-                        toBlocks(r.lines),
+                        toBlocks(radky),
                         minLineHeight = (r.h * 0.013f).toInt(),
                         subtitlesOnly = true,
                         screenCenterX = r.w / 2 - r.x0,
@@ -603,6 +647,15 @@ class Ctecka(
                                 if (tracker.isChanging && picked.text.isNotEmpty() && shown) { hideAt = 0; hide() }
                         }
                     }
+                }
+            }
+            if (r is Helper.Read.Frame || r == Helper.Read.Same) {
+                val t = telefon
+                if (t != null && sender != null) {
+                    val v = vzhled()
+                    try {
+                        t.tick(System.currentTimeMillis(), helper, if (v.pismo > 0) v.pismo else 22, v.pozadi) { sender.sendPhone(it) }
+                    } catch (e: Exception) { zapis("TELEFON chyba ${e.message}") }
                 }
             }
             if (hideAt in 1..System.currentTimeMillis()) { hideAt = 0; hide() }
