@@ -596,10 +596,11 @@ def pixely(obraz, box):
 
 
 def zvetseni_telefonu(vyska):
-    """Kolikrát zvětšit výřez telefonu: na ~1600 bodů výšky (telefon zabírá ~70 % výšky obrazu), nejvýš 2×."""
+    """Kolikrát zvětšit výřez telefonu: na ~1250 bodů výšky (telefon zabírá ~70 % výšky obrazu), nejvýš 1,6×.
+    Dřív ~1600 bodů a 2× – čtení trvalo zhruba dvakrát déle a překlad telefonu naskočil až po ~5 s (majitel 25. 11. 2026)."""
     if vyska <= 0:
         return 1.0
-    return max(1.0, min(2.0, 1600.0 / vyska))
+    return max(1.0, min(1.6, 1250.0 / vyska))
 
 
 def zvetsi(obraz, k):

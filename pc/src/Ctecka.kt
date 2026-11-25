@@ -501,7 +501,7 @@ class Ctecka(
                         val now = System.currentTimeMillis()
                         telefon.tick(now, telHelper, if (v.pismo > 0) v.pismo else 22, v.pozadi, { sender.sendPhone(it) }, snimekAt)
                         // obrazovky menu hry (mapa, Brief, Progress…) celé – jen když není otevřený telefon
-                        if (!telefon.shown) menuPc?.tick(now, telHelper) { sender.sendPhone(it) }
+                        if (!telefon.shown && !telefon.ikonaVidet) menuPc?.tick(now, telHelper) { sender.sendPhone(it) }
                     }
                 } catch (e: Exception) { zapis("TELEFON chyba ${e.message}"); Thread.sleep(1000) }
                 Thread.sleep(150)

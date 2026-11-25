@@ -83,6 +83,9 @@ internal class TelefonPc(
      * Telefon zavřený podle kontroly ze snímku po čase [od]: true = zavřený, false = ovládání telefonu je vidět,
      * null = takovou kontrolu ještě nemám (požádá o ni hned).
      */
+    /** Ovládání telefonu bylo při poslední kontrole vidět (telefon se otevírá) – menu hry se teď nečte. */
+    val ikonaVidet: Boolean get() = ikonaNaposled
+
     fun zavrenoPo(od: Long): Boolean? {
         if (stavAt >= od) return !ikonaNaposled
         chciKontrolu = true
@@ -132,7 +135,7 @@ internal class TelefonPc(
             return
         }
         // nový obsah se potvrzuje druhým čtením – to přijde hned, ne až za sekundu (telefon se překládal pomalu)
-        if (!hned && now - checkAt < (if (tracker.waiting) 250 else if (shown) 600 else 1000)) return
+        if (!hned && now - checkAt < (if (tracker.waiting) 250 else if (shown) 600 else 400)) return
         checkAt = now
         chciKontrolu = false
         val v = helper.rozmer() ?: return
@@ -186,6 +189,12 @@ internal class TelefonPc(
             if (shown) { shown = false; shownBase = null; send(TvSender.PHONE_HIDE); log("TELEFON schovan (nic)") }
             return
         }
+        // seznam konverzací se nepřekládá, jen otevřená konverzace (přání majitele 25. 11. 2026)
+        if (seznam(read0)) {
+            if (shown) { shown = false; shownBase = null; send(TvSender.PHONE_HIDE) }
+            log("TELEFON seznam zpráv – nepřekládá se")
+            return
+        }
         // vlastní zprávy (modrá bublina) vpravo, příchozí vlevo – podle barvy pozadí odstavce jako v aplikaci (`withPhoneColors`)
         val read = (if (read0.card || read0.feed) read0 else try {
             S.withBubbleColors(read0, read0.boxes.map { b -> b?.let { helper.pixely(it)?.let { px -> S.blueness(px) } } })
@@ -200,16 +209,12 @@ internal class TelefonPc(
         log("TELEFON " + read.paragraphs.indices.joinToString(" ¦ ") { i -> read.paragraphs[i].take(80) + " → " + texts.getOrElse(i) { "" }.take(80) }.take(700))
     }
 
+    /** Seznam konverzací (řádky se jmény kontaktů), ne otevřená konverzace. */
+    private fun seznam(read: PhoneRead) = !read.card && read.names.count { it != null } >= PhoneScreen.LIST_MIN
+
     private fun zprava(read: PhoneRead, texts: List<String>, title: String?, pismo: Int, pozadi: Int): String? {
-        val isList = !read.card && read.names.count { it != null } >= PhoneScreen.LIST_MIN
+        if (seznam(read)) return null
         val side = PhoneScreen.panel(read)
-        if (isList) {
-            // seznam konverzací stejným panelem jako konverzace (majitel 25. 11. 2026: náhledy u řádků „skákaly“ jinam
-            // než panel konverzace); nadpisy oddílů seznamu („Suggested“, „Messages“) se vynechají
-            val rows = texts.indices.filter { i -> texts[i].isNotBlank() && !ODDIL.matches(read.paragraphs[i].trim()) }
-                .map { i -> texts[i] to 's' }
-            return if (rows.isEmpty()) null else TvSender.phoneMessage(null, rows, side, pismo, pozadi)
-        }
         val keep = texts.indices.filter { i -> read.sides.getOrElse(i) { 's' } != 'c' && texts[i].isNotBlank() && !ODDIL.matches(read.paragraphs[i].trim()) }
         if (keep.isEmpty()) return null
         val msgs = keep.map { i -> texts[i] to read.sides.getOrElse(i) { 's' } }
