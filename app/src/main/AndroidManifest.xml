@@ -187,6 +187,12 @@
             android:exported="false"
             android:foregroundServiceType="mediaPlayback" />
 
+        <!-- Titulky PS5: „Překlad z PC“ – jen ukazuje titulky z ReCaptionu pro PC -->
+        <service
+            android:name=".PcReceiverService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
+
         <service
             android:name=".TitulkyAccessibility"
             android:exported="true"

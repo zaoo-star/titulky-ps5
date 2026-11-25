@@ -183,6 +183,10 @@ class MainActivity : Activity() {
     private var lastGuess: String? = null
     private var lastProbe = Ps5Probe.State.UNKNOWN
 
+    /** Titulky PS5: stav „Překlad z PC“ při posledním vykreslení (Domů se obnoví při změně). */
+    private var lastPc = PcReceiverService.State.OFF
+    private var lastPcShown = 0
+
     private val ticker = object : Runnable {
         override fun run() {
             // obnov obrazovku, když se změnil stav překladu (např. zastavení z notifikace)
@@ -204,7 +208,8 @@ class MainActivity : Activity() {
                 lastLink != TranslatorService.linkState || (lastFrames == 0L) != (TranslatorService.framesDecoded == 0L) ||
                 lastStage != TranslatorService.linkStatus().stage ||
                 (section == Section.HOME && (lastTv != TranslatorService.tvConnected || lastTvSeen != (TvSender.lastSeen?.at ?: 0L) ||
-                    lastGuess != Prefs.gameGuess(this@MainActivity) || lastProbe != Ps5Probe.state))
+                    lastGuess != Prefs.gameGuess(this@MainActivity) || lastProbe != Ps5Probe.state ||
+                    lastPc != PcReceiverService.state || lastPcShown != PcReceiverService.shownCount))
             // náhled obrazu z PlayStationu se obnovuje každé 3 s (ne když uživatel zrovna píše)
             // (jen na stránce Konzole – Domů náhled nemá a překreslovat ho každé 3 s bylo zbytečné)
             val preview = TranslatorService.running && ticks % 3 == 0 && wizard < 0 && section == Section.PS5 && "preview" in openGroups
@@ -1319,6 +1324,7 @@ class MainActivity : Activity() {
     // ======================= DOMŮ =======================
 
     private fun home() {
+        if (Prefs.pcMode(this) && !remote) { pcHome(); return }
         val running = TranslatorService.running
         val paused = TranslatorService.paused
         val demoRun = running && TranslatorService.demo
@@ -1427,6 +1433,54 @@ class MainActivity : Activity() {
 
         // upozornění, která nejsou v přehledu (končící vývojářský režim LG, licence)
         warnings()
+    }
+
+    /**
+     * Titulky PS5 – Domů v režimu „Překlad z PC“: TV nečte ani nepřekládá, jen ukazuje titulky z ReCaptionu pro PC
+     * (Čtečka pro TV). Spustit / Zastavit řídí [PcReceiverService].
+     */
+    private fun pcHome() {
+        lastPc = PcReceiverService.state
+        lastPcShown = PcReceiverService.shownCount
+        val on = PcReceiverService.state != PcReceiverService.State.OFF
+        val overlayOk = SubtitleOverlay.canShow(this)
+        val buttons = row()
+        if (on) {
+            if (Prefs.isTv(this)) buttons.addView(tagged(ui.button(t("b_go_game"), primary = true) { moveTaskToBack(true) }, "start"))
+            buttons.addView(tagged(mediaButton(STOP, STOP_RED, t("b_stop")) { PcReceiverService.stop(this); main.postDelayed({ render(true) }, 300) }, "stop"),
+                if (buttons.childCount > 0) wrapLp() else ui.lp())
+        } else {
+            buttons.addView(tagged(mediaButton(PLAY, Theme.OK, "Spustit překlad z PC") {
+                if (!SubtitleOverlay.canShow(this)) { toast(t("need_overlay")); return@mediaButton }
+                PcReceiverService.start(this); main.postDelayed({ render(true) }, 300)
+            }, "start"), ui.lp())
+        }
+        add(buttons, 14)
+        if (!narrow) homeTiles()
+        val card = ui.card()
+        fun line(color: Int, text: String, tag: String, onClick: (() -> Unit)? = null) {
+            val r = ui.hbox().apply {
+                setPadding(ui.dp(6), ui.dp(7), ui.dp(6), ui.dp(7))
+                if (onClick != null) { isFocusable = true; isClickable = true; background = ui.focusBg(Theme.CARD, radius = 10); setOnClickListener { onClick() } }
+                addView(View(this@MainActivity).apply { background = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(color) } },
+                    LinearLayout.LayoutParams(ui.dp(12), ui.dp(12)).apply { rightMargin = ui.dp(12) })
+                addView(ui.text(text, 16f, if (color == Theme.MUTED) Theme.MUTED else Theme.TEXT), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+                if (onClick != null) addView(ui.text("›", 20f, Theme.MUTED, bold = true).apply { setPadding(ui.dp(10), 0, ui.dp(4), 0) })
+            }
+            card.addView(tagged(r, tag))
+        }
+        line(Theme.ACCENT, "Režim · překlad z PC", "pcmode") { section = Section.SETTINGS; render() }
+        when (PcReceiverService.state) {
+            PcReceiverService.State.CONNECTED -> line(Theme.OK, "PC · připojeno " + (PcReceiverService.pcAddress ?: ""), "pcstate")
+            PcReceiverService.State.SEARCHING -> { line(Theme.WARN, "PC · hledám v síti", "pcstate"); card.addView(ui.waiting()) }
+            PcReceiverService.State.OFF -> line(Theme.MUTED, "PC · neběží", "pcstate")
+        }
+        if (PcReceiverService.state == PcReceiverService.State.CONNECTED)
+            line(Theme.MUTED, "Titulky z PC · ${PcReceiverService.shownCount}", "pccount")
+        line(if (overlayOk) Theme.OK else Theme.WARN, if (overlayOk) "Pruh přes obraz · povoleno" else "Pruh přes obraz · chybí povolení", "pcoverlay",
+            if (overlayOk) null else { { section = Section.SETTINGS; render() } })
+        Prefs.pcAddress(this)?.let { line(Theme.MUTED, "Poslední PC · $it", "pclast") }
+        add(card, 18)
     }
 
     /** Titulky PS5: velké dlaždice jako v menu PS5 – rychlý skok na Vzhled titulků, Konzoli, Nápovědu a Nastavení. */
@@ -3018,6 +3072,15 @@ class MainActivity : Activity() {
             choose(t("wz_dev_q"), listOf(t("dev_tv"), t("dev_phone")), if (reader) 1 else 0) { i -> setReader(i == 1); render(true) }
         }, "device"), 8)
         consoleRow("sconsole", 8)
+        // Titulky PS5: „Překlad z PC“ – TV jen ukazuje titulky z ReCaptionu pro PC (Čtečka pro TV)
+        if (!remote && !Prefs.readerDevice(this)) add(tagged(ui.settingRow("Překlad z PC", onOff(Prefs.pcMode(this))) {
+            if (Prefs.pcMode(this)) { PcReceiverService.stop(this); Prefs.setPcMode(this, false); render(true) }
+            else confirmOn("Překlad z PC", "Titulky čte a překládá ReCaption pro PC (⚙ → Použití → Čtečka pro TV) ve stejné " +
+                "domácí síti. Tato TV jen ukazuje hotové titulky – PS5 se k ní nepřipojuje. Spouští se na Domů.") {
+                if (TranslatorService.running) stopTranslation()
+                Prefs.setPcMode(this, true); render(true)
+            }
+        }, "pcmode_set"), 8)
         // probouzení PlayStationu: zapne ho na spárovaném (druhém) účtu, proto výchozí vypnuto
         if (Prefs.console(this) == Console.PLAYSTATION) {
             add(tagged(ui.settingRow(t("ps_wake_row"), onOff(Prefs.ps5Wake(this))) {

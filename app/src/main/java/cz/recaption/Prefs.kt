@@ -363,6 +363,13 @@ object Prefs {
     /** Budit PlayStation z klidového režimu při Spustit (zapne ho na spárovaném druhém účtu); výchozí ne (od 0.97.18). */
     /** Od 0.97.41 nový klíč (dřív `ps5_wake`): po aktualizaci je probouzení u všech vypnuté, zapnout jde znovu v Nastavení. */
     /** Telefon jako čtečka: displej při překladu nezhasne, jen se ztlumí (od 0.97.85, výchozí vypnuto) – zhasnutý displej Samsung zpomalil čtení obrazu na ~1 s. */
+    /** Titulky PS5: „Překlad z PC“ – TV jen ukazuje titulky z PC (ReCaption pro PC, Čtečka pro TV); výchozí vypnuto. */
+    fun pcMode(c: Context): Boolean = own(c).getBoolean("pc_prijem", false)
+    fun setPcMode(c: Context, v: Boolean) = own(c).edit().putBoolean("pc_prijem", v).apply()
+    /** Poslední adresa PC, které se ozvalo (zkouší se jako první). */
+    fun pcAddress(c: Context): String? = own(c).getString("pc_adresa", null)
+    fun setPcAddress(c: Context, v: String?) = own(c).edit().putString("pc_adresa", v).apply()
+
     fun screenDim(c: Context): Boolean = bool(c, "displej_tlumeny", false)
     fun setScreenDim(c: Context, v: Boolean) = setBool(c, "displej_tlumeny", v)
     /**
