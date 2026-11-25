@@ -126,7 +126,10 @@ internal class TelefonPc(
             if (shown) { shown = false; shownBase = null; send(TvSender.PHONE_HIDE); log("TELEFON schovan (nic)") }
             return
         }
-        val read = read0
+        // vlastní zprávy (modrá bublina) vpravo, příchozí vlevo – podle barvy pozadí odstavce jako v aplikaci (`withPhoneColors`)
+        val read = if (read0.card || read0.feed) read0 else try {
+            S.withBubbleColors(read0, read0.boxes.map { b -> b?.let { helper.pixely(it)?.let { px -> S.blueness(px) } } })
+        } catch (_: Exception) { read0 }
         val texts = if (read.card) paras.map { karta(it) } else read.paragraphs.indices.map { i -> odstavec(read, i, read.paragraphs[i]) }
         val title = if (read.card) read.title?.let { karta(it) } else read.title
         val msg = zprava(read, texts, title, pismo, pozadi) ?: return
@@ -173,6 +176,8 @@ internal class TelefonPc(
 internal interface PhoneHelper {
     /** Obraz hry v posledním snímku: x0, y0, šířka, výška (bez černých pruhů); null = snímek není. */
     fun rozmer(): IntArray?
+    /** Barvy bodů (0xRRGGBB) obdélníku [box] (zlomky obrazu hry); null = snímek není. */
+    fun pixely(box: FloatArray): IntArray?
     /** Mřížka jasu [cols] × [rows] z obdélníku [box] (zlomky) – jako `PhoneGate.sample`; null = snímek není. */
     fun mrizka(box: FloatArray, cols: Int, rows: Int): IntArray?
     /** Řádky výřezu [box] (zlomky) v plném rozlišení se vzorky jasu; null = snímek není. */

@@ -31,6 +31,9 @@ MRIZKA <tab> vlevo <tab> nahoře <tab> vpravo <tab> dole <tab> sloupců <tab> ř
          po stranách / nahoře a dole (okno chiaki-ng mívá jiný poměr stran než 16:9); MRIZKA a TELEFON
          počítají zlomky i body v tomhle obdélníku
       -> NIC                          žádný snímek
+  PIXELY <tab> vlevo <tab> nahoře <tab> vpravo <tab> dole      (zlomky obrazu hry, viz ROZMER)
+      -> OK <tab> barvy bodů 0xRRGGBB desítkově oddělené čárkou (mřížka nejvýš 40 × 8 – jako barevný snímek
+         v aplikaci pro modrou bublinu vlastních zpráv)
   TELEFON <tab> vlevo <tab> nahoře <tab> vpravo <tab> dole     (zlomky posledního snímku)
       -> OK <tab> N <tab> šířka <tab> výška <tab> ms  a za tím N řádků přečtených ve výřezu:
          vlevo <tab> nahoře <tab> vpravo <tab> dole <tab> sklon <tab> vzorky <tab> text
@@ -577,6 +580,16 @@ def vzorky_jasu(sedy, l, t, r, b):
     return sedy[y0:y1:sy, x0:x1:sx].astype(np.int32).ravel()
 
 
+def pixely(obraz, box):
+    """Barvy bodů obdélníku (zlomky) v mřížce nejvýš 40 × 8, jako číslo 0xRRGGBB (obraz je BGR)."""
+    h, w = obraz.shape[:2]
+    x0 = min(max(int(box[0] * w), 0), w - 1); x1 = min(max(int(box[2] * w), x0 + 1), w)
+    y0 = min(max(int(box[1] * h), 0), h - 1); y1 = min(max(int(box[3] * h), y0 + 1), h)
+    sx = max(1, (x1 - x0) // 40); sy = max(1, (y1 - y0) // 8)
+    o = obraz[y0:y1:sy, x0:x1:sx].astype(np.int64)
+    return (o[..., 2] << 16 | o[..., 1] << 8 | o[..., 0]).ravel().tolist()
+
+
 def zvetseni_telefonu(vyska):
     """Kolikrát zvětšit výřez telefonu: na ~1600 bodů výšky (telefon zabírá ~70 % výšky obrazu), nejvýš 2×."""
     if vyska <= 0:
@@ -761,6 +774,12 @@ def main():
                     continue
                 vx, vy, vw, vh = obraz_hry(posledni)
                 ven("OK", ",".join(str(v) for v in mrizka_jasu(posledni[vy:vy + vh, vx:vx + vw], [float(c) for c in cast[1:5]], int(cast[5]), int(cast[6]))))
+            elif cast[0] == "PIXELY":
+                if posledni is None:
+                    ven("NIC")
+                    continue
+                vx, vy, vw, vh = obraz_hry(posledni)
+                ven("OK", ",".join(str(v) for v in pixely(posledni[vy:vy + vh, vx:vx + vw], [float(c) for c in cast[1:5]])))
             elif cast[0] == "TELEFON":
                 if posledni is None:
                     ven("OK", 0, 0, 0, 0)

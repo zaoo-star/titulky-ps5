@@ -169,6 +169,12 @@ private class Helper(python: String, script: File, model: String, lang: String, 
         return intArrayOf(p[1].toInt(), p[2].toInt(), p[3].toInt(), p[4].toInt())
     }
 
+    override fun pixely(box: FloatArray): IntArray? {
+        val p = ask("PIXELY", zlomky(box)).split('\t')
+        if (p[0] != "OK" || p.size < 2 || p[1].isEmpty()) return null
+        return p[1].split(',').mapNotNull { it.toIntOrNull() }.map { it or (0xFF shl 24) }.toIntArray()
+    }
+
     override fun mrizka(box: FloatArray, cols: Int, rows: Int): IntArray? {
         val p = ask("MRIZKA", zlomky(box), "$cols", "$rows").split('\t')
         if (p[0] != "OK" || p.size < 2) return null
