@@ -116,9 +116,9 @@ class SupportTest {
     }
 
     @Test fun updateAddressesAndProblems() {
-        assertEquals("https://recaption.pages.dev/d/latest/ReCaption.apk",
+        assertEquals("https://github.com/zaoo-star/titulky-ps5/releases/download/latest/ReCaption.apk",
             UpdateCheck.url(UpdateCheck.Channel.STABLE, "ReCaption.apk"))
-        assertEquals("https://recaption.pages.dev/d/zkusebni/version.txt",
+        assertEquals("https://github.com/zaoo-star/titulky-ps5/releases/download/zkusebni/version.txt",
             UpdateCheck.url(UpdateCheck.Channel.TEST, "version.txt"))
         assertEquals("upd_cancel", UpdateCheck.problemKey(3))
         assertEquals("upd_sig", UpdateCheck.problemKey(5))

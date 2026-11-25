@@ -74,7 +74,7 @@ class SetupPageTest {
         assertNull(SetupPage.parseScanLink("recaption://login?h=192.168.1.20&p=8766&k=abcd2345efgh6789"))
         assertNull(SetupPage.parseScanLink(null))
         // prohlížeč Androidu: aplikace je → otevře se, není → stáhne se
-        assertEquals("intent://kod?h=1#Intent;scheme=recaption;package=cz.recaption;S.browser_fallback_url=https%3A%2F%2Fx.cz%2Fa.apk;end",
+        assertEquals("intent://kod?h=1#Intent;scheme=recaption;package=cz.titulkyps5;S.browser_fallback_url=https%3A%2F%2Fx.cz%2Fa.apk;end",
             SetupPage.intentLink("recaption://kod?h=1", "https://x.cz/a.apk"))
         val html = SetupPage.page(Lang.CS, "TV", t, "https://x.cz/a.apk", "https://sony.example/", "https://d/", "https://k/",
             appModeLink = "recaption://tv?h=192.168.1.20&p=8766&k=abcd2345efgh6789&n=TV")

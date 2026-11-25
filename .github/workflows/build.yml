@@ -1,31 +1,25 @@
+# Titulky PS5 – sestavení a vydání (úprava ReCaptionu, AGPL-3.0).
+# Každý push: testy logiky + podepsané APK. Z větve main navíc vydání „latest“, odkud si appka bere aktualizace
+# (version.txt + ReCaption.apk / ReCaption-arm64.apk / ReCaption-arm32.apk – názvy čte Updater.kt).
+# Podpis: tajné údaje repozitáře TPS5_KEY_BASE64 (p12 v base64, alias „recaption“) a TPS5_KEY_PASSWORD.
+# Bez nich se nic nevydá (APK s dočasným podpisem by nešlo nainstalovat přes předchozí verzi).
 name: Sestavit APK
-# Každý push: testy logiky → podepsané APK → vydání (asi 10 min). Emulátory běží souběžně jen pro informaci.
-#   APK: ReCaption.apk celé (web, Downloader, USB) + ReCaption-arm64.apk / -arm32.apk podle procesoru (aktualizace v aplikaci)
-#   main      → „latest“ (nabídne se všem) + vydání pod číslem verze „v<verze>“ – push na main jen se souhlasem majitele
-#   zaloha-…  → jen vydání pod číslem verze
-#   ostatní   → zkušební kanál „zkusebni“ (jen testeři, Tester.kt)
-# Fronta po větvích: novější push zruší rozběhnuté starší sestavení (nejnovější se neruší nikdy, takže vždy něco
-# vyjde); rozběhnuté vydání se neruší (nenechá „latest“ napůl smazané). Kanály nejdou zpátky na nižší versionCode.
 
 on:
   push:
-    paths-ignore:       # APK nemění: PC, Mac a iPhone mají vlastní workflow
-      - "pc/**"
-      - "ios/**"
-      - ".github/workflows/pc.yml"
-      - ".github/workflows/mac.yml"
-      - ".github/workflows/ios.yml"
   workflow_dispatch:
 
 permissions:
   contents: write
 
+concurrency:
+  group: sestaveni-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
-    concurrency:
-      group: sestaveni-${{ github.ref }}
-      cancel-in-progress: true
     runs-on: ubuntu-latest
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v5
         with:
@@ -46,9 +40,6 @@ jobs:
           yes | "$SDKM" --licenses > /dev/null || true
           "$SDKM" "ndk;28.2.13676358" "cmake;3.22.1" "platforms;android-35" "build-tools;35.0.0" | tail -3
 
-      # Nativní část (chiaki-ng, spojení s PS5) se překládá nejdéle a mění se jen výjimečně: hotové knihovny pro ARM
-      # se ukládají do mezipaměti podle zdrojů (podmodul, app/src/main/cpp, volby CMake v build.gradle.kts) a při shodě
-      # se jen převezmou (-PnativniZ, jako sestavit-na-pc.ps1) – vydání o několik minut dřív (přání majitele 24. 11. 2026).
       - name: Klíč nativní části
         id: nat
         run: |
@@ -61,310 +52,72 @@ jobs:
       - name: Nativní část z mezipaměti?
         run: |
           if [ -f nativni/arm64-v8a/libchiaki-jni.so ] && [ -f nativni/armeabi-v7a/libchiaki-jni.so ]; then
-            echo "NATIVNI=-PnativniZ=$PWD/nativni" >> "$GITHUB_ENV"; echo "Nativní část z mezipaměti – nepřekládá se."
-          else echo "Nativní část se přeloží (zdroje se změnily nebo mezipaměť vypršela)."; fi
+            echo "NATIVNI=-PnativniZ=$PWD/nativni" >> "$GITHUB_ENV"; echo "Nativní část z mezipaměti."
+          else echo "Nativní část se přeloží."; fi
 
       - name: Testy logiky
         run: chmod +x gradlew && bash ci/opakuj-sit.sh ./gradlew testDebugUnitTest --no-daemon $NATIVNI
 
-      - name: Sestavení APK pro televize (ARM)
+      - name: Sestavení APK (ARM)
         env:
-          # Stálý podpisový klíč (soubor p12 v kódování base64) a jeho heslo. Jsou jen v tajných
-          # údajích repozitáře, nikdy v repozitáři samotném; bez nich se podepíše dočasným klíčem.
-          RECAPTION_KEY_BASE64: ${{ secrets.RECAPTION_KEY_BASE64 }}
-          RECAPTION_KEY_PASSWORD: ${{ secrets.RECAPTION_KEY_PASSWORD }}
+          RECAPTION_KEY_BASE64: ${{ secrets.TPS5_KEY_BASE64 }}
+          RECAPTION_KEY_PASSWORD: ${{ secrets.TPS5_KEY_PASSWORD }}
         run: |
-          KLIC="$RUNNER_TEMP/recaption.p12"
-          trap 'rm -f "$KLIC"' EXIT     # klíč na stroji nezůstane, ani když sestavení spadne
+          KLIC="$RUNNER_TEMP/tps5.p12"
+          trap 'rm -f "$KLIC"' EXIT
           if [ -n "$RECAPTION_KEY_BASE64" ]; then
             printf '%s' "$RECAPTION_KEY_BASE64" | tr -d ' \r\n\t' | base64 -d > "$KLIC"
             export RECAPTION_KEY_FILE="$KLIC"
           fi
-          # testerské APK jen z běžných větví (zkušební kanál); main a zaloha-… = APK pro všechny (Tester.kt)
-          KANAL=zkusebni
-          case "$GITHUB_REF" in refs/heads/main|refs/heads/zaloha-*) KANAL=latest ;; esac
-          echo "Kanál APK: $KANAL"
-          bash ci/opakuj-sit.sh ./gradlew assembleRelease --no-daemon -Pkanal=$KANAL -PabiApk $NATIVNI
-          # přeloženou nativní část uložit pro příští sestavení (mezipaměť se uloží na konci úlohy)
+          bash ci/opakuj-sit.sh ./gradlew assembleRelease --no-daemon -Pkanal=latest -PabiApk $NATIVNI
           if [ -z "$NATIVNI" ]; then
             rm -rf nativni-tmp && unzip -q -o app/build/outputs/apk/release/app-universal-release.apk 'lib/*/libchiaki-jni.so' 'lib/*/libc++_shared.so' -d nativni-tmp
-            rm -rf nativni && mv nativni-tmp/lib nativni && rm -rf nativni-tmp && ls -R nativni
+            rm -rf nativni && mv nativni-tmp/lib nativni && rm -rf nativni-tmp
           fi
 
-      - name: Přejmenovat APK
+      - name: Přejmenovat a zkontrolovat APK
         run: |
-          # celé APK (web, Downloader, USB) a dělené podle procesoru (aktualizace v aplikaci, Updater.apkFile)
-          cp app/build/outputs/apk/release/app-universal-release.apk TestPreklad.apk
+          cp app/build/outputs/apk/release/app-universal-release.apk ReCaption.apk
           cp app/build/outputs/apk/release/app-arm64-v8a-release.apk ReCaption-arm64.apk
           cp app/build/outputs/apk/release/app-armeabi-v7a-release.apk ReCaption-arm32.apk
-          unzip -l TestPreklad.apk | grep -E "classes.*dex|\.so$"
-          unzip -l TestPreklad.apk | grep -q "lib/arm64-v8a/libchiaki-jni.so"
-          unzip -l TestPreklad.apk | grep -q "lib/armeabi-v7a/libchiaki-jni.so"
+          unzip -l ReCaption.apk | grep -q "lib/arm64-v8a/libchiaki-jni.so"
+          unzip -l ReCaption.apk | grep -q "lib/armeabi-v7a/libchiaki-jni.so"
           unzip -l ReCaption-arm64.apk | grep -q "lib/arm64-v8a/libchiaki-jni.so"
           unzip -l ReCaption-arm32.apk | grep -q "lib/armeabi-v7a/libchiaki-jni.so"
-          if unzip -l TestPreklad.apk | grep -qE "lib/x86(_64)?/"; then echo "::error::Celé APK obsahuje knihovny pro x86"; exit 1; fi
-          if unzip -l ReCaption-arm64.apk | grep -q "lib/armeabi-v7a/"; then echo "::error::Dělené APK pro arm64 obsahuje i 32bitové knihovny"; exit 1; fi
-          ls -la TestPreklad.apk ReCaption-arm64.apk ReCaption-arm32.apk
+          AAPT="$ANDROID_HOME/build-tools/35.0.0/aapt"
+          "$AAPT" dump badging ReCaption.apk | grep -E "^package:|^application-label:"
+          "$AAPT" dump badging ReCaption.apk | grep -q "package: name='cz.titulkyps5'"
+          CODE=$("$AAPT" dump badging ReCaption.apk | grep -oE "versionCode='[0-9]+'" | grep -oE "[0-9]+")
+          NAME=$("$AAPT" dump badging ReCaption.apk | grep -oE "versionName='[^']+'" | cut -d"'" -f2)
+          echo "$CODE $NAME" > version.txt; cat version.txt
+          ls -la ReCaption*.apk
 
       - name: Kontrola podpisu
+        env:
+          MA_KLIC: ${{ secrets.TPS5_KEY_BASE64 != '' }}
         run: |
-          # Všechny verze musí mít stejný podpis, jinak je televize nenainstaluje přes starší verzi.
-          # Otisk (SHA-256) certifikátu stálého klíče. Je to veřejný údaj – pozná se podle něj jen,
-          # že APK podepsal správný klíč; podepsat s ním nic nejde.
-          STALY=9cc0a5e6719dbe63d87bf893452e6f1205dda322d2a027f7508acf96ee38c317
           otisk() { "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs "$1" | grep -m1 "SHA-256" | grep -oE "[0-9a-f]{64}" || true; }
-          OTISK=$(otisk TestPreklad.apk)
-          echo "otisk podpisu: $OTISK"
-          # dělená APK musí mít tentýž podpis (jinak by se nevydala žádná)
-          for f in ReCaption-arm64.apk ReCaption-arm32.apk; do [ "$(otisk $f)" = "$OTISK" ] || OTISK=jiny; done
-          if [ "$OTISK" = "$STALY" ]; then
-            echo "stálý" > podpis.txt
-          else
-            echo "dočasný" > podpis.txt
-            echo "::warning::APK je podepsané dočasným klíčem – nepůjde nainstalovat přes vydanou verzi. V nastavení repozitáře chybí nebo nesedí tajné údaje RECAPTION_KEY_BASE64 a RECAPTION_KEY_PASSWORD."
-          fi
-          cat podpis.txt
+          O=$(otisk ReCaption.apk); echo "otisk podpisu: $O"
+          for f in ReCaption-arm64.apk ReCaption-arm32.apk; do [ "$(otisk $f)" = "$O" ] || { echo "::error::APK mají různý podpis"; exit 1; }; done
+          if [ "$MA_KLIC" = "true" ]; then echo "stálý" > podpis.txt; else echo "dočasný" > podpis.txt; echo "::warning::Chybí tajné údaje TPS5_KEY_BASE64 / TPS5_KEY_PASSWORD – APK má dočasný podpis a nevydá se."; fi
 
       - uses: actions/upload-artifact@v4
         with:
-          name: TestPreklad-APK
+          name: Titulky-PS5-APK
           path: |
-            TestPreklad.apk
+            ReCaption.apk
             ReCaption-arm64.apk
             ReCaption-arm32.apk
+            version.txt
             podpis.txt
 
-  publish:
-    name: Vydat APK ke stažení
-    needs: [build]
-    if: startsWith(github.ref, 'refs/heads/')
-    concurrency:
-      group: vydani-${{ github.ref }}
-      cancel-in-progress: false
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/download-artifact@v4
-        with:
-          name: TestPreklad-APK
-      - name: Vydat
+      - name: Vydat (latest)
+        if: github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          CODE=$(grep -oE 'versionCode = [0-9]+' app/build.gradle.kts | grep -oE '[0-9]+')
-          NAME=$(grep -oE 'versionName = "[^"]+"' app/build.gradle.kts | cut -d'"' -f2)
-          echo "$CODE $NAME" > version.txt
-          cat version.txt
-          cp TestPreklad.apk ReCaption.apk
-          cp TestPreklad.apk PlayLingo.apk     # starší PlayLingo (do 0.97.146) stahuje PlayLingo.apk; GitHub přesměruje starou adresu repa sem
-          # jen APK se stálým podpisem – jiné by se nenainstalovalo přes vydanou verzi
-          if [ "$(cat podpis.txt 2>/dev/null)" != "stálý" ]; then
-            if [ "$GITHUB_REF" = "refs/heads/main" ]; then
-              echo "::error::APK není podepsané stálým klíčem, proto se nevydává. Zkontroluj tajné údaje RECAPTION_KEY_BASE64 a RECAPTION_KEY_PASSWORD."
-              exit 1
-            fi
-            echo "::warning::APK není podepsané stálým klíčem, proto se nevydává."
-            exit 0
-          fi
-          PODPIS="Podpis: $(cat podpis.txt)."
-          # kanál nejde zpátky: starší běh nepřepíše novější vydání
-          novejsi() {
-            V=$(gh release download "$1" --pattern version.txt --output - 2>/dev/null | grep -oE '^[0-9]+' || echo 0)
-            if [ "${V:-0}" -gt "$CODE" ]; then echo "::notice::V kanálu $1 je novější verze ($V), $CODE se tam nevydává."; return 0; fi
-            return 1
-          }
-          # aplikace pro TV z APK (nepodepsaný .wgt pro Samsung, .ipk pro LG): Apps2Samsung bere .wgt z vydání latest
-          # (core/SamsungSetup.kt), telefon si z kanálu stáhne novější aplikaci pro TV než má v APK (TvPackages.kt, tv-verze.txt)
-          mkdir -p tv-apk
-          unzip -p ReCaption.apk assets/samsung/receiver.wgt > tv-apk/ReCaption-Samsung.wgt
-          unzip -p ReCaption.apk assets/lg/receiver.ipk > tv-apk/ReCaption-LG.ipk
-          if [ "$(head -c 2 tv-apk/ReCaption-Samsung.wgt)" != "PK" ]; then echo "::error::V APK chybí aplikace pro TV Samsung (assets/samsung/receiver.wgt)."; exit 1; fi
-          if [ "$(head -c 7 tv-apk/ReCaption-LG.ipk)" != "!<arch>" ]; then echo "::error::V APK chybí aplikace pro TV LG (assets/lg/receiver.ipk)."; exit 1; fi
-          unzip -p ReCaption.apk assets/lg/receiver-manifest.json | grep -oE '"version": "[^"]+"' | cut -d'"' -f4 > tv-apk/tv-verze.txt
-          # do kanálu: aplikace pro TV z APK, ledaže je tam samostatně vydaná novější (tv.yml) – ta zůstane (nejde zpátky)
-          tv_do_kanalu() {
-            cp tv-apk/ReCaption-Samsung.wgt tv-apk/ReCaption-LG.ipk tv-apk/tv-verze.txt .
-            STARA=$(gh release download "$1" --pattern tv-verze.txt --output - 2>/dev/null | head -1 | tr -d '\r\n ' || true)
-            NOVA=$(cat tv-apk/tv-verze.txt)
-            if [ -n "$STARA" ] && [ "$STARA" != "$NOVA" ] && [ "$(printf '%s\n%s\n' "$STARA" "$NOVA" | sort -V | tail -1)" = "$STARA" ]; then
-              rm -rf tv-kanal && mkdir tv-kanal
-              if gh release download "$1" --dir tv-kanal --pattern ReCaption-LG.ipk --pattern ReCaption-Samsung.wgt --pattern tv-verze.txt; then
-                cp tv-kanal/* . && echo "::notice::V kanálu $1 zůstává samostatně vydaná aplikace pro TV $STARA (APK nese $NOVA)."
-              fi
-            fi
-          }
-          if [ "$GITHUB_REF" != "refs/heads/main" ] && [ "${GITHUB_REF#refs/heads/zaloha-}" = "$GITHUB_REF" ]; then
-            novejsi zkusebni && exit 0
-            tv_do_kanalu zkusebni
-            gh release delete zkusebni --yes --cleanup-tag || true
-            gh release create zkusebni ReCaption.apk ReCaption-arm64.apk ReCaption-arm32.apk PlayLingo.apk version.txt ReCaption-Samsung.wgt ReCaption-LG.ipk tv-verze.txt --target "$GITHUB_SHA" --prerelease --latest=false --title "ReCaption – zkušební verze $NAME" --notes "Zkušební verze $NAME z větve ${GITHUB_REF#refs/heads/}, vyzkoušená testy logiky. Nabídne se jen testerům. $PODPIS"
-            exit 0
-          fi
-          # vydání pod číslem verze vznikne jednou a už se nepřepisuje (záloha, ke které se dá vrátit); aplikace pro TV z APK
-          cp ReCaption.apk "ReCaption-$NAME.apk"
-          gh release view "v$NAME" >/dev/null 2>&1 || gh release create "v$NAME" "ReCaption-$NAME.apk" tv-apk/ReCaption-Samsung.wgt tv-apk/ReCaption-LG.ipk --target "$GITHUB_SHA" --latest=false --title "ReCaption $NAME" --notes "Verze $NAME, vyzkoušená testy logiky. $PODPIS"
-          if [ "$GITHUB_REF" != "refs/heads/main" ]; then exit 0; fi
-          novejsi latest && exit 0
-          tv_do_kanalu latest
-          gh release delete latest --yes --cleanup-tag || true
-          gh release create latest ReCaption.apk ReCaption-arm64.apk ReCaption-arm32.apk PlayLingo.apk TestPreklad.apk version.txt ReCaption-Samsung.wgt ReCaption-LG.ipk tv-verze.txt --title "ReCaption – nejnovější APK" --notes "Automaticky sestaveno z posledního kódu a vyzkoušeno testy logiky. Spojení s PlayStationem používá otevřenou knihovnu chiaki-ng (AGPL-3.0); zdrojový kód je v tomto repozitáři. $PODPIS"
-
-  emulator-apk:
-    name: APK pro emulátory
-    continue-on-error: true
-    concurrency:
-      group: emulator-apk-${{ github.ref }}
-      cancel-in-progress: true
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          submodules: recursive
-
-      - uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: 17
-          cache: gradle
-
-      - name: Nástroje pro nativní část (spojení s PlayStationem)
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq protobuf-compiler python3-protobuf ninja-build
-          pip3 install --user --break-system-packages protobuf grpcio-tools || true
-          SDKM="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
-          yes | "$SDKM" --licenses > /dev/null || true
-          "$SDKM" "ndk;28.2.13676358" "cmake;3.22.1" "platforms;android-35" "build-tools;35.0.0" | tail -3
-
-      - run: chmod +x gradlew
-
-      - name: Sestavení zkušební verze pro emulátor (x86)
-        run: |
-          bash ci/opakuj-sit.sh ./gradlew assembleDebug --no-daemon -Pabis=x86
-          cp app/build/outputs/apk/debug/app-debug.apk TestPreklad-emulator.apk
-          unzip -l TestPreklad-emulator.apk | grep "\.so$"
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: emulator-apk
-          path: TestPreklad-emulator.apk
-
-      # emulátor telefonu s Androidem 14 je 64bitový – vlastní APK; když se nepovede, spadne jen tahle jedna zkouška
-      - name: Sestavení zkušební verze pro emulátor telefonu (x86_64)
-        continue-on-error: true
-        run: |
-          bash ci/opakuj-sit.sh ./gradlew assembleDebug --no-daemon -Pabis=x86_64
-          cp app/build/outputs/apk/debug/app-debug.apk TestPreklad-emulator64.apk
-
-      - uses: actions/upload-artifact@v4
-        continue-on-error: true
-        with:
-          name: emulator-apk64
-          path: TestPreklad-emulator64.apk
-
-  # Zkoušky v emulátorech jen pro informaci (vydání na ně nečeká): výsledky a snímky ve větvích test-results-api<N>
-  # a test-results-phone<N>. Neúspěšná zkouška se jednou zopakuje (ci/zkouska-opakovat.sh).
-  emulator:
-    name: Emulátor Android TV (API ${{ matrix.api }})
-    needs: emulator-apk
-    continue-on-error: true   # jen pro informaci – pád emulátoru neoznačí běh za neúspěšný (žádný e-mail „failed“)
-    runs-on: ubuntu-latest
-    timeout-minutes: 80     # emulátor se občas zasekne (80 min = i s jedním opakováním)
-    strategy:
-      fail-fast: false
-      matrix:
-        api: [28, 30, 33, 34]   # Android 9, 11, 13, 14
-    steps:
-      - uses: actions/checkout@v5
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: emulator-apk
-
-      - name: Povolit KVM
-        run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
-
-      - name: Zkouška v emulátoru
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: ${{ matrix.api }}
-          target: android-tv
-          arch: x86
-          profile: tv_1080p
-          disable-animations: true
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -memory 2048
-          script: bash ci/zkouska-opakovat.sh ci/emulator-test.sh
-
-      - name: Uložit výsledky
-        if: always()
-        run: |
-          cd test-results || exit 0
-          git init -q -b test-results-api${{ matrix.api }}
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
-          git add -A
-          git commit -q -m "Výsledky zkoušky v emulátoru"
-          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" test-results-api${{ matrix.api }}
-
-      - name: Vyhodnocení
-        run: |
-          cat test-results/result.txt
-          grep -q "^VYSLEDEK=OK" test-results/result.txt
-
-  # telefon: pomocník, celá aplikace v šesti velikostech displeje a překlad
-  phone:
-    name: Emulátor telefonu (API ${{ matrix.api }})
-    needs: emulator-apk
-    continue-on-error: true   # jen pro informaci – pád emulátoru neoznačí běh za neúspěšný (žádný e-mail „failed“)
-    runs-on: ubuntu-latest
-    timeout-minutes: 75
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - { api: 30, arch: x86, artifact: emulator-apk, apk: TestPreklad-emulator.apk }         # Android 11
-          - { api: 34, arch: x86_64, artifact: emulator-apk64, apk: TestPreklad-emulator64.apk }   # Android 14
-    steps:
-      - uses: actions/checkout@v5
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: ${{ matrix.artifact }}
-
-      - name: Povolit KVM
-        run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
-
-      - name: Zkouška v emulátoru telefonu
-        uses: reactivecircus/android-emulator-runner@v2
-        env:
-          APK: ${{ matrix.apk }}
-        with:
-          api-level: ${{ matrix.api }}
-          target: google_apis
-          arch: ${{ matrix.arch }}
-          profile: pixel_6
-          disable-animations: true
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -memory 3072
-          script: bash ci/zkouska-opakovat.sh ci/phone-test.sh
-
-      - name: Uložit výsledky
-        if: always()
-        run: |
-          cd test-results || exit 0
-          git init -q -b test-results-phone${{ matrix.api }}
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
-          git add -A
-          git commit -q -m "Výsledky zkoušky v emulátoru telefonu"
-          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" test-results-phone${{ matrix.api }}
-
-      - name: Vyhodnocení
-        run: |
-          head -3 test-results/result.txt
-          grep -q "^VYSLEDEK=OK" test-results/result.txt
+          if [ "$(cat podpis.txt)" != "stálý" ]; then echo "Dočasný podpis – nevydávám."; exit 0; fi
+          gh release view latest >/dev/null 2>&1 || gh release create latest --title "Titulky PS5 (nejnovější)" --notes "Titulky PS5 – úprava ReCaptionu (https://github.com/adusa89/ReCaption, AGPL-3.0). Zdrojový kód je v tomto repozitáři."
+          gh release upload latest ReCaption.apk ReCaption-arm64.apk ReCaption-arm32.apk version.txt --clobber
+          V=$(cut -d' ' -f2 version.txt)
+          gh release view "v$V" >/dev/null 2>&1 || gh release create "v$V" ReCaption.apk --title "Titulky PS5 $V" --notes "Verze $V (commit ${GITHUB_SHA::7})."

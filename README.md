@@ -1,3 +1,22 @@
+# Titulky PS5
+
+Úprava aplikace **ReCaption** (https://github.com/adusa89/ReCaption, autor VeksCZ) pro Zaoa a kamarády:
+české titulky přes hru z PlayStationu 5 na Android TV.
+
+Co je jinak než v ReCaptionu:
+- vlastní jméno a ID (`cz.titulkyps5`), aktualizace z vydání tohoto repozitáře,
+- nic se neposílá na servery ReCaptionu (hlášení, statistiky, sbírání replik, seznam her),
+- vlastní profily her přibalené v aplikaci (`app/src/main/assets/hry-profily.json`),
+- telefon ve hře: překlad se při scrollování konverzace posouvá hned, delší konverzace se vejde.
+
+Licence: AGPL-3.0 jako ReCaption (soubor `LICENSE`). Zdrojový kód každé vydané verze je v tomto repozitáři.
+
+**Stažení:** https://github.com/zaoo-star/titulky-ps5/releases/download/latest/ReCaption.apk
+
+---
+
+Původní README ReCaptionu:
+
 # ReCaption
 
 **Nejnovější APK ke stažení:** https://github.com/adusa89/ReCaption/releases/download/latest/ReCaption.apk  

@@ -1,0 +1,8 @@
+{"format":1,"verze":1,"minAppVerze":156,"bezneSlova":[],
+ "hry":[{"id":"gta6","nazev":"Grand Theft Auto VI",
+   "jmena":["Jason","Lucia","Brian","Cal","Joey","Donnie","Shirley","Vice City","Leonida","Peach Palm Drive"],
+   "bezne":[],
+   "postavy":[{"jmeno":"Jason","rod":"m"},{"jmeno":"Lucia","rod":"f","prezdivky":["Lu"]},{"jmeno":"Brian","rod":"m"},
+              {"jmeno":"Cal","rod":"m"},{"jmeno":"Joey","rod":"m"},{"jmeno":"Donnie","rod":"m"},{"jmeno":"Shirley","rod":"f"}],
+   "pokyny":true,
+   "telefon":{"polohy":[{"nazev":"chuze","misto":[0.355,0.17,0.60,0.83],"sklon":0.0}]}}]}

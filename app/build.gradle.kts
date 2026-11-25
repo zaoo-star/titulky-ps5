@@ -13,11 +13,12 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "cz.recaption"
+        // Titulky PS5 (úprava ReCaptionu): vlastní ID – instaluje se vedle ReCaptionu, aktualizace z vlastního repa
+        applicationId = "cz.titulkyps5"
         minSdk = 26          // Android 8 a novější (prakticky všechny Android TV a boxy)
         targetSdk = 34
-        versionCode = 317
-        versionName = "1.3"
+        versionCode = 318
+        versionName = "1.3-z1"
 
         // kanál APK (od 1.00-rc7, přání majitele – zkušební verze jen pro testery): „zkusebni“ = testerské APK z větví
         // (build.yml -Pkanal=zkusebni), jinak „latest“ (main, zaloha-…, místní sestavení). Čte Tester.kt z manifestu.

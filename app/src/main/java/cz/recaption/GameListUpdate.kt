@@ -39,13 +39,29 @@ object GameListUpdate {
     fun load(c: Context) {
         try {
             val f = file(c)
-            if (!f.exists() || f.length() > GameListJson.MAX_SIZE * 3L) return
+            if (!f.exists() || f.length() > GameListJson.MAX_SIZE * 3L) { loadBundled(c); return }
             val r = GameListJson.parse(f.readText(Charsets.UTF_8), BuildInfo.VERSION_CODE)
             val cat = r.catalog
             if (cat != null && cat.version > GameProfiles.BUILTIN.version) GameProfiles.use(cat)
-            else log("ulozeny nepouzit: ${r.problem ?: "verze ${r.version}"}")
-        } catch (t: Throwable) { log("load ${t.javaClass.simpleName}") }
+            else { log("ulozeny nepouzit: ${r.problem ?: "verze ${r.version}"}"); loadBundled(c) }
+        } catch (t: Throwable) { log("load ${t.javaClass.simpleName}"); loadBundled(c) }
     }
+
+    /**
+     * Titulky PS5: vlastní profily her přibalené v APK (`assets/hry-profily.json`) – bez serveru ReCaptionu. Načtou se,
+     * když v zařízení není jiný (stažený) seznam. Tvar jako stažený seznam ([GameListJson]).
+     */
+    private fun loadBundled(c: Context) {
+        try {
+            val text = c.assets.open(BUNDLED).use { it.readBytes().toString(Charsets.UTF_8) }
+            val r = GameListJson.parse(text, BuildInfo.VERSION_CODE)
+            val cat = r.catalog
+            if (cat != null) { GameProfiles.use(cat); log("pribaleny verze ${cat.version}") }
+            else log("pribaleny nepouzit: ${r.problem}")
+        } catch (t: Throwable) { log("pribaleny ${t.javaClass.simpleName}") }
+    }
+
+    private const val BUNDLED = "hry-profily.json"
 
     /**
      * Automatická kontrola (po otevření aplikace a při spuštění překladu): bez staženého seznamu vždy (nejvýš jednou

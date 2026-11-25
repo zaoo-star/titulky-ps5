@@ -57,7 +57,7 @@ object PhoneLogin {
         "intent://login?h=${t.host}&p=${t.port}&k=${t.key}" + (lang?.let { "&l=" + it.code } ?: "") +
             "#Intent;scheme=recaption;package=$PACKAGE;S.browser_fallback_url=" + java.net.URLEncoder.encode(apkUrl, "UTF-8") + ";end"
 
-    const val PACKAGE = "cz.recaption"
+    const val PACKAGE = "cz.titulkyps5"
 
     /** Jazyk televize z odkazu – telefon ho převezme, dokud si uživatel nevybral vlastní. */
     fun langFromAppLink(link: String?): Lang? {

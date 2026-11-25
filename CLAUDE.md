@@ -1,3 +1,12 @@
+# Titulky PS5 – úprava ReCaptionu (repo zaoo-star/titulky-ps5)
+
+**Tohle není repozitář ReCaptionu.** Je to veřejná úprava pro majitele Zaoa (AGPL-3.0, autor originálu VeksCZ / adusa89).
+Pokyny níž jsou převzaté z ReCaptionu a platí pro kód; neplatí pro ně: servery ReCaptionu (Cloudflare, schránka hlášení,
+počítadlo, seznam her) – tady se nepoužívají (`hlaseni.json` v kořeni repa má prázdnou adresu), soukromé repo
+`ReCaption-data` – tady nejsou a nesmí se používat, podpis a vydání – vlastní workflow `.github/workflows/build.yml`
+(tajné údaje `TPS5_KEY_BASE64`, `TPS5_KEY_PASSWORD`, vydání `latest`). Profily her jsou naše vlastní v
+`app/src/main/assets/hry-profily.json` (jen veřejně známé údaje). Jméno aplikace „Titulky PS5“, ID `cz.titulkyps5`.
+
 # ReCaption – pokyny pro Claude Code
 
 Aplikace pro Android TV. Po domácí síti se připojí k PlayStationu 5 (stejně jako Remote Play),

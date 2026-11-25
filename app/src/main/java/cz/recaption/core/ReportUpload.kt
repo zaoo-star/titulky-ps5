@@ -14,7 +14,8 @@ import kotlin.math.ceil
  * - 201 `{"kod":"K7M2QX9P","platnost_dni":30}`; 400 není ZIP, 413 moc velké, 429 moc odeslání, 503 denní limit.
  */
 object ReportUpload {
-    const val CONFIG_URL = HelpLinks.BASE + "hlaseni.json"
+    // Titulky PS5: nic se neposílá na server ReCaptionu – adresa z vlastního repa (url prázdné = funkce nenastavené)
+    const val CONFIG_URL = "https://raw.githubusercontent.com/zaoo-star/titulky-ps5/main/hlaseni.json"
     const val FORMAT = 1
     const val DEFAULT_MB = 45
     /** Víc se nikdy neposílá, ať by v `hlaseni.json` stálo cokoli. */

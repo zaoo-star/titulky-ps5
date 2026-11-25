@@ -52,7 +52,8 @@ object UpdateCheck {
     data class Offer(val remote: Remote, val channel: Channel)
 
     /** Od 1.00-rc2 přes naši adresu (Cloudflare přepošle soubor z vydání na GitHubu – `cloudflare/_worker.js`). */
-    private const val BASE = "https://recaption.pages.dev/d/"
+    // Titulky PS5: vydání vlastního repa (latest = verze pro všechny)
+    private const val BASE = "https://github.com/zaoo-star/titulky-ps5/releases/download/"
 
     /** Adresa souboru ve vydání daného kanálu (ReCaption.apk, version.txt). */
     fun url(channel: Channel, file: String): String = BASE + channel.tag + "/" + file

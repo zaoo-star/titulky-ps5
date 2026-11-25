@@ -93,7 +93,7 @@ class PhoneLoginTest {
             assertTrue("$lang chování stránky", ask.contains("id=\"l\"") && ask.contains("window.sonyTab") && ask.contains("XMLHttpRequest"))
             // Android: odkaz otevře ReCaption v telefonu, bez něj prohlížeč stáhne aplikaci (od 0.97.57)
             assertTrue("$lang odkaz do aplikace", ask.contains("intent://login?h=192.168.1.20&amp;p=8765&amp;k=abcd2345&amp;l=${lang.code}" +
-                "#Intent;scheme=recaption;package=cz.recaption;S.browser_fallback_url=https%3A%2F%2Fexample.com%2FReCaption.apk;end"))
+                "#Intent;scheme=recaption;package=cz.titulkyps5;S.browser_fallback_url=https%3A%2F%2Fexample.com%2FReCaption.apk;end"))
             // aplikace je na stránce první, přihlášení v prohlížeči je záloha (sbalitelná, bez skriptu rozbalená)
             assertTrue("$lang pořadí", ask.indexOf("id=\"app\"") in 0 until ask.indexOf("id=\"web\" open"))
             assertTrue("$lang texty", ask.contains(PhoneLogin.esc(I18n.t(lang, "wp_send"))) && ask.contains(PhoneLogin.esc(I18n.t(lang, "wp_app_btn"))))

@@ -30,8 +30,8 @@ object AtvInstall {
     const val REMOTE_PORT = 6466
     /** Google Cast – mají ho skoro všechny Android TV (záloha při hledání). */
     const val CAST_PORT = 8009
-    const val PACKAGE = "cz.recaption"
-    const val ACTIVITY = "cz.recaption/.MainActivity"
+    const val PACKAGE = "cz.titulkyps5"
+    const val ACTIVITY = "cz.titulkyps5/cz.recaption.MainActivity"
     /** Celé nahrání (spojení, potvrzení v TV, přenos asi 60 MB, instalace) nejvýš 8 minut. */
     const val TIMEOUT_MS = 8 * 60_000L
     /** Jak dlouho čekat, než hráč v TV potvrdí „Povolit ladění?“ (a nejdelší ticho při instalaci). */

@@ -162,7 +162,9 @@ class ReportUploadTest {
     }
 
     @Test fun configLivesOnHelpPages() {
-        assertEquals(HelpLinks.BASE + "hlaseni.json", ReportUpload.CONFIG_URL)
+        // Titulky PS5: adresa serveru je ve vlastním repu, ne na stránkách ReCaptionu
+        assertEquals("https://raw.githubusercontent.com/zaoo-star/titulky-ps5/main/hlaseni.json", ReportUpload.CONFIG_URL)
+        assertNull(ReportUpload.config("""{"format":1,"url":""}"""))
         assertTrue(ReportUpload.CONFIG_URL.startsWith("https://"))
     }
 }
