@@ -1264,6 +1264,11 @@ private class Aplikace {
             val f = Nastroje.zaznamy().apply { mkdirs() }
             runCatching { java.awt.Desktop.getDesktop().open(f) }
         }.also { radky += it })
+        // AGPL-3.0: odkaz na zdrojový kód a licenci (úprava open-source projektu)
+        val licenceKarta = Karta()
+        licenceKarta.add(Radek("Zdrojový kód · licence AGPL-3.0", { "" }) {
+            runCatching { java.awt.Desktop.getDesktop().browse(java.net.URI("https://github.com/zaoo-star/titulky-ps5")) }
+        }.also { radky += it })
         return stranka(
             popisek("Použití", 15, B.MUTED, true).vlevo(), Box.createVerticalStrut(8), pouziti,
             Box.createVerticalStrut(20),
@@ -1274,6 +1279,8 @@ private class Aplikace {
             popisek("DeepL", 15, B.MUTED, true).vlevo(), Box.createVerticalStrut(8), deeplKarta,
             Box.createVerticalStrut(20),
             popisek("Ladění", 15, B.MUTED, true).vlevo(), Box.createVerticalStrut(8), zaznamKarta,
+            Box.createVerticalStrut(20),
+            popisek("Licence", 15, B.MUTED, true).vlevo(), Box.createVerticalStrut(8), licenceKarta,
         )
     }
 
