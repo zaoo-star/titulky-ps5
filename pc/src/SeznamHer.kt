@@ -25,10 +25,12 @@ object SeznamHer {
     }
 
     private fun nacti() {
-        try {
-            val f = soubor
+        // Titulky PS5: vlastní profily her přibalené v balíčku (`app\\hry-profily.json`, stejné jako v APK) – server nemáme;
+        // stažený seznam (kdyby byl) s vyšší verzí má přednost
+        for (f in listOfNotNull(System.getProperty("recaption.pc")?.let { File(it, "hry-profily.json") }, soubor)) try {
             if (f.isFile && f.length() < GameListJson.MAX_SIZE * 3L) {
-                GameListJson.parse(f.readText(Charsets.UTF_8), VERZE_APLIKACE).catalog?.let { GameProfiles.use(it) }
+                GameListJson.parse(f.readText(Charsets.UTF_8), VERZE_APLIKACE).catalog
+                    ?.takeIf { it.version > GameProfiles.catalog.version }?.let { GameProfiles.use(it) }
             }
         } catch (_: Throwable) {}
     }

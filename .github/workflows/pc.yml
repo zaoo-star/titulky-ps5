@@ -56,7 +56,7 @@ jobs:
             --input pc\build\install\recaption-pc\lib --main-jar recaption-pc.jar --main-class cz.recaption.pc.AplikaceKt `
             --java-options '-Drecaption.pc=$APPDIR' --java-options '-Dfile.encoding=UTF-8' `
             --app-version $verze --vendor "Titulky PS5" --description "Titulky PS5 pro PC"
-          Copy-Item pc\cteni.py, pc\priprava.ps1 out\TitulkyPS5\app\
+          Copy-Item pc\cteni.py, pc\priprava.ps1, app\src\main\assets\hry-profily.json out\TitulkyPS5\app\
 
       - name: Python s knihovnami pro čtení a překlad
         shell: pwsh

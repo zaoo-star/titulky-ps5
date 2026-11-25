@@ -31,7 +31,7 @@ internal class TelefonPc(
     private val preloz: (String) -> String,
     private val log: (String) -> Unit,
 ) {
-    val zapnuto: Boolean = profil.cornerSpec != null && profil.phoneSpots.isNotEmpty()
+    val zapnuto: Boolean = profil.phoneSpots.isNotEmpty()
 
     private val open = PhoneOpen()
     private val zone = PhoneZone(profil.phoneSpots)
