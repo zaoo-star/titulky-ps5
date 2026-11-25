@@ -213,7 +213,7 @@ class PhoneHelperActivity : Activity() {
                 // pruh: kolik je staženo (instalace = čekání na systém, pruh jen běhá)
                 if (st == Updater.State.DOWNLOADING) addView(ui.progress(if (Updater.percent >= 0) Updater.percent / 100f else null), ui.lp(h = ui.dp(10), top = 8))
                 if (st == Updater.State.INSTALLING) addView(ui.progress(null), ui.lp(h = ui.dp(10), top = 8))
-                if (st == Updater.State.FAILED) addView(ui.text(UpdateCheck.url(o.channel, "ReCaption.apk"), 13f, Theme.MUTED), ui.lp(top = 6))
+                if (st == Updater.State.FAILED) addView(ui.text(UpdateCheck.url(o.channel, "TitulkyPS5.apk"), 13f, Theme.MUTED), ui.lp(top = 6))
                 if (!Updater.busy) addView(ui.button(t("upd_btn"), primary = true) { startUpdate(o) }, ui.lp(top = 10))
             }, 14)
         }
@@ -269,7 +269,7 @@ class PhoneHelperActivity : Activity() {
             startActivity(Intent(this, MainActivity::class.java))
             finish()
         }.apply { textSize = 14f; setTextColor(Theme.MUTED) }, 8)
-        add(ui.text("ReCaption · ${BuildInfo.VERSION}", 13f, Theme.MUTED), 20)
+        add(ui.text("Titulky PS5 · ${BuildInfo.VERSION}", 13f, Theme.MUTED), 20)
     }
 
     /**

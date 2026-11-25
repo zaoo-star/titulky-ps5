@@ -15,6 +15,7 @@ import android.view.WindowManager
 import cz.recaption.core.DiagLog
 import cz.recaption.core.PcFinder
 import cz.recaption.core.PcMessage
+import cz.recaption.core.PcWake
 import cz.recaption.core.WsClient
 
 /**
@@ -25,8 +26,9 @@ import cz.recaption.core.WsClient
  * běžný překlad ([SubtitleOverlay] s nastavením z Titulků).
  */
 class PcReceiverService : Service() {
+    enum class State { OFF, SEARCHING, CONNECTED }
+
     companion object {
-        enum class State { OFF, SEARCHING, CONNECTED }
         @Volatile var state = State.OFF
             private set
         /** Adresa připojeného PC (jen pro Domů). */
@@ -34,6 +36,9 @@ class PcReceiverService : Service() {
             private set
         /** Kolik titulků z PC přišlo od spuštění (jen pro Domů). */
         @Volatile var shownCount = 0
+            private set
+        /** Jméno PC z odpovědi na povel (jen pro Domů). */
+        @Volatile var pcName: String? = null
             private set
 
         const val ACTION_STOP = "cz.titulkyps5.PC_STOP"
@@ -67,6 +72,8 @@ class PcReceiverService : Service() {
     }
 
     override fun onDestroy() {
+        // program na PC čtení zastaví (PC zůstane zapnuté)
+        Thread({ PcWake.send("zastav", waitMs = 0) }, "tp-pc-stop").apply { isDaemon = true; start() }
         running = false
         client?.close()
         worker?.interrupt()
@@ -82,6 +89,13 @@ class PcReceiverService : Service() {
         while (running) {
             state = State.SEARCHING; pcAddress = null
             update()
+            // povel pro program na PC: přepnout na Čtečku pro TV a spustit (a probudit PC, když známe jeho MAC)
+            val replies = PcWake.send("spust", Prefs.pcMac(this))
+            replies.firstOrNull { it.second != null }?.let { (name, mac) ->
+                if (mac != Prefs.pcMac(this)) Prefs.setPcMac(this, mac)
+                pcName = name
+            }
+            if (replies.isNotEmpty()) log("PC odpovědělo na povel: ${replies.joinToString { it.first }}")
             val c = PcFinder.find(Prefs.pcAddress(this), stop = { !running })
             if (c == null) { sleep(5000); continue }
             client = c

@@ -74,7 +74,7 @@ object SnapSaver {
     private fun dir(a: Activity, b: SnapBatches.Info): File =
         SnapBatches.find(SnapRecorder.root(a), b.n) ?: error("dávka ${b.n} není")
 
-    private fun zipName(b: SnapBatches.Info) = "ReCaption-${b.name}.zip"
+    private fun zipName(b: SnapBatches.Info) = "TitulkyPS5-${b.name}.zip"
 
     /** ZIP do sdílené složky a systémové Sdílet. */
     private fun shareZip(a: Activity, b: SnapBatches.Info): String? {
@@ -102,7 +102,7 @@ object SnapSaver {
         val cv = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, zipName(b))
             put(MediaStore.MediaColumns.MIME_TYPE, "application/zip")
-            put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/ReCaption")
+            put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/TitulkyPS5")
         }
         val r = a.contentResolver
         val uri = r.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, cv) ?: error("insert")
@@ -121,7 +121,7 @@ object SnapSaver {
             val cv = ContentValues().apply {
                 put(MediaStore.MediaColumns.DISPLAY_NAME, "${b.name}-${f.name}")
                 put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
-                put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/ReCaption/" + b.name)
+                put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/TitulkyPS5/" + b.name)
             }
             val uri = r.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, cv) ?: error("insert")
             try { (r.openOutputStream(uri) ?: error("stream")).use { out -> f.inputStream().use { it.copyTo(out) } } }

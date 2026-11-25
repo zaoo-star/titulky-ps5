@@ -369,6 +369,9 @@ object Prefs {
     /** Poslední adresa PC, které se ozvalo (zkouší se jako první). */
     fun pcAddress(c: Context): String? = own(c).getString("pc_adresa", null)
     fun setPcAddress(c: Context, v: String?) = own(c).edit().putString("pc_adresa", v).apply()
+    /** MAC síťové karty PC (z jeho odpovědi na povel) – pro probuzení PC ze spánku (Wake-on-LAN). */
+    fun pcMac(c: Context): String? = own(c).getString("pc_mac", null)
+    fun setPcMac(c: Context, v: String?) = own(c).edit().putString("pc_mac", v).apply()
 
     fun screenDim(c: Context): Boolean = bool(c, "displej_tlumeny", false)
     fun setScreenDim(c: Context, v: Boolean) = setBool(c, "displej_tlumeny", v)

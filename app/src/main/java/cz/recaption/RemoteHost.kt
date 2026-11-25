@@ -79,7 +79,7 @@ object RemoteHost {
 
     /** Stránka pro telefon (texty v jazyce aplikace v TV). */
     private fun page(c: Context): String = SetupPage.page(Prefs.uiLang(c), tvName(), target(c),
-        UpdateCheck.url(if (Prefs.testChannel(c)) UpdateCheck.Channel.TEST else UpdateCheck.Channel.STABLE, "ReCaption.apk"),
+        UpdateCheck.url(if (Prefs.testChannel(c)) UpdateCheck.Channel.TEST else UpdateCheck.Channel.STABLE, "TitulkyPS5.apk"),
         PsnAuth.LOGIN_URL, Deepl.SIGNUP_URL, Deepl.KEYS_URL, cz.recaption.core.HelpLinks.IPHONE_SHORTCUT, appModeLink = link(c),
         web = webOptions(c), xbox = Prefs.console(c) == Console.XBOX)
 

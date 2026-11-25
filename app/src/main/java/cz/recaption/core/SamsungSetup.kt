@@ -34,7 +34,7 @@ object SamsungSetup {
     const val SOURCE_URL = "https://github.com/adusa89/ReCaption"
 
     /** Název souboru ve vydání (Apps2Samsung bere soubory .wgt). */
-    const val WGT_ASSET = "ReCaption-Samsung.wgt"
+    const val WGT_ASSET = "TitulkyPS5-Samsung.wgt"
 
     private fun enc(s: String) = URLEncoder.encode(s, "UTF-8")
 

@@ -1471,7 +1471,7 @@ class MainActivity : Activity() {
         }
         line(Theme.ACCENT, "Režim · překlad z PC", "pcmode") { section = Section.SETTINGS; render() }
         when (PcReceiverService.state) {
-            PcReceiverService.State.CONNECTED -> line(Theme.OK, "PC · připojeno " + (PcReceiverService.pcAddress ?: ""), "pcstate")
+            PcReceiverService.State.CONNECTED -> line(Theme.OK, (PcReceiverService.pcName ?: "PC") + " · připojeno " + (PcReceiverService.pcAddress ?: ""), "pcstate")
             PcReceiverService.State.SEARCHING -> { line(Theme.WARN, "PC · hledám v síti", "pcstate"); card.addView(ui.waiting()) }
             PcReceiverService.State.OFF -> line(Theme.MUTED, "PC · neběží", "pcstate")
         }
@@ -1480,6 +1480,7 @@ class MainActivity : Activity() {
         line(if (overlayOk) Theme.OK else Theme.WARN, if (overlayOk) "Pruh přes obraz · povoleno" else "Pruh přes obraz · chybí povolení", "pcoverlay",
             if (overlayOk) null else { { section = Section.SETTINGS; render() } })
         Prefs.pcAddress(this)?.let { line(Theme.MUTED, "Poslední PC · $it", "pclast") }
+        line(Theme.MUTED, if (Prefs.pcMac(this) != null) "Probuzení PC ze spánku · zapnuto" else "Probuzení PC ze spánku · po prvním spojení", "pcwake")
         add(card, 18)
     }
 
@@ -1628,7 +1629,7 @@ class MainActivity : Activity() {
             { Prefs.setGameId(this, guess.id); applyToService(); render(true) }, onClick = { pickGame() })
         else if (game.id != "all") row(if (running) Theme.OK else Theme.MUTED, game.title, "hgame", onClick = { pickGame() })
         // verze ReCaptionu: aktuální zeleně, novější ke stažení oranžově s tlačítkem Aktualizovat v řádku
-        val me = "ReCaption ${BuildInfo.VERSION.removePrefix("verze ")}"
+        val me = "Titulky PS5 ${BuildInfo.VERSION.removePrefix("verze ")}"
         val o = update
         if (o == null) row(Theme.OK, me, "hver")
         else {
@@ -1648,7 +1649,7 @@ class MainActivity : Activity() {
             // který instalaci řeší sám – obchází nepovedenou instalaci přes PackageInstaller) a s tlačítkem Kopírovat,
             // ať jde adresu poslat na jiné zařízení (testeři hlásili, že se text nedal ani zkopírovat, 24. 11. 2026)
             if (st == Updater.State.FAILED) {
-                val apkUrl = UpdateCheck.url(o.channel, "ReCaption.apk")
+                val apkUrl = UpdateCheck.url(o.channel, "TitulkyPS5.apk")
                 card.addView(ui.text(apkUrl, 13f, Theme.ACCENT).apply {
                     isClickable = true
                     setOnClickListener { try { startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(apkUrl))) } catch (_: Exception) {} }
@@ -1656,7 +1657,7 @@ class MainActivity : Activity() {
                 card.addView(tagged(ui.smallButton(t("zz_copy")) {
                     try {
                         val cm = getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-                        cm.setPrimaryClip(android.content.ClipData.newPlainText("ReCaption", apkUrl))
+                        cm.setPrimaryClip(android.content.ClipData.newPlainText("Titulky PS5", apkUrl))
                         Toast.makeText(this, t("upd_url_copied"), Toast.LENGTH_SHORT).show()
                     } catch (_: Exception) {}
                 }, "updcopy"), ui.lp(w = LinearLayout.LayoutParams.WRAP_CONTENT, top = 6))
@@ -1682,16 +1683,16 @@ class MainActivity : Activity() {
                 // neznámá verze v TV (aplikace před 1.1.0) = bez čísla, ne „?“ (přání majitele, 0.97.30)
                 // LG spárovaná a známá adresa: aktualizace přímo tady (LgUpdate), bez další stránky (od 0.97.93, přání majitele)
                 type == TvType.LG && LgUpdate.running -> {
-                    row(Theme.WARN, "ReCaption " + t("h_ver_tv").replace("%s", tvName) + " · " + t("lg_p_" + (LgUpdate.phase ?: cz.recaption.core.LgPhase.PACKAGE).name.lowercase()), "htvapp")
+                    row(Theme.WARN, "Titulky PS5 " + t("h_ver_tv").replace("%s", tvName) + " · " + t("lg_p_" + (LgUpdate.phase ?: cz.recaption.core.LgPhase.PACKAGE).name.lowercase()), "htvapp")
                     card.addView(ui.progress(((LgUpdate.phase ?: cz.recaption.core.LgPhase.PACKAGE).ordinal + 1f) / cz.recaption.core.LgPhase.values().size), ui.lp(h = ui.dp(8), top = 2))
                 }
-                old != null -> row(Theme.WARN, "ReCaption " + t("h_ver_tv").replace("%s", if (old.first == "?") tvName else "$tvName ${old.first}") +
+                old != null -> row(Theme.WARN, "Titulky PS5 " + t("h_ver_tv").replace("%s", if (old.first == "?") tvName else "$tvName ${old.first}") +
                     " · " + t("h_ver_new").replace("%s", old.second), "htvapp", t(if (type == TvType.LG) "lg_update" else "w_install"), {
                         if (type == TvType.LG && LgUpdate.direct(this)) LgUpdate.start(this) { runOnUiThread { if (!isFinishing && section == Section.HOME) render(keepFocus = true) } }
                         else TvChoice.openInstall(this, type, update = true)
                     })
-                current != null -> row(Theme.OK, "ReCaption " + t("h_ver_tv").replace("%s", "$tvName $current"), "htvapp")
-                bundled != null -> row(Theme.MUTED, "ReCaption " + t("h_ver_tv").replace("%s", tvName), "htvapp")
+                current != null -> row(Theme.OK, "Titulky PS5 " + t("h_ver_tv").replace("%s", "$tvName $current"), "htvapp")
+                bundled != null -> row(Theme.MUTED, "Titulky PS5 " + t("h_ver_tv").replace("%s", tvName), "htvapp")
             }
             // aktualizace z Domů selhala: chyba a cesta na stránku s přípravou (tam je postup krok za krokem)
             if (type == TvType.LG && !LgUpdate.running) LgUpdate.error?.let { e ->
@@ -1710,9 +1711,9 @@ class MainActivity : Activity() {
         }
         // zkratka pro ladění (⚙ → Experimentální → „Snímky na Domů“): úplně dole, jen tlačítka ▶ / ■ Snímky a Odeslat (od 0.97.119)
         if (!remote && Prefs.snapHome(this)) snapHomeRow(card, running) { c, text, tag -> row(c, text, tag) }
-        // Titulky PS5: místo „Podpořit“ a Facebooku ReCaptionu původ aplikace (AGPL-3.0) – úplně dole nenápadný šedý řádek
+        // Titulky PS5: místo „Podpořit“ a Facebooku odkaz na zdrojový kód (AGPL-3.0) – úplně dole nenápadný šedý řádek
         card.addView(View(this).apply { setBackgroundColor(Theme.SIDEBAR) }, ui.lp(h = ui.dp(1), top = 6))
-        row(Theme.MUTED, "Úprava aplikace ReCaption (VeksCZ) · zdrojový kód", "hsource",
+        row(Theme.MUTED, "Zdrojový kód · licence AGPL-3.0", "hsource",
             onClick = { openLink("https://github.com/zaoo-star/titulky-ps5", "Titulky PS5") })
     }
 
@@ -2281,7 +2282,7 @@ class MainActivity : Activity() {
             loginServer = LoginServer(
                 lang = { Prefs.uiLang(this) },
                 loginUrl = PsnAuth.LOGIN_URL,
-                apkUrl = { UpdateCheck.url(if (Prefs.testChannel(this)) UpdateCheck.Channel.TEST else UpdateCheck.Channel.STABLE, "ReCaption.apk") },
+                apkUrl = { UpdateCheck.url(if (Prefs.testChannel(this)) UpdateCheck.Channel.TEST else UpdateCheck.Channel.STABLE, "TitulkyPS5.apk") },
                 resolveCode = { PsnAuth.accountForCode(it) },
                 onAccount = { accountFromPhone(it) },
                 log = { android.util.Log.i("TP_TEST", "LOGIN|$it"); DiagLog.add("LOGIN|$it") },
@@ -3075,8 +3076,9 @@ class MainActivity : Activity() {
         // Titulky PS5: „Překlad z PC“ – TV jen ukazuje titulky z ReCaptionu pro PC (Čtečka pro TV)
         if (!remote && !Prefs.readerDevice(this)) add(tagged(ui.settingRow("Překlad z PC", onOff(Prefs.pcMode(this))) {
             if (Prefs.pcMode(this)) { PcReceiverService.stop(this); Prefs.setPcMode(this, false); render(true) }
-            else confirmOn("Překlad z PC", "Titulky čte a překládá ReCaption pro PC (⚙ → Použití → Čtečka pro TV) ve stejné " +
-                "domácí síti. Tato TV jen ukazuje hotové titulky – PS5 se k ní nepřipojuje. Spouští se na Domů.") {
+            else confirmOn("Překlad z PC", "Titulky čte a překládá program Titulky PS5 na PC ve stejné domácí síti. " +
+                "Tato TV jen ukazuje hotové titulky. Spustit na Domů zapne čtení i na PC (program na PC musí běžet, " +
+                "PC ze spánku probudí, když to PC dovolí). Zastavit ho na PC zase vypne.") {
                 if (TranslatorService.running) stopTranslation()
                 Prefs.setPcMode(this, true); render(true)
             }
@@ -3616,7 +3618,7 @@ class MainActivity : Activity() {
             }, "hc$i"), if (i == 0) 16 else 8)
             if (open) { openNest("hc$i"); add(make(), 6); closeNests() }
         }
-        add(ui.text("ReCaption · ${BuildInfo.VERSION}", 13f, Theme.MUTED), 24)
+        add(ui.text("Titulky PS5 · ${BuildInfo.VERSION}", 13f, Theme.MUTED), 24)
     }
 
     // ======================= KONZOLE (PlayStation / Xbox) =======================

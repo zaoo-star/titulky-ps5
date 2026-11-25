@@ -187,7 +187,7 @@ object RemoteSetup {
     fun page(lang: Lang, appLink: String): String {
         fun t(k: String) = PhoneLogin.esc(I18n.t(lang, k))
         return "<!doctype html><html lang=\"${lang.code}\"><head><meta charset=\"utf-8\">" +
-            "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>ReCaption</title><style>" +
+            "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Titulky PS5</title><style>" +
             "body{margin:0;background:#0e1014;color:#f2f2f2;font:17px/1.45 system-ui,sans-serif}" +
             "main{max-width:34em;margin:0 auto;padding:18px 16px 44px}h1{font-size:24px;margin:6px 0 12px}" +
             "p{margin:10px 0}.muted{color:#9aa4ae;font-size:15px}" +

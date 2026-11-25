@@ -61,7 +61,7 @@ object SnapRecorder {
         val dir = File(root, SnapBatches.dirName(n, now))
         if (!dir.mkdirs()) return false
         val head = listOf(
-            "ReCaption ${BuildInfo.VERSION} · ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} · Android ${android.os.Build.VERSION.RELEASE}",
+            "Titulky PS5 ${BuildInfo.VERSION} · ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} · Android ${android.os.Build.VERSION.RELEASE}",
             "zdroj: " + (if (TranslatorService.demo) "ukázka" else if (TranslatorService.xbox) "Xbox" else "PlayStation") +
                 " · hra: ${Prefs.gameId(ctx)}",
         )

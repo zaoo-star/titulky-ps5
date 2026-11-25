@@ -40,10 +40,10 @@ object Updater {
 
     private const val TAG = "TestPreklad"
     const val ACTION_STATUS = "cz.recaption.UPDATE_STATUS"
-    private const val FILE = "ReCaption-update.apk"
+    private const val FILE = "TitulkyPS5-update.apk"
 
     /** Celé APK (všechny procesory) – web, Downloader, USB a záloha, když dělené APK ve vydání není. */
-    const val UNIVERSAL = "ReCaption.apk"
+    const val UNIVERSAL = "TitulkyPS5.apk"
 
     /**
      * APK pro procesor tohoto zařízení (od 1.00-rc23, zhruba poloviční – rychlejší stažení i instalace):
@@ -52,8 +52,8 @@ object Updater {
     fun apkFile(): String {
         val abis = Build.SUPPORTED_ABIS?.toList() ?: emptyList()
         return when {
-            "arm64-v8a" in abis -> "ReCaption-arm64.apk"
-            "armeabi-v7a" in abis -> "ReCaption-arm32.apk"
+            "arm64-v8a" in abis -> "TitulkyPS5-arm64.apk"
+            "armeabi-v7a" in abis -> "TitulkyPS5-arm32.apk"
             else -> UNIVERSAL
         }
     }
@@ -145,7 +145,7 @@ object Updater {
                     // dělené APK podle procesoru ve vydání chybí (starší vydání) → celé APK
                     try { download(source, file, progress) }
                     catch (e: IOException) {
-                        if (e.message != "http 404" || !source.contains("/ReCaption-arm")) throw e
+                        if (e.message != "http 404" || !source.contains("/TitulkyPS5-arm")) throw e
                         log("abi apk 404 → celé")
                         download(source.substringBeforeLast('/') + "/" + UNIVERSAL, file, progress)
                     }
@@ -236,7 +236,7 @@ object Updater {
         session = id
         try {
             installer.openSession(id).use { s ->
-                s.openWrite("ReCaption.apk", 0, file.length()).use { out ->
+                s.openWrite("TitulkyPS5.apk", 0, file.length()).use { out ->
                     FileInputStream(file).use { it.copyTo(out, 256 * 1024) }
                     s.fsync(out)
                 }

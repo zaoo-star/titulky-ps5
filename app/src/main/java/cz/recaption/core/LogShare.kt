@@ -108,7 +108,7 @@ object LogShare {
      */
     fun page(text: String, code: String, file: String, lang: Lang): String {
         val cz = lang == Lang.CS || lang == Lang.SK
-        val title = if (cz) "Hlášení ReCaptionu" else "ReCaption report"
+        val title = if (cz) "Hlášení Titulky PS5" else "Titulky PS5 report"
         val how = if (cz) "1. Stáhni soubor tlačítkem níž. 2. Pošli ho autorovi aplikace (Messenger, WhatsApp, e-mail – v iPhonu ze Souborů → Stažené, v Androidu ze Stažených). Hesla, klíče ani číslo účtu v něm nejsou."
             else "1. Download the file with the button below. 2. Send it to the app author (Messenger, WhatsApp, e-mail – on iPhone from Files → Downloads, on Android from Downloads). It contains no passwords, keys or account numbers."
         val btn = if (cz) "Stáhnout hlášení" else "Download the report"

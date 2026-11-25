@@ -155,7 +155,7 @@ object AtvInstall {
      * {počet slov, n0inv, n (little-endian), rr = 2^(2·bitů) mod n, exponent} a za mezerou jméno.
      * Jen pro klíče 2048 bitů (jiné adbd nebere).
      */
-    fun adbPublicKey(modulus: BigInteger, exponent: BigInteger, name: String = "ReCaption"): String {
+    fun adbPublicKey(modulus: BigInteger, exponent: BigInteger, name: String = "TitulkyPS5"): String {
         require(modulus.bitLength() == 2048) { "ADB bere jen RSA 2048" }
         val words = 64
         val r32 = BigInteger.ONE.shiftLeft(32)

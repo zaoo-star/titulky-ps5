@@ -6,7 +6,7 @@
 #
 # Ukončení: Ctrl+C.
 param([string]$Okno = "", [string]$Jazyk = "cs", [ValidateSet("pc", "tv", "oboje")][string]$Vystup = "pc")
-$slozka = "$env:LOCALAPPDATA\ReCaptionTools"
+$slozka = "$env:LOCALAPPDATA\TitulkyPS5"
 $model = Get-ChildItem "$slozka\modely\en_$Jazyk" -Directory | Select-Object -First 1
 if (-not $model) { throw "Chybí překladový model – nejdřív spusť pc\priprava.ps1 -Jazyk $Jazyk" }
 # Java 17: přednost má ta z přípravy, pak Temurin 17. Výchozí java v systému může být starší (8)

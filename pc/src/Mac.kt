@@ -327,7 +327,7 @@ internal object MacPredvolby {
  * vstupem, ne parametrem – parametry příkazů jsou vidět ve výpisu procesů.
  */
 internal object MacKlicenka {
-    private const val SLUZBA = "ReCaption"
+    private const val SLUZBA = "Titulky PS5"
 
     fun nacti(ucet: String): String? {
         val (kod, ven) = prikaz("/usr/bin/security", "find-generic-password", "-a", ucet, "-s", SLUZBA, "-w")

@@ -82,7 +82,7 @@ class CteckaTv(
                 proces = p
                 if (konec) p.destroy()
                 val zacatek = System.currentTimeMillis()
-                log("chiaki-ng: ${konzole.jmeno} (${n.adresa}) · účet pro ReCaption · bez zvuku")
+                log("chiaki-ng: ${konzole.jmeno} (${n.adresa}) · účet pro Titulky PS5 · bez zvuku")
                 val o = OknoHry("pid:${p.pid()}")
                 for (i in 1..60) {
                     if (o.existuje() || !p.isAlive || konec) break

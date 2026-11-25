@@ -290,7 +290,7 @@ class LgInstaller(private val context: Context) {
         override fun add(hostkey: HostKey?, ui: UserInfo?) {}
         override fun remove(host: String?, type: String?) {}
         override fun remove(host: String?, type: String?, key: ByteArray?) {}
-        override fun getKnownHostsRepositoryID() = "ReCaption LG"
+        override fun getKnownHostsRepositoryID() = "Titulky PS5 LG"
         override fun getHostKey(): Array<HostKey> = emptyArray()
         override fun getHostKey(host: String?, type: String?): Array<HostKey> = emptyArray()
     }

@@ -142,7 +142,7 @@ class Parovani(
         if (k == 2 && ucet == null) spustStranku() else zastavStranku()
         val (nadpis, telo) = when (k) {
             1 -> "PS5 v síti" to stranka1()
-            2 -> (if (ctecka) "<html>$MODRA Účet pro ReCaption</html>" else "Účet PlayStation") to stranka2()
+            2 -> (if (ctecka) "<html>$MODRA Účet pro Titulky PS5</html>" else "Účet PlayStation") to stranka2()
             3 -> "Kód z PS5" to stranka3()
             else -> "Hotovo" to stranka4()
         }
@@ -179,7 +179,7 @@ class Parovani(
 
     private fun stranka2(): JComponent {
         val u = ucet
-        val legenda = popisek("<html>$MODRA Účet pro ReCaption – druhý uživatel na PS5, jen pro ReCaption<br>" +
+        val legenda = popisek("<html>$MODRA Účet pro Titulky PS5 – druhý uživatel na PS5, jen pro Titulky PS5<br>" +
             "$ZELENA Herní účet – ten, na kterém se hraje</html>", 15, B.MUTED).vlevo()
         if (u != null) {
             return sloupec(Karta().apply { add(rUcet) }, Box.createVerticalStrut(14),
@@ -204,7 +204,7 @@ class Parovani(
                 add(Tlacitko("Přihlásit v prohlížeči") { prihlasitVPc() })
             },
             Box.createVerticalStrut(12),
-            popisek("<html>1. " + (if (ctecka) "$MODRA Účet pro ReCaption, ne herní" else "Hlavní účet PS5") +
+            popisek("<html>1. " + (if (ctecka) "$MODRA Účet pro Titulky PS5, ne herní" else "Hlavní účet PS5") +
                 "<br>2. Passkey → Remind Me Later<br>3. Zkopírovat adresu<br>&nbsp;&nbsp;&nbsp;&nbsp;stránky „redirect“</html>", 15, B.MUTED).vlevo(),
         )
         val dvaSloupce = JPanel().apply {
@@ -221,7 +221,7 @@ class Parovani(
     }
 
     private fun stranka3(): JComponent = sloupec(
-        if (ctecka) popisek("<html>Na PS5:<br>1. Přepnout na uživatele $MODRA ${PhoneLogin.esc(ucet?.name?.ifEmpty { null } ?: "pro ReCaption")}" +
+        if (ctecka) popisek("<html>Na PS5:<br>1. Přepnout na uživatele $MODRA ${PhoneLogin.esc(ucet?.name?.ifEmpty { null } ?: "pro Titulky PS5")}" +
             " (tlačítko PS → profil → Přepnout uživatele)<br>" +
             "2. Nastavení → Systém → Remote Play → zapnout Povolit Remote Play<br>" +
             "3. Tamtéž zapnout Skrýt stav připojení Remote Play<br>" +
@@ -268,7 +268,7 @@ class Parovani(
                 when {
                     u != null -> rUcet.nastav(B.OK, "Účet · ${u.name.ifEmpty { "ověřen" }}", "Jiný účet") { jinyUcet() }
                     overovani -> rUcet.nastav(B.MUTED, "Účet · ověřování")
-                    herniUcet -> rUcet.nastav(B.WARN, "Účet · herní účet · přihlásit účtem pro ReCaption")
+                    herniUcet -> rUcet.nastav(B.WARN, "Účet · herní účet · přihlásit účtem pro Titulky PS5")
                     spatnaAdresa -> rUcet.nastav(B.WARN, "Účet · adresa neplatí · přihlásit znovu")
                     else -> rUcet.nastav(B.WARN, "Účet · čeká na přihlášení")
                 }
@@ -325,7 +325,7 @@ class Parovani(
         // čtečka: herní účet (ten, na kterém se hraje na PC) by PS5 při hraní vypnul ovladač
         herniUcet = ctecka && nast.ucetId.isNotEmpty() && a.id == nast.ucetId
         if (herniUcet) {
-            log("Přihlášen herní účet · pro čtečku je potřeba účet pro ReCaption (druhý uživatel na PS5).")
+            log("Přihlášen herní účet · pro čtečku je potřeba účet pro Titulky PS5 (druhý uživatel na PS5).")
             SwingUtilities.invokeLater { tik() }
             return
         }
@@ -478,7 +478,7 @@ class Parovani(
             val e = PhoneLogin::esc
             val sb = StringBuilder()
             sb.append("<!doctype html><html lang=\"cs\"><head><meta charset=\"utf-8\">")
-                .append("<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>ReCaption</title><style>")
+                .append("<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Titulky PS5</title><style>")
                 .append("body{margin:0;background:#0e1014;color:#f2f2f2;font:17px/1.45 system-ui,sans-serif}")
                 .append("main{max-width:34em;margin:0 auto;padding:18px 16px 44px}h1{font-size:24px;margin:6px 0 12px}")
                 .append("p{margin:8px 0}.card{background:#1b1f27;border-radius:14px;padding:14px 16px;margin:10px 0}")
@@ -487,14 +487,14 @@ class Parovani(
                 .append("a.btn,button{display:block;width:100%;box-sizing:border-box;text-align:center;background:#f2c14e;color:#1a1405;")
                 .append("font:600 18px system-ui,sans-serif;border:0;border-radius:12px;padding:14px;margin:12px 0 4px;text-decoration:none}")
                 .append("input{width:100%;box-sizing:border-box;font-size:16px;padding:13px;border-radius:12px;border:2px solid #3a4250;")
-                .append("background:#0e1014;color:#f2f2f2;margin-top:6px}</style></head><body><main><h1>").append(Os.text("ReCaption pro PC")).append("</h1>")
+                .append("background:#0e1014;color:#f2f2f2;margin-top:6px}</style></head><body><main><h1>").append(Os.text("Titulky PS5 pro PC")).append("</h1>")
             when {
                 ok == true -> sb.append(Os.text("<p class=\"ok\">Hotovo ✔ Účet ověřen · pokračování v PC</p>"))
                 path.isEmpty() -> sb.append(Os.text("<p class=\"bad\">Odkaz už neplatí · v PC znovu otevřít Spárovat</p>"))
                 else -> {
-                    if (herni) sb.append("<p class=\"bad\">Tohle je 🟢 herní účet · přihlásit 🔵 účtem pro ReCaption</p>")
+                    if (herni) sb.append("<p class=\"bad\">Tohle je 🟢 herní účet · přihlásit 🔵 účtem pro Titulky PS5</p>")
                     else if (ok == false) sb.append("<p class=\"bad\">Adresa neplatí nebo vypršela · přihlásit znovu</p>")
-                    sb.append(if (ctecka) "<div class=\"card note\">🔵 Účet pro ReCaption · druhý uživatel na PS5, ne 🟢 herní účet</div><div class=\"card\">"
+                    sb.append(if (ctecka) "<div class=\"card note\">🔵 Účet pro Titulky PS5 · druhý uživatel na PS5, ne 🟢 herní účet</div><div class=\"card\">"
                         else "<div class=\"card note\">Hlavní účet PlayStation · ten, na kterém se na PS5 hraje</div><div class=\"card\">")
                         .append("<p>1. Přihlášení u Sony (nová karta)</p>")
                         .append("<a id=\"l\" class=\"btn\" target=\"_blank\" rel=\"noopener\" href=\"").append(e(PsnPc.LOGIN_URL)).append("\">Přihlásit se u PlayStation</a>")

@@ -220,7 +220,7 @@ object PhoneLogin {
         fun t(k: String) = I18n.t(lang, k)
         val sb = StringBuilder()
         sb.append("<!doctype html><html lang=\"").append(lang.code).append("\"><head><meta charset=\"utf-8\">")
-            .append("<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>ReCaption</title><style>")
+            .append("<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Titulky PS5</title><style>")
             .append("body{margin:0;background:#0e1014;color:#f2f2f2;font:17px/1.45 system-ui,sans-serif}")
             .append("main{max-width:34em;margin:0 auto;padding:18px 16px 44px}")
             .append("h1{font-size:24px;margin:6px 0 4px}h2{font-size:15px;color:#f2c14e;margin:26px 0 8px}")
@@ -233,7 +233,7 @@ object PhoneLogin {
             .append("summary{cursor:pointer;margin:26px 0 8px;color:#f2c14e}")
             .append("input{width:100%;box-sizing:border-box;font-size:16px;padding:13px;border-radius:12px;border:2px solid #3a4250;")
             .append("background:#0e1014;color:#f2f2f2;margin-top:6px}")
-            .append("</style></head><body><main><h1>ReCaption</h1>")
+            .append("</style></head><body><main><h1>Titulky PS5</h1>")
         when (state) {
             Page.DONE -> sb.append("<p class=\"ok\">").append(para(t("wp_ok"))).append("</p>")
             Page.GONE -> sb.append("<p class=\"bad\">").append(para(t("wp_gone"))).append("</p>")

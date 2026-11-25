@@ -201,7 +201,7 @@ class AtvInstallActivity : Activity() {
         val model = vault.model(target.ip)
         val ver = vault.tvVersion(target.ip)
         if (model == null && ver == null) return null
-        return listOfNotNull(model ?: "Android TV", ver?.let { "ReCaption $it" }).joinToString(" · ")
+        return listOfNotNull(model ?: "Android TV", ver?.let { "Titulky PS5 $it" }).joinToString(" · ")
     }
 
     private fun render(keepFocus: Boolean = false) {

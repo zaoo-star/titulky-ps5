@@ -109,7 +109,7 @@ object Chiaki {
             c.instanceFollowRedirects = false
             c.connectTimeout = 10_000
             c.readTimeout = 30_000
-            c.setRequestProperty("User-Agent", "ReCaption")
+            c.setRequestProperty("User-Agent", "Titulky PS5")
             val s = c.responseCode
             if (s in 300..399) { u = c.getHeaderField("Location") ?: error("přesměrování bez adresy"); c.disconnect(); return@repeat }
             if (s != 200) error("GitHub odpověděl $s")

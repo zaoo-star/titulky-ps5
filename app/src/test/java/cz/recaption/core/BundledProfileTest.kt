@@ -8,7 +8,15 @@ import java.io.File
 
 /** Titulky PS5: přibalený profil GTA VI (assets/hry-profily.json) se musí přečíst celý, i s polohami telefonu. */
 class BundledProfileTest {
-    private fun file() = listOf("src/main/assets/hry-profily.json", "app/src/main/assets/hry-profily.json").map(::File).first { it.exists() }
+    /** Soubor profilu hledaný od pracovní složky nahoru (Gradle běží v app/, místní skript jinde). */
+    private fun file(): File {
+        var d: File? = File("").absoluteFile
+        while (d != null) {
+            for (rel in listOf("src/main/assets/hry-profily.json", "app/src/main/assets/hry-profily.json")) File(d, rel).let { if (it.exists()) return it }
+            d = d.parentFile
+        }
+        error("hry-profily.json nenalezen")
+    }
 
     @Test fun profilSePrecte() {
         val r = GameListJson.parse(file().readText(), 318)

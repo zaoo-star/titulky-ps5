@@ -108,7 +108,7 @@ class TvSenderTest {
                 s.soTimeout = 5000
                 s.getOutputStream().apply { write("GET / HTTP/1.1\r\nHost: tv\r\n\r\n".toByteArray()); flush() }
                 val all = String(s.getInputStream().readBytes(), Charsets.UTF_8)
-                assertTrue(all, all.startsWith("HTTP/1.1 200") && all.endsWith("ReCaption"))
+                assertTrue(all, all.startsWith("HTTP/1.1 200") && all.endsWith("TitulkyPS5"))
             }
             assertEquals(0, sender.connected)
         } finally { sender.stop() }

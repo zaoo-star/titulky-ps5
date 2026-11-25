@@ -19,7 +19,7 @@ object CrashReport {
         // nejhlubší příčina (Caused by) bývá to nejdůležitější – když se do limitu nevešla, přidat ji
         val cause = lines.drop(MAX_LINES).lastOrNull { it.startsWith("Caused by") }
         val body = (head + listOfNotNull(cause?.let { "… $it" })).joinToString("\n")
-        return Redact.clean("$time · ReCaption $version · vlákno ${thread.take(40)}\n$body")
+        return Redact.clean("$time · Titulky PS5 $version · vlákno ${thread.take(40)}\n$body")
     }
 
     /** Přidá záznam k dosavadnímu obsahu souboru a nechá jen posledních [KEEP]. */

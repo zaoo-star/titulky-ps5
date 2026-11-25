@@ -14,7 +14,7 @@ class Nastaveni(private val soubor: File = File(Nastroje.slozka, "aplikace.prope
     private fun uloz() {
         runCatching {
             soubor.parentFile?.mkdirs()
-            soubor.outputStream().use { p.store(it.writer(Charsets.UTF_8), "ReCaption pro počítač") }
+            soubor.outputStream().use { p.store(it.writer(Charsets.UTF_8), "Titulky PS5 pro počítač") }
         }
     }
 
@@ -60,6 +60,8 @@ class Nastaveni(private val soubor: File = File(Nastroje.slozka, "aplikace.prope
     var zaznamHry: Boolean get() = text("zaznamHry", "false") == "true"; set(v) = nastav("zaznamHry", v)
     /** Nezhasínat počítač při překladu (počítač neusne, displej nezhasne) – výchozí vypnuto, viz [Nezhasinat]. */
     var nezhasinat: Boolean get() = text("nezhasinat", "false") == "true"; set(v) = nastav("nezhasinat", v)
+    /** Titulky PS5: povel z TV („Překlad z PC“) přepne na Čtečku pro TV a spustí / zastaví čtení; výchozí zapnuto. */
+    var zTv: Boolean get() = text("z_tv", "true") == "true"; set(v) = nastav("z_tv", v)
     /** Účet PlayStation pro spárování (zakódované číslo účtu a jméno; heslo se nikdy neukládá). */
     var ucetId: String get() = text("ucetId", ""); set(v) = nastav("ucetId", v)
     var ucetJmeno: String get() = text("ucetJmeno", ""); set(v) = nastav("ucetJmeno", v)
@@ -110,7 +112,7 @@ class Nastaveni(private val soubor: File = File(Nastroje.slozka, "aplikace.prope
         val POZADI = cz.recaption.core.TvSettings.OPACITIES
         /** Stejné barvy jako na Android TV (Prefs.TEXT_COLORS). */
         val BARVY = listOf("Bílá" to 0xFFFFFF, "Žlutá" to 0xFFE066, "Zelená" to 0xA8F0A8, "Modrá" to 0x9FD8FF)
-        val ZDROJE = listOf("chiaki" to "chiaki-ng v ReCaptionu", "okno" to "Jiný program", "ukazka" to "Ukázková hra")
+        val ZDROJE = listOf("chiaki" to "chiaki-ng v Titulkách PS5", "okno" to "Jiný program", "ukazka" to "Ukázková hra")
         val VYSTUPY = listOf("pc" to Os.text("Pruh na PC"), "tv" to "TV LG / Samsung", "oboje" to Os.text("PC i TV"))
         val POUZITI = listOf("pc" to Os.text("Hraji na PC"), "ctecka" to "Čtečka pro TV (hra na PS5 v TV)")
     }

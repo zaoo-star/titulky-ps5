@@ -26,10 +26,10 @@ object Pruvodce {
      * češtinu (jako web), ostatní angličtinu.
      */
     class T(val cs: String, val en: String, val jine: Map<String, String> = emptyMap()) {
-        fun get(lang: String): String = when (lang) {
+        fun get(lang: String): String = I18n.rename(when (lang) {
             "cs" -> cs; "en" -> en
             else -> jine[lang] ?: PruvodcePreklady.get(lang, en) ?: if (lang == "sk") cs else en
-        }
+        })
     }
 
     /**

@@ -142,7 +142,7 @@ object DiagReport {
         val dm = c.resources.displayMetrics
         val lang = Prefs.lang(c)
         val app = StringBuilder()
-            .append("ReCaption ").append(BuildInfo.VERSION).append(" (").append(BuildInfo.VERSION_CODE).append(") · ").append(now).append('\n')
+            .append("Titulky PS5 ").append(BuildInfo.VERSION).append(" (").append(BuildInfo.VERSION_CODE).append(") · ").append(now).append('\n')
             .append("Zařízení: ").append(Build.MANUFACTURER).append(' ').append(Build.MODEL)
             .append(" · Android ").append(Build.VERSION.RELEASE).append(" (API ").append(Build.VERSION.SDK_INT).append(")\n")
             .append("Obrazovka: ").append(dm.widthPixels).append('×').append(dm.heightPixels)
@@ -234,7 +234,7 @@ object DiagReport {
     /** Uloží celé hlášení do souboru; vrací cestu (nebo „?“). */
     fun save(c: Context, r: Report): String = try {
         val dir = c.getExternalFilesDir(null) ?: c.filesDir
-        val f = File(dir, "ReCaption-hlaseni.txt")
+        val f = File(dir, "TitulkyPS5-hlaseni.txt")
         f.writeText(r.full, Charsets.UTF_8)
         f.absolutePath
     } catch (_: Exception) { "?" }

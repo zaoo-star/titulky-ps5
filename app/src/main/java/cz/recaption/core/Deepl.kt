@@ -325,7 +325,7 @@ object DeeplPage {
         fun t(k: String) = PhoneLogin.esc(I18n.t(lang, k))
         val sb = StringBuilder()
         sb.append("<!doctype html><html lang=\"").append(lang.code).append("\"><head><meta charset=\"utf-8\">")
-            .append("<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>ReCaption</title><style>")
+            .append("<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Titulky PS5</title><style>")
             .append("body{margin:0;background:#0e1014;color:#f2f2f2;font:17px/1.45 system-ui,sans-serif}")
             .append("main{max-width:34em;margin:0 auto;padding:18px 16px 44px}h1{font-size:24px;margin:6px 0 4px}")
             .append("p{margin:8px 0}.muted{color:#9aa4ae;font-size:15px}.ok{color:#4ade80;font-size:20px;font-weight:600}")
@@ -334,7 +334,7 @@ object DeeplPage {
             .append("border:0;border-radius:12px;padding:14px;margin:12px 0 4px;text-decoration:none}a.btn{background:#2a303b;color:#f2f2f2}")
             .append(".card{background:#1b1f27;border-radius:14px;padding:14px 16px;margin:10px 0}")
             .append("input{width:100%;box-sizing:border-box;font-size:16px;padding:13px;border-radius:12px;border:2px solid #3a4250;")
-            .append("background:#0e1014;color:#f2f2f2;margin-top:6px}</style></head><body><main><h1>ReCaption · DeepL</h1>")
+            .append("background:#0e1014;color:#f2f2f2;margin-top:6px}</style></head><body><main><h1>Titulky PS5 · DeepL</h1>")
         when (state) {
             State.DONE -> sb.append("<p class=\"ok\">").append(t("dl_w_ok")).append("</p>")
                 .append(detail?.let { "<p>" + PhoneLogin.esc(it) + "</p>" } ?: "")

@@ -130,7 +130,7 @@ object SnapBatches {
 
     /** Hlavička `index.txt` (verze, zařízení, zdroj obrazu…). */
     fun header(n: Int, start: Long, lines: List<String>): String =
-        "ReCaption – dávka snímků $n, začátek ${stamp(start)}\n" + lines.joinToString("") { "$it\n" } +
+        "Titulky PS5 – dávka snímků $n, začátek ${stamp(start)}\n" + lines.joinToString("") { "$it\n" } +
             "Formát: #číslo čas +sekundy od začátku soubor šířka×výška důvod (prvni/zmena/velka); pod tím co aplikace od minulého snímku zapsala (události) a četla (CTENI: surový text → co z něj vzala).\n\n"
 
     /**

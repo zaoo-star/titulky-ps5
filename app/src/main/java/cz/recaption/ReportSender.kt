@@ -94,7 +94,7 @@ class ReportSender private constructor(
     }
 
     /** Vlastní soubor každého dialogu – úklid zavřeného dialogu nesmaže balík nově otevřeného (0.97.69). */
-    private val zipName = "ReCaption-balik-${System.nanoTime()}.zip"
+    private val zipName = "TitulkyPS5-balik-${System.nanoTime()}.zip"
     private fun zipFile(c: Context) = File(File(c.cacheDir, "odeslani"), zipName)
 
     private val main = Handler(Looper.getMainLooper())
@@ -499,7 +499,7 @@ class ReportSender private constructor(
     private fun copy(code: String) {
         try {
             val cm = a.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-            cm.setPrimaryClip(ClipData.newPlainText("ReCaption", code))
+            cm.setPrimaryClip(ClipData.newPlainText("Titulky PS5", code))
             Toast.makeText(a, t("snd_copied"), Toast.LENGTH_SHORT).show()
         } catch (_: Throwable) {
             Toast.makeText(a, t("zz_noshare"), Toast.LENGTH_LONG).show()

@@ -230,7 +230,7 @@ class TranslatorService : Service() {
             if (want && dimLock?.isHeld != true) {
                 @Suppress("DEPRECATION")
                 dimLock = (getSystemService(Context.POWER_SERVICE) as android.os.PowerManager)
-                    .newWakeLock(android.os.PowerManager.SCREEN_DIM_WAKE_LOCK, "ReCaption:displej")
+                    .newWakeLock(android.os.PowerManager.SCREEN_DIM_WAKE_LOCK, "Titulky PS5:displej")
                     .also { it.setReferenceCounted(false); it.acquire() }
                 tp("SCREEN|displej ztlumený, nezhasne")
             } else if (!want && dimLock != null) {
@@ -410,7 +410,7 @@ class TranslatorService : Service() {
         } catch (e: Throwable) { Log.w(TAG, "wifi lock", e) }
         try {
             wakeLock = (getSystemService(Context.POWER_SERVICE) as android.os.PowerManager)
-                .newWakeLock(android.os.PowerManager.PARTIAL_WAKE_LOCK, "ReCaption:preklad")
+                .newWakeLock(android.os.PowerManager.PARTIAL_WAKE_LOCK, "Titulky PS5:preklad")
                 .also { it.setReferenceCounted(false); it.acquire() }
         } catch (e: Throwable) { Log.w(TAG, "wake lock", e) }
         beginRunning()

@@ -102,7 +102,7 @@ object DeeplPc {
             c.readTimeout = readMs
             c.useCaches = false
             c.setRequestProperty("Authorization", Deepl.authHeader(key))
-            c.setRequestProperty("User-Agent", "ReCaption")
+            c.setRequestProperty("User-Agent", "Titulky PS5")
             if (json != null) {
                 c.doOutput = true
                 c.setRequestProperty("Content-Type", "application/json; charset=utf-8")

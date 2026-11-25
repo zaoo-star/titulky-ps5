@@ -1,4 +1,4 @@
-# ReCaption pro počítač s Windows jako balíček ke stažení (ReCaption-PC.zip): rozbalit a spustit ReCaption.exe.
+# Titulky PS5 pro počítač s Windows jako balíček ke stažení (TitulkyPS5-PC.zip): rozbalit a spustit TitulkyPS5.exe.
 # Nic se neinstaluje – Java i Python s knihovnami pro čtení a překlad jsou uvnitř; po prvním spuštění se jen
 # stáhne překladový model (Domů → Připravit) a program Remote Play chiaki-ng (Domů → Stáhnout).
 #
@@ -6,9 +6,9 @@
 #   - přibalený Python přečte a přeloží ukázkový titulek (pc/zkouska_balicku.py),
 #   - okno aplikace se otevře a uloží snímky stránek (artefakt „snimky-pc“).
 # Z větve je balíček jen jako artefakt běhu (záložka Actions); z main jde do vydání „pc“
-# (https://github.com/zaoo-star/titulky-ps5/releases/download/pc/ReCaption-PC.zip). Titulky PS5: PC jako čtečka pro Android TV
+# (https://github.com/zaoo-star/titulky-ps5/releases/download/pc/TitulkyPS5-PC.zip). Titulky PS5: PC jako čtečka pro Android TV
 # s režimem „Překlad z PC“ (PcReceiverService).
-name: ReCaption pro PC
+name: Titulky PS5 pro PC
 
 on:
   push:
@@ -43,7 +43,7 @@ jobs:
           # přesná verze, pro kterou má python.org vložený Python (embed) – novější opravy 3.12 ho už nemají
           python-version: "3.12.10"
 
-      - name: Sestavit ReCaption pro PC
+      - name: Sestavit Titulky PS5 pro PC
         shell: pwsh
         run: .\gradlew.bat -p pc installDist --console=plain
 
@@ -52,18 +52,18 @@ jobs:
         run: |
           $verze = (Select-String -Path app\build.gradle.kts -Pattern 'versionName = "([0-9.]+)').Matches[0].Groups[1].Value
           "VERZE=$verze" | Out-File -Append $env:GITHUB_ENV -Encoding utf8
-          jpackage --type app-image --name ReCaption --dest out `
+          jpackage --type app-image --name TitulkyPS5 --dest out `
             --input pc\build\install\recaption-pc\lib --main-jar recaption-pc.jar --main-class cz.recaption.pc.AplikaceKt `
             --java-options '-Drecaption.pc=$APPDIR' --java-options '-Dfile.encoding=UTF-8' `
-            --app-version $verze --vendor ReCaption --description "ReCaption pro PC"
-          Copy-Item pc\cteni.py, pc\priprava.ps1 out\ReCaption\app\
+            --app-version $verze --vendor "Titulky PS5" --description "Titulky PS5 pro PC"
+          Copy-Item pc\cteni.py, pc\priprava.ps1 out\TitulkyPS5\app\
 
       - name: Python s knihovnami pro čtení a překlad
         shell: pwsh
         run: |
           $ProgressPreference = "SilentlyContinue"
           $py = (python -c "import platform; print(platform.python_version())").Trim()
-          $cil = "out\ReCaption\app\python"
+          $cil = "out\TitulkyPS5\app\python"
           Invoke-WebRequest "https://www.python.org/ftp/python/$py/python-$py-embed-amd64.zip" -OutFile embed.zip
           Expand-Archive embed.zip -DestinationPath $cil
           # vložený Python čte cesty jen ze souboru ._pth – přidat knihovny a import site
@@ -73,15 +73,15 @@ jobs:
           python -m pip install --only-binary=:all: --target "$cil\Lib\site-packages" -q `
             ctranslate2 subword-nmt sacremoses rapidocr-onnxruntime pillow numpy
           Get-ChildItem "$cil\Lib\site-packages" -Recurse -Directory -Filter __pycache__ | Remove-Item -Recurse -Force
-          "{0:N0} MB" -f ((Get-ChildItem out\ReCaption -Recurse | Measure-Object Length -Sum).Sum / 1MB)
+          "{0:N0} MB" -f ((Get-ChildItem out\TitulkyPS5 -Recurse | Measure-Object Length -Sum).Sum / 1MB)
 
       - name: Zkouška – přibalený Python přečte a přeloží titulek
         shell: pwsh
         run: |
           $env:PYTHONUTF8 = "1"
-          powershell -NoProfile -ExecutionPolicy Bypass -File out\ReCaption\app\priprava.ps1 -Jazyk cs -BezSestaveni -Python out\ReCaption\app\python\python.exe
-          $model = Get-ChildItem "$env:LOCALAPPDATA\ReCaptionTools\modely\en_cs" -Directory | Select-Object -First 1
-          python pc\zkouska_balicku.py out\ReCaption\app\python\python.exe out\ReCaption\app\cteni.py $model.FullName
+          powershell -NoProfile -ExecutionPolicy Bypass -File out\TitulkyPS5\app\priprava.ps1 -Jazyk cs -BezSestaveni -Python out\TitulkyPS5\app\python\python.exe
+          $model = Get-ChildItem "$env:LOCALAPPDATA\TitulkyPS5\modely\en_cs" -Directory | Select-Object -First 1
+          python pc\zkouska_balicku.py out\TitulkyPS5\app\python\python.exe out\TitulkyPS5\app\cteni.py $model.FullName
 
       - name: Zkouška – okno aplikace (snímky stránek)
         shell: pwsh
@@ -89,7 +89,7 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force snimky | Out-Null
           $env:JAVA_TOOL_OPTIONS = "-Drecaption.snimek=$PWD\snimky"
-          $p = Start-Process out\ReCaption\ReCaption.exe -PassThru
+          $p = Start-Process out\TitulkyPS5\TitulkyPS5.exe -PassThru
           if (-not $p.WaitForExit(120000)) { $p.Kill(); throw "okno se do 2 minut nezavřelo" }
           Get-ChildItem snimky
 
@@ -102,12 +102,12 @@ jobs:
 
       - name: ZIP
         shell: pwsh
-        run: Compress-Archive out\ReCaption ReCaption-PC.zip
+        run: Compress-Archive out\TitulkyPS5 TitulkyPS5-PC.zip
 
       - uses: actions/upload-artifact@v4
         with:
-          name: ReCaption-PC
-          path: ReCaption-PC.zip
+          name: TitulkyPS5-PC
+          path: TitulkyPS5-PC.zip
           compression-level: 0
 
       - name: Vydání „pc“ (jen z main)
@@ -117,6 +117,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release delete pc --yes --cleanup-tag || true
-          gh release create pc ReCaption-PC.zip --target "$GITHUB_SHA" --prerelease --latest=false \
-            --title "ReCaption pro PC (zkušební) $VERZE" \
-            --notes "ReCaption pro počítač s Windows 10/11 (64 bit), zkušební. Rozbalit ZIP a spustit ReCaption.exe – nic se neinstaluje. Jako čtečka pro Titulky PS5 na Android TV (Nastavení → Překlad z PC) nebo TV LG / Samsung: ⚙ → Použití → Čtečka pro TV. Původní návod: https://adusa89.github.io/ReCaption/pc.html. Spojení s PlayStationem obstarává program chiaki-ng (AGPL-3.0), který si ReCaption stáhne samo; zdrojový kód je v tomto repozitáři."
+          gh release create pc TitulkyPS5-PC.zip --target "$GITHUB_SHA" --prerelease --latest=false \
+            --title "Titulky PS5 pro PC $VERZE" \
+            --notes "Titulky PS5 pro počítač s Windows 10/11 (64 bit). Rozbalit ZIP a spustit TitulkyPS5.exe – nic se neinstaluje. Jako čtečka pro Titulky PS5 na Android TV: ⚙ → Použití → Čtečka pro TV, v TV Nastavení → Překlad z PC. Spojení s PlayStationem obstarává program chiaki-ng (AGPL-3.0), který si program stáhne sám; zdrojový kód je v tomto repozitáři (úprava open-source projektu, licence AGPL-3.0)."

@@ -209,7 +209,7 @@ object NetLogShare {
     fun copy(a: Activity, text: String) {
         try {
             val cm = a.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-            cm.setPrimaryClip(ClipData.newPlainText("ReCaption", text))
+            cm.setPrimaryClip(ClipData.newPlainText("Titulky PS5", text))
             Toast.makeText(a, a.tx("zz_copied"), Toast.LENGTH_SHORT).show()
         } catch (_: Throwable) {
             Toast.makeText(a, a.tx("zz_noshare"), Toast.LENGTH_LONG).show()
@@ -225,7 +225,7 @@ object NetLogShare {
             val send = Intent(Intent.ACTION_SEND).apply {
                 type = "text/plain"
                 putExtra(Intent.EXTRA_STREAM, ReportProvider.uri(a))
-                putExtra(Intent.EXTRA_SUBJECT, "ReCaption " + BuildInfo.VERSION + " – hlášení")
+                putExtra(Intent.EXTRA_SUBJECT, "Titulky PS5 " + BuildInfo.VERSION + " – hlášení")
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
             a.startActivity(Intent.createChooser(send, a.tx("zz_share")).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION))
@@ -241,12 +241,12 @@ object NetLogShare {
  */
 class ReportProvider : ContentProvider() {
     companion object {
-        private const val NAME = "ReCaption-hlaseni.txt"
+        private const val NAME = "TitulkyPS5-hlaseni.txt"
         fun authority(c: Context) = c.packageName + ".hlaseni"
         fun file(c: Context) = File(File(c.cacheDir, "sdileni"), NAME)
         fun uri(c: Context): Uri = Uri.parse("content://" + authority(c) + "/" + NAME)
         /** Dávka snímků jako ZIP ke sdílení (`SnapSaver`, od 0.97.69) – druhý a poslední soubor, který tu jde ven. */
-        private const val ZIP = "ReCaption-snimky.zip"
+        private const val ZIP = "TitulkyPS5-snimky.zip"
         fun zipFile(c: Context) = File(File(c.cacheDir, "sdileni"), ZIP)
         fun zipUri(c: Context): Uri = Uri.parse("content://" + authority(c) + "/" + ZIP)
     }

@@ -139,7 +139,7 @@ object MacZkouska {
     }
 
     /** Okno s anglickým „titulkem“ dole – stojí místo okna hry při zkoušce snímku (`--zkouska-okno`). */
-    fun zkusebniOkno(): JFrame = JFrame("ReCaption zkouska").apply {
+    fun zkusebniOkno(): JFrame = JFrame("Titulky PS5 zkouska").apply {
         contentPane = object : JComponent() {
             override fun paintComponent(g: Graphics) {
                 g.color = Color(30, 40, 60)
@@ -156,7 +156,7 @@ object MacZkouska {
     }
 
     fun spust(nechat: Boolean): Int {
-        println("ReCaption – zkouška částí pro Mac (${System.getProperty("os.name")} ${System.getProperty("os.version")}, ${System.getProperty("os.arch")})")
+        println("Titulky PS5 – zkouška částí pro Mac (${System.getProperty("os.name")} ${System.getProperty("os.version")}, ${System.getProperty("os.arch")})")
         predvolbyZXml()
         if (!Os.mac) {
             println("Není Mac – zbytek se přeskakuje.")

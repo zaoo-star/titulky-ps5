@@ -86,7 +86,7 @@ object SetupPage {
             .joinToString(",", "{", "}") { RemoteSetup.json(it) + ":" + RemoteSetup.json(t(it)) }
         val sb = StringBuilder()
         sb.append("<!doctype html><html lang=\"").append(lang.code).append("\"><head><meta charset=\"utf-8\">")
-            .append("<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>ReCaption</title><style>")
+            .append("<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Titulky PS5</title><style>")
             .append("body{margin:0;background:#0e1014;color:#f2f2f2;font:17px/1.45 system-ui,sans-serif}")
             .append("main{max-width:34em;margin:0 auto;padding:18px 16px 44px}h1{font-size:23px;margin:6px 0 2px}")
             .append("h2{font-size:18px;margin:0 0 6px}p{margin:8px 0}.muted{color:#9aa4ae;font-size:15px}")

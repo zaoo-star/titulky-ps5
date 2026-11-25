@@ -1,6 +1,6 @@
-# Titulky PS5 – sestavení a vydání (úprava ReCaptionu, AGPL-3.0).
+# Titulky PS5 – sestavení a vydání (licence AGPL-3.0, viz LICENSE a README).
 # Každý push: testy logiky + podepsané APK. Z větve main navíc vydání „latest“, odkud si appka bere aktualizace
-# (version.txt + ReCaption.apk / ReCaption-arm64.apk / ReCaption-arm32.apk – názvy čte Updater.kt).
+# (version.txt + TitulkyPS5.apk / TitulkyPS5-arm64.apk / TitulkyPS5-arm32.apk – názvy čte Updater.kt).
 # Podpis: tajné údaje repozitáře TPS5_KEY_BASE64 (p12 v base64, alias „recaption“) a TPS5_KEY_PASSWORD.
 # Bez nich se nic nevydá (APK s dočasným podpisem by nešlo nainstalovat přes předchozí verzi).
 name: Sestavit APK
@@ -77,37 +77,37 @@ jobs:
 
       - name: Přejmenovat a zkontrolovat APK
         run: |
-          cp app/build/outputs/apk/release/app-universal-release.apk ReCaption.apk
-          cp app/build/outputs/apk/release/app-arm64-v8a-release.apk ReCaption-arm64.apk
-          cp app/build/outputs/apk/release/app-armeabi-v7a-release.apk ReCaption-arm32.apk
-          unzip -l ReCaption.apk | grep -q "lib/arm64-v8a/libchiaki-jni.so"
-          unzip -l ReCaption.apk | grep -q "lib/armeabi-v7a/libchiaki-jni.so"
-          unzip -l ReCaption-arm64.apk | grep -q "lib/arm64-v8a/libchiaki-jni.so"
-          unzip -l ReCaption-arm32.apk | grep -q "lib/armeabi-v7a/libchiaki-jni.so"
+          cp app/build/outputs/apk/release/app-universal-release.apk TitulkyPS5.apk
+          cp app/build/outputs/apk/release/app-arm64-v8a-release.apk TitulkyPS5-arm64.apk
+          cp app/build/outputs/apk/release/app-armeabi-v7a-release.apk TitulkyPS5-arm32.apk
+          unzip -l TitulkyPS5.apk | grep -q "lib/arm64-v8a/libchiaki-jni.so"
+          unzip -l TitulkyPS5.apk | grep -q "lib/armeabi-v7a/libchiaki-jni.so"
+          unzip -l TitulkyPS5-arm64.apk | grep -q "lib/arm64-v8a/libchiaki-jni.so"
+          unzip -l TitulkyPS5-arm32.apk | grep -q "lib/armeabi-v7a/libchiaki-jni.so"
           AAPT="$ANDROID_HOME/build-tools/35.0.0/aapt"
-          "$AAPT" dump badging ReCaption.apk | grep -E "^package:|^application-label:"
-          "$AAPT" dump badging ReCaption.apk | grep -q "package: name='cz.titulkyps5'"
-          CODE=$("$AAPT" dump badging ReCaption.apk | grep -oE "versionCode='[0-9]+'" | grep -oE "[0-9]+")
-          NAME=$("$AAPT" dump badging ReCaption.apk | grep -oE "versionName='[^']+'" | cut -d"'" -f2)
+          "$AAPT" dump badging TitulkyPS5.apk | grep -E "^package:|^application-label:"
+          "$AAPT" dump badging TitulkyPS5.apk | grep -q "package: name='cz.titulkyps5'"
+          CODE=$("$AAPT" dump badging TitulkyPS5.apk | grep -oE "versionCode='[0-9]+'" | grep -oE "[0-9]+")
+          NAME=$("$AAPT" dump badging TitulkyPS5.apk | grep -oE "versionName='[^']+'" | cut -d"'" -f2)
           echo "$CODE $NAME" > version.txt; cat version.txt
-          ls -la ReCaption*.apk
+          ls -la TitulkyPS5*.apk
 
       - name: Kontrola podpisu
         env:
           MA_KLIC: ${{ secrets.TPS5_KEY_BASE64 != '' }}
         run: |
           otisk() { "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs "$1" | grep -m1 "SHA-256" | grep -oE "[0-9a-f]{64}" || true; }
-          O=$(otisk ReCaption.apk); echo "otisk podpisu: $O"
-          for f in ReCaption-arm64.apk ReCaption-arm32.apk; do [ "$(otisk $f)" = "$O" ] || { echo "::error::APK mají různý podpis"; exit 1; }; done
+          O=$(otisk TitulkyPS5.apk); echo "otisk podpisu: $O"
+          for f in TitulkyPS5-arm64.apk TitulkyPS5-arm32.apk; do [ "$(otisk $f)" = "$O" ] || { echo "::error::APK mají různý podpis"; exit 1; }; done
           if [ "$MA_KLIC" = "true" ]; then echo "stálý" > podpis.txt; else echo "dočasný" > podpis.txt; echo "::warning::Chybí tajné údaje TPS5_KEY_BASE64 / TPS5_KEY_PASSWORD – APK má dočasný podpis a nevydá se."; fi
 
       - uses: actions/upload-artifact@v4
         with:
           name: Titulky-PS5-APK
           path: |
-            ReCaption.apk
-            ReCaption-arm64.apk
-            ReCaption-arm32.apk
+            TitulkyPS5.apk
+            TitulkyPS5-arm64.apk
+            TitulkyPS5-arm32.apk
             version.txt
             podpis.txt
 
@@ -117,7 +117,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           if [ "$(cat podpis.txt)" != "stálý" ]; then echo "Dočasný podpis – nevydávám."; exit 0; fi
-          gh release view latest >/dev/null 2>&1 || gh release create latest --title "Titulky PS5 (nejnovější)" --notes "Titulky PS5 – úprava ReCaptionu (https://github.com/adusa89/ReCaption, AGPL-3.0). Zdrojový kód je v tomto repozitáři."
-          gh release upload latest ReCaption.apk ReCaption-arm64.apk ReCaption-arm32.apk version.txt --clobber
+          gh release view latest >/dev/null 2>&1 || gh release create latest --title "Titulky PS5 (nejnovější)" --notes "Titulky PS5 – české titulky do her z PS5 na Android TV. Licence AGPL-3.0, zdrojový kód je v tomto repozitáři."
+          gh release upload latest TitulkyPS5.apk TitulkyPS5-arm64.apk TitulkyPS5-arm32.apk version.txt --clobber
           V=$(cut -d' ' -f2 version.txt)
-          gh release view "v$V" >/dev/null 2>&1 || gh release create "v$V" ReCaption.apk --title "Titulky PS5 $V" --notes "Verze $V (commit ${GITHUB_SHA::7})."
+          gh release view "v$V" >/dev/null 2>&1 || gh release create "v$V" TitulkyPS5.apk --title "Titulky PS5 $V" --notes "Verze $V (commit ${GITHUB_SHA::7})."

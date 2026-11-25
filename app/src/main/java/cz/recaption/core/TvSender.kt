@@ -32,7 +32,7 @@ import java.util.concurrent.Executors
  *    a `{"text":"…"}` (replika bez jména). `text` zůstává celý jako dřív („Jméno: …“, volby s „• “),
  *    takže starší aplikace v televizi, která `casti` nezná, ukáže všechno jako obyčejný text.
  * Televize po připojení pošle `{"typ":"pripojeno","televize":"…","system":"…","hdmi":1}`, od verze 1.1.0
- * navíc `"aplikace":"ReCaption","platforma":"webos"|"tizen","verze":"1.1.0"` ([TvAnnounce]). Podle toho
+ * navíc `"aplikace":"Titulky PS5","platforma":"webos"|"tizen","verze":"1.1.0"` ([TvAnnounce]). Podle toho
  * průvodce nahráním do televize a stránka Domů poznají, že je aplikace v televizi nainstalovaná
  * a v jaké verzi ([lastSeen]). Od verze 1.2.0 televize posílá i svůj záznam událostí
  * `{"typ":"zaznam","radky":["…"]}` (po připojení a pak po dávkách) – ukládá ho [TvLog].
@@ -559,7 +559,7 @@ class TvSender(private val log: (String) -> Unit = {}) {
             if (key == null) {
                 // obyčejný dotaz (např. z prohlížeče): jen dát vědět, že tu ReCaption je
                 c.getOutputStream().apply {
-                    write("HTTP/1.1 200 OK\r\nContent-Type: text/plain; charset=utf-8\r\nContent-Length: 9\r\nConnection: close\r\n\r\nReCaption".toByteArray(Charsets.US_ASCII))
+                    write("HTTP/1.1 200 OK\r\nContent-Type: text/plain; charset=utf-8\r\nContent-Length: 10\r\nConnection: close\r\n\r\nTitulkyPS5".toByteArray(Charsets.US_ASCII))
                     flush()
                 }
                 close(c); return

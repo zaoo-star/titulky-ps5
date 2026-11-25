@@ -21,17 +21,17 @@ object ReportUpload {
     /** Víc se nikdy neposílá, ať by v `hlaseni.json` stálo cokoli. */
     const val MAX_MB = 200
     const val PATH = "/v1/nahrat"
-    const val HEADER_VERSION = "X-ReCaption-Verze"
-    const val HEADER_KIND = "X-ReCaption-Druh"
+    const val HEADER_VERSION = "X-TitulkyPS5-Verze"
+    const val HEADER_KIND = "X-TitulkyPS5-Druh"
     /**
      * Nepovinné hlavičky s týmiž údaji, jaké jsou i v `info.json` v balíku (žádný nový údaj navíc) – server
      * si je jen uloží k balíku (bez otevírání ZIPu), ať jde testerská hlášení na stránce počtů aspoň zběžně
      * roztřídit podle zařízení a TV, aniž by se musel stahovat celý balík (přání majitele 24. 11. 2026).
      */
-    const val HEADER_DEVICE = "X-ReCaption-Zarizeni"
-    const val HEADER_TV_TYPE = "X-ReCaption-TypTv"
-    const val HEADER_TV_INFO = "X-ReCaption-Tv"
-    const val HEADER_GAME = "X-ReCaption-Hra"
+    const val HEADER_DEVICE = "X-TitulkyPS5-Zarizeni"
+    const val HEADER_TV_TYPE = "X-TitulkyPS5-TypTv"
+    const val HEADER_TV_INFO = "X-TitulkyPS5-Tv"
+    const val HEADER_GAME = "X-TitulkyPS5-Hra"
     /** Hlavička se ořízne na tuhle délku (ochrana serveru), delší údaj je prostě zkrácený. */
     const val HEADER_MAX = 80
     const val KIND_REPORT = "hlaseni"

@@ -8,6 +8,7 @@ import cz.recaption.core.TvSettings
 import cz.recaption.core.TvAnnounce
 import cz.recaption.core.TvSender
 import cz.recaption.core.Lang
+import cz.recaption.core.PcWake
 import java.awt.BasicStroke
 import java.awt.BorderLayout
 import java.awt.CardLayout
@@ -267,7 +268,7 @@ internal fun vyber(kde: Component, moznosti: List<String>, aktualni: Int, vybran
 
 private class Aplikace {
     private val nast = Nastaveni()
-    private val okno = JFrame("ReCaption")
+    private val okno = JFrame("Titulky PS5")
     private val obsah = JPanel(CardLayout()).apply { background = B.BG }
     private val polozkyMenu = ArrayList<Pair<String, JComponent>>()
     private var stranka = "Domů"
@@ -313,6 +314,26 @@ private class Aplikace {
     /** Okno chiaki-ng čtečky je minimalizované (hlídá se každou sekundu, čte i vlákno čtení pro stav v TV). */
     @Volatile private var chiakiMinim = false
     private fun cteckaBezi() = cteckaVlakno?.isAlive == true
+
+    /** Titulky PS5: povely z TV (Překlad z PC) – spustit / zastavit čtečku pro TV ([PcWake]). */
+    private val povely = PcWake.Listener(runCatching { java.net.InetAddress.getLocalHost().hostName }.getOrNull() ?: "PC",
+        log = { m -> SwingUtilities.invokeLater { zapis(m) } }) { akce, _ ->
+        SwingUtilities.invokeLater { if (akce == "spust") zTvSpust() else zTvZastav() }
+    }
+
+    private fun zTvSpust() {
+        if (!nast.zTv) { zapis("TV chce překlad · v Nastavení vypnuto"); return }
+        if (!nast.ctecka) Nastaveni.POUZITI.indexOfFirst { it.first == "ctecka" }.takeIf { it >= 0 }?.let { zmenPouziti(it, tichy = true) }
+        if (cteckaBezi()) return
+        if (!Nastroje.pripraveno(nast.jazyk)) { zapis("TV chce překlad · chybí příprava (Domů → Připravit)"); obnovDomu(); return }
+        if (vybranaKonzole() == null) { zapis("TV chce překlad · PS5 není spárovaná pro čtečku (Domů → Spárovat)"); obnovDomu(); return }
+        zapis("Spuštěno z TV")
+        cistProTv()
+    }
+
+    private fun zTvZastav() {
+        if (nast.zTv && cteckaBezi()) { zapis("Zastaveno z TV"); zastavit() }
+    }
     /** Nezhasínat počítač při překladu – volá se jen z vlákna okna (stav Windows patří vláknu). */
     private val nezhasinat = Nezhasinat(::zapis)
     /** Řádky Nastavení jen pro hraní na PC (schovávají se ve čtečce). */
@@ -365,6 +386,9 @@ private class Aplikace {
         System.getProperty("recaption.stranka")?.let { prepni(it) }
         if (System.getProperty("recaption.autostart") == "1" && Nastroje.pripraveno(nast.jazyk)) spustit()
         okno.isVisible = true
+        // spuštěno s Windows: okno jen na liště, čeká na povel z TV
+        if (Autostart.naPozadi) okno.extendedState = JFrame.ICONIFIED
+        povely.start()
         hlavniTlacitko.requestFocusInWindow()
         // jen pro snímky při ladění: -Drecaption.parovani=1 otevře průvodce spárováním
         if (System.getProperty("recaption.parovani") == "1") sparovat()
@@ -413,7 +437,7 @@ private class Aplikace {
         panel.layout = BoxLayout(panel, BoxLayout.Y_AXIS)
         panel.border = EmptyBorder(24, 14, 20, 14)
         panel.preferredSize = Dimension(220, 0)
-        panel.add(popisek("ReCaption", 26, B.ACCENT, true).vlevo().apply { border = EmptyBorder(0, 12, 26, 0) })
+        panel.add(popisek("Titulky PS5", 26, B.ACCENT, true).vlevo().apply { border = EmptyBorder(0, 12, 26, 0) })
         listOf("Domů", "Titulky").forEach { panel.add(polozkaMenu(it, it)) }
         panel.add(Box.createVerticalGlue())
         panel.add(polozkaMenu("⚙  Nastavení", "Nastavení"))
@@ -1115,9 +1139,14 @@ private class Aplikace {
                     "<html><b>Nezhasínat PC při překladu</b><br><br>" +
                         "Dokud běží překlad, PC neusne a displej nezhasne ani se nezamkne.<br>" +
                         "Jinak se čtení okna chiaki-ng zastaví nebo zpomalí.<br>" +
-                        "Po zastavení překladu nebo zavření ReCaptionu platí zase nastavení systému.</html>"),
-                    "ReCaption", javax.swing.JOptionPane.PLAIN_MESSAGE)
+                        "Po zastavení překladu nebo zavření Titulků PS5 platí zase nastavení systému.</html>"),
+                    "Titulky PS5", javax.swing.JOptionPane.PLAIN_MESSAGE)
                 hlidejSpanek()
+            })
+            // Titulky PS5: TV zapne a vypne čtení sama (Překlad z PC)
+            add(volba("Zapnout z TV (Překlad z PC)", listOf("Ne", "Ano"), { if (nast.zTv) 1 else 0 }) { nast.zTv = it == 1 })
+            if (Autostart.mozne()) add(volba("Spouštět s Windows", listOf("Ne", "Ano"), { if (Autostart.zapnuto()) 1 else 0 }) {
+                if (Autostart.nastav(it == 1) != (it == 1)) zapis("Spouštění s Windows se nepodařilo nastavit")
             })
         }
         val zdroj = Karta().apply {
@@ -1207,7 +1236,7 @@ private class Aplikace {
      * Použití: hraní na PC / čtečka pro TV. Spárování je pro každé zvlášť (čtečka má vlastní profil
      * chiaki-ng s účtem pro ReCaption), takže přepnutí nic nemaže; popis čtečky v dialogu při zapnutí.
      */
-    private fun zmenPouziti(i: Int) {
+    private fun zmenPouziti(i: Int, tichy: Boolean = false) {
         val nove = Nastaveni.POUZITI[i].first
         if (nove == nast.pouziti) return
         if (vlakno?.isAlive == true || chiaki?.isAlive == true || krok != null || cteckaBezi()) zastavit()
@@ -1221,15 +1250,15 @@ private class Aplikace {
         radky.forEach { it.obnov() }
         obnovDomu()
         okno.contentPane.revalidate()
-        if (nast.ctecka) javax.swing.JOptionPane.showMessageDialog(okno, Os.text(
-            "<html><b>Čtečka pro TV LG / Samsung</b><br><br>" +
+        if (nast.ctecka && !tichy) javax.swing.JOptionPane.showMessageDialog(okno, Os.text(
+            "<html><b>Čtečka pro TV</b> (Titulky PS5 na Android TV, TV LG / Samsung)<br><br>" +
                 "Hra jde z PS5 do TV a hraje se dál ${Parovani.ZELENA} herním účtem.<br>" +
-                "PC se připojí přes Remote Play ${Parovani.MODRA} účtem pro ReCaption (druhý uživatel na PS5)<br>" +
-                "a překlad pošle do aplikace ReCaption v TV.<br><br>" +
+                "PC se připojí přes Remote Play ${Parovani.MODRA} účtem pro Titulky PS5 (druhý uživatel na PS5)<br>" +
+                "a překlad pošle do aplikace Titulky PS5 v TV.<br><br>" +
                 "PS5 se pro čtečku páruje zvlášť tímto druhým účtem · spárování pro hraní na PC zůstává.<br>" +
                 "PS5 se nebudí · připojení až po zapnutí ovladačem.<br>" +
                 "Okno chiaki-ng smí být za jinými okny, ne minimalizované · zvuk z PC vypnutý.</html>"),
-            "ReCaption", javax.swing.JOptionPane.PLAIN_MESSAGE)
+            "Titulky PS5", javax.swing.JOptionPane.PLAIN_MESSAGE)
     }
 
     // ---- DeepL ----
@@ -1244,10 +1273,10 @@ private class Aplikace {
     }
 
     private fun zadatKlic() {
-        val vlozeno = javax.swing.JOptionPane.showInputDialog(okno, "Klíč DeepL (prázdné = smazat)", "ReCaption",
+        val vlozeno = javax.swing.JOptionPane.showInputDialog(okno, "Klíč DeepL (prázdné = smazat)", "Titulky PS5",
             javax.swing.JOptionPane.PLAIN_MESSAGE) ?: run { radky.forEach { it.obnov() }; obnovDomu(); return }
         if (!DeeplPc.uloz(vlozeno)) {
-            javax.swing.JOptionPane.showMessageDialog(okno, "Tohle klíč DeepL není.", "ReCaption", javax.swing.JOptionPane.PLAIN_MESSAGE)
+            javax.swing.JOptionPane.showMessageDialog(okno, "Tohle klíč DeepL není.", "Titulky PS5", javax.swing.JOptionPane.PLAIN_MESSAGE)
             return
         }
         if (DeeplPc.ma()) nast.deepl = true
@@ -1284,6 +1313,7 @@ private class Aplikace {
     }
 
     private fun konec() {
+        povely.stop()
         nezhasinat.uvolnit()
         ctecka?.zastav()
         chiaki?.destroy()

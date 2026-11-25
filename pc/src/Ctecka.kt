@@ -53,8 +53,8 @@ internal const val UKOL_ZONA = cz.recaption.core.TextLogic.OBJECTIVE_ZONE_TOP
 /** Kde leží nástroje z přípravy (`priprava.ps1`) a soubory čtečky. */
 object Nastroje {
     val slozka =
-        if (Os.mac) File(System.getProperty("user.home"), "Library/Application Support/ReCaptionTools")
-        else File(System.getenv("LOCALAPPDATA") ?: System.getProperty("user.home"), "ReCaptionTools")
+        if (Os.mac) File(System.getProperty("user.home"), "Library/Application Support/TitulkyPS5")
+        else File(System.getenv("LOCALAPPDATA") ?: System.getProperty("user.home"), "TitulkyPS5")
     /** Složka `pc` v repozitáři – nastavuje ji spouštěcí skript; v balíčku ke stažení složka `app` vedle ReCaption.exe. */
     val pc = File(System.getProperty("recaption.pc", "."))
     /** Python s knihovnami přibalený v balíčku ke stažení (`ReCaption-PC.zip`, `.github/workflows/pc.yml`). */
@@ -275,7 +275,7 @@ class Ctecka(
                 slozka.mkdirs()
                 zapisovac = File(slozka, "zaznam.txt").bufferedWriter(Charsets.UTF_8)
                 log("Záznam do ${slozka.path}")
-                zapis("ReCaption pro PC · jazyk $jazyk · okno „$okno“ · výstup $vystup · DeepL ${if (deepl) "ano" else "ne"} · " +
+                zapis("Titulky PS5 pro PC · jazyk $jazyk · okno „$okno“ · výstup $vystup · DeepL ${if (deepl) "ano" else "ne"} · " +
                     "hra ${profil.id} · pokyny ${if (pokyny) "ano" else "ne"} · úkol ${if (ukol) "ano" else "ne"} · menu ${if (menu) "ano" else "ne"}")
                 zapis("CTENI = text ze spodní třetiny obrazu, souřadnice v celém obraze [vlevo,nahoře-vpravo,dole]; snímky celé hry jsou snimek-*.jpg")
             }
