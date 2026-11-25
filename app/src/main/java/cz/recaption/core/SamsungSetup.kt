@@ -31,7 +31,7 @@ object SamsungSetup {
     /** Zdroj pro Apps2Samsung: holý odkaz na repozitář (ne `/releases/tag/latest` – tester 24. 11. 2026 dostal
      *  „use a github repository or release link .wgt or .tpk file", odkaz na stránku vydání appka odmítla;
      *  Apps2Samsung si v repozitáři sám najde nejnovější vydání s `.wgt`). Na skutečné TV ověřil jen tenhle tvar. */
-    const val SOURCE_URL = "https://github.com/adusa89/ReCaption"
+    const val SOURCE_URL = "https://github.com/zaoo-star/titulky-ps5"
 
     /** Název souboru ve vydání (Apps2Samsung bere soubory .wgt). */
     const val WGT_ASSET = "TitulkyPS5-Samsung.wgt"

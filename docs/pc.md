@@ -6,6 +6,8 @@ počítač se k PS5 připojí přes Remote Play 🔵 účtem pro Titulky PS5 (dr
 
 Potřeba: **Windows 10 nebo 11 (64 bit)** ve stejné domácí síti jako PS5 a TV, asi 1,5 GB místa.
 
+Místo Android TV jde i **TV LG** nebo **Samsung** s aplikací Titulky PS5 – návod [TV LG](lg.md), [TV Samsung](samsung.md).
+
 <a id="stazeni"></a>
 ## 1. Stáhnout a spustit
 

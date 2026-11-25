@@ -38,17 +38,17 @@
       st_sit: 'TV bez sítě',
       st_ok: 'vzhled titulků',
       uk_stitek: 'Ukázka',
-      uk_popis: 'Hra ukazuje titulky anglicky. ReCaption je přečte, přeloží a překlad ukáže v černém pruhu dole.',
+      uk_popis: 'Hra ukazuje titulky anglicky. Titulky PS5 je přečtou, přeloží a překlad ukážou v pruhu dole.',
       np_nadpis: 'Jak to funguje',
-      np_1: 'Do telefonu nebo boxu s Androidem nainstalovat ReCaption: recaption.pages.dev',
-      np_2: 'Podle průvodce v ní spárovat PlayStation 5. Zařízení musí být ve stejné domácí síti jako televize.',
-      np_3: 'V ReCaptionu na Androidu zvolit Nastavení → Typ TV podle této televize a spustit překlad.',
-      np_4: 'Tady v televizi vybrat vstup HDMI s PlayStationem. Volba se zapamatuje – příště se hra ukáže hned po spuštění. Televize si ReCaption v síti najde sama.',
-      np_5: 'Při hře: OK otevře nabídku (pozadí, písmo, barva, okraj, poloha, originál, jména, vstup HDMI). Jde i bez spojení s telefonem. Zpět vrátí úvodní obrazovku.',
+      np_1: 'Do PC s Windows nainstalovat Titulky PS5 pro PC: zaoo-star.github.io/titulky-ps5/pc',
+      np_2: 'V programu na PC spárovat PlayStation 5 a v Titulky → Hra vybrat hru. PC musí být ve stejné domácí síti jako televize.',
+      np_3: 'Na PC zvolit ⚙ Nastavení → Použití → Čtečka pro TV a Spustit.',
+      np_4: 'Tady v televizi vybrat vstup HDMI s PlayStationem. Volba se zapamatuje – příště se hra ukáže hned po spuštění. Televize si PC v síti najde sama.',
+      np_5: 'Při hře: OK otevře nabídku (pozadí, písmo, barva, okraj, poloha, originál, jména, vstup HDMI). Jde i bez spojení s PC. Zpět vrátí úvodní obrazovku.',
       np_sony: 'Aplikace není produktem společnosti Sony Interactive Entertainment. „PlayStation“ a „PS5“ jsou jejich ochranné známky.',
       pn_nadpis: 'Vzhled titulků',
-      kafe: 'Podpořit ReCaption',
-      kafe_pod: 'Dobrovolný příspěvek',
+      kafe: 'Návody Titulky PS5',
+      kafe_pod: 'zaoo-star.github.io/titulky-ps5',
       pn_pruhlednost: 'Pozadí pruhu',
       pn_velikost: 'Velikost písma',
       pn_poloha: 'Poloha pruhu',
@@ -63,10 +63,10 @@
       pn_offline: 'Změny se nepodařilo uložit',
       pn_podle_hry: 'Podle hry',
       pn_polohy: ['Přes titulky', 'Těsně nad titulkem', 'Nad oblastí čtení', 'Nahoře'],
-      pn_vlastni: 'Vlastní (z telefonu)',
+      pn_vlastni: 'Vlastní (z PC)',
       pn_ano: 'Zapnuto',
       pn_ne: 'Vypnuto',
-      pn_ovladani: '▲▼ volba · ◀▶ změna · Zpět zavře. Ostatní nastavení je v ReCaptionu v telefonu.',
+      pn_ovladani: '▲▼ volba · ◀▶ změna · Zpět zavře. Ostatní nastavení je v programu na PC.',
       pn_ukazka: 'Takhle bude vypadat překlad titulků.',
       pn_ukazka_orig: 'This is how the subtitle translation will look.'
     },
@@ -85,18 +85,18 @@
       st_sit: 'TV offline',
       st_ok: 'subtitle look',
       uk_stitek: 'Demo',
-      uk_popis: 'The game shows subtitles in English. ReCaption reads them, translates them and shows ' +
+      uk_popis: 'The game shows subtitles in English. Titulky PS5 reads them, translates them and shows ' +
         'the translation in the black bar below (here: Czech).',
       np_nadpis: 'How it works',
-      np_1: 'Install ReCaption on an Android phone or box: recaption.pages.dev',
-      np_2: 'Follow its guide to pair your PlayStation 5. The device must be in the same home network as the TV.',
-      np_3: 'In ReCaption on Android, choose Settings → TV type matching this TV and start translating.',
-      np_4: 'Here on the TV, choose the HDMI input of your PlayStation. The choice is remembered – next time the game shows right after start. The TV finds ReCaption in the network by itself.',
-      np_5: 'While playing: OK opens the menu (background, text, colour, padding, position, original, names, HDMI input). It works without the phone too. Back returns to the start screen.',
+      np_1: 'Install Titulky PS5 for PC on a Windows PC: zaoo-star.github.io/titulky-ps5/pc',
+      np_2: 'In the PC program, pair your PlayStation 5 and pick the game. The PC must be in the same home network as the TV.',
+      np_3: 'On the PC, choose ⚙ Settings → Use → Reader for TV and press Start.',
+      np_4: 'Here on the TV, choose the HDMI input of your PlayStation. The choice is remembered – next time the game shows right after start. The TV finds the PC in the network by itself.',
+      np_5: 'While playing: OK opens the menu (background, text, colour, padding, position, original, names, HDMI input). It works without the PC too. Back returns to the start screen.',
       np_sony: 'This app is not a product of Sony Interactive Entertainment. “PlayStation” and “PS5” are their trademarks.',
       pn_nadpis: 'Subtitle look',
-      kafe: 'Support ReCaption',
-      kafe_pod: 'Voluntary tip',
+      kafe: 'Titulky PS5 guides',
+      kafe_pod: 'zaoo-star.github.io/titulky-ps5',
       pn_pruhlednost: 'Bar background',
       pn_velikost: 'Text size',
       pn_poloha: 'Bar position',
@@ -111,10 +111,10 @@
       pn_offline: 'Changes could not be saved',
       pn_podle_hry: 'Like the game',
       pn_polohy: ['Over the subtitles', 'Right above the subtitle', 'Above the reading area', 'At the top'],
-      pn_vlastni: 'Custom (from the phone)',
+      pn_vlastni: 'Custom (from the PC)',
       pn_ano: 'On',
       pn_ne: 'Off',
-      pn_ovladani: '▲▼ choose · ◀▶ change · Back closes. Everything else is in ReCaption on the phone.',
+      pn_ovladani: '▲▼ choose · ◀▶ change · Back closes. Everything else is in the PC program.',
       pn_ukazka: 'This is how the translation will look.',
       pn_ukazka_orig: 'This is how the subtitle translation will look.'
     }
@@ -295,10 +295,10 @@
     if (!naDomu && !prijem) { return r; }
     // čeká na spojení: jediný řádek o ReCaptionu (od 1.5.16, přání majitele – HDMI ani řádky z Androidu tam nedávají smysl)
     // ceka: pod řádkem slabý běžící pruh (od 1.5.18, přání majitele) – jen když se opravdu hledá
-    if (!spojeni) { r.push(stav.bezSite ? { barva: 'pozor', text: T.st_sit } : { barva: 'pozor', text: 'ReCaption · ' + T.st_hledam, ceka: true }); return r; }
+    if (!spojeni) { r.push(stav.bezSite ? { barva: 'pozor', text: T.st_sit } : { barva: 'pozor', text: 'Titulky PS5 · ' + T.st_hledam, ceka: true }); return r; }
     // vstup HDMI jen při potížích (jako na Android TV, kde řádek HDMI není); na úvodní obrazovce ne
     if (!naDomu && stav.vstupChyba) { r.push({ barva: 'pozor', text: 'HDMI ' + prijem.hdmi + ' · ' + T.st_vstup }); }
-    r.push({ barva: 'ok', text: 'ReCaption · ' + T.st_pripojeno });
+    r.push({ barva: 'ok', text: 'Titulky PS5 · ' + T.st_pripojeno });
     r = r.concat(stav.android);
     // nápověda k OK: tlačítko v rámečku místo šedé tečky (od 1.5.4); jen při hře
     if (!naDomu) { r.push({ barva: 'klavesa', text: T.st_ok }); }

@@ -226,7 +226,7 @@ sealed class PcMessage {
          * Verze, kterou se Android TV ohlásí PC: PC podle ní volí tvar zpráv (telefon přes text od 1.5.28, obrázky 1.5.24…,
          * [TvSender.PHONE_OVER_TV]). Odpovídá aplikaci pro TV LG/Samsung (`webos/obchod/app/appinfo.json`), kterou tu napodobujeme.
          */
-        const val RECEIVER_VERSION = "1.5.60"
+        const val RECEIVER_VERSION = "1.5.61"
 
         /** Ohlášení po připojení (jako `pripojeno` z aplikace v TV, [TvAnnounce]). */
         fun announce(model: String, version: String) =

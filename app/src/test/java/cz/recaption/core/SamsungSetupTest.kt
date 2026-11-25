@@ -9,8 +9,8 @@ import org.junit.Test
 /** Průvodce TV Samsung přes Apps2Samsung: odkazy, hledání TV a pořadí kroků. */
 class SamsungSetupTest {
     @Test fun linksCarryOnlyTheLatestRelease() {
-        assertEquals("apps2samsung://source?url=https%3A%2F%2Fgithub.com%2Fadusa89%2FReCaption", SamsungSetup.sourceLink())
-        assertEquals("https://apps2samsung.com/source?url=https%3A%2F%2Fgithub.com%2Fadusa89%2FReCaption", SamsungSetup.sourceWebLink())
+        assertEquals("apps2samsung://source?url=https%3A%2F%2Fgithub.com%2Fzaoo-star%2Ftitulky-ps5", SamsungSetup.sourceLink())
+        assertEquals("https://apps2samsung.com/source?url=https%3A%2F%2Fgithub.com%2Fzaoo-star%2Ftitulky-ps5", SamsungSetup.sourceWebLink())
         assertTrue(SamsungSetup.WGT_ASSET.endsWith(".wgt"))
     }
 

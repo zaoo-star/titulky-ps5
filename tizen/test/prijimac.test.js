@@ -149,7 +149,7 @@ function zkus(platforma, verze, dalsi) {
     // stav na úvodní obrazovce (od 1.5.17): ReCaption se hledá hned od startu
     var domuStav = tv.prvky['domu-stav'].children;
     assert.ok(domuStav.length >= 1, 'na úvodní obrazovce je stav');
-    assert.ok(/^ReCaption · /.test(domuStav[0].children[1].textContent), 'stav: ReCaption · …');
+    assert.ok(/^Titulky PS5 · /.test(domuStav[0].children[1].textContent), 'stav: Titulky PS5 · …');
     tv.stiskni(13);
     assert.strictEqual(tv.document.documentElement.className, 's-hra', 'při hře je průhledná celá stránka');
     assert.strictEqual(tv.pamet.hdmi, '1', 'vstup se zapamatuje');
@@ -467,7 +467,7 @@ function zkus(platforma, verze, dalsi) {
       ws.onmessage({ data: JSON.stringify({ typ: 'stav', radky: [{ barva: 'pozor', text: 'PS5-151 · bez obrazu' }, { barva: 'zla', text: 'Čeština' }] }) });
       var st = tv.prvky.hlaseni.children;
       assert.strictEqual(tv.prvky.hlaseni.style.display, 'block', 'oranžový stav je vidět');
-      assert.ok(/^ReCaption · /.test(st[0].children[1].textContent), 'bez potíží se vstupem žádný řádek HDMI');
+      assert.ok(/^Titulky PS5 · /.test(st[0].children[1].textContent), 'bez potíží se vstupem žádný řádek HDMI');
       assert.strictEqual(st[0].children.length, 2, 'se spojením pod řádkem ReCaptionu žádný běžící pruh');
       assert.ok(!st.some(function (r) { return r.className !== 'st-radek'; }), 'se spojením se nic nečeká');
       assert.strictEqual(st[1].children[1].textContent, 'PS5-151 · bez obrazu');

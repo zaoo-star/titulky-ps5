@@ -3,6 +3,7 @@ package cz.recaption
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Intent
+import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Build
@@ -17,6 +18,7 @@ import android.view.View
 import android.view.WindowManager
 import android.view.inputmethod.EditorInfo
 import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.HorizontalScrollView
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -127,6 +129,9 @@ class MainActivity : Activity() {
      * Jinde je prázdná a schovaná.
      */
     private lateinit var pinned: LinearLayout
+    /** Titulky PS5 (TV): menu Nastavení vlevo (Obecné, Vzhled titulků…) a náhled titulků vpravo – jen na široké obrazovce. */
+    private var sideNav: LinearLayout? = null
+    private var previewPanel: LinearLayout? = null
     private var pageScroll: ScrollView? = null
     private var contentTop = 0
     private var section = Section.HOME
@@ -600,8 +605,82 @@ class MainActivity : Activity() {
         scroll.addView(content)
         pageScroll = scroll
         column.addView(scroll, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
-        root.addView(column, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
+        // Titulky PS5: tělo = [menu Nastavení vlevo] [obsah] [náhled titulků vpravo]; okraje jen u Nastavení a Titulků
+        val body = ui.hbox().apply { gravity = Gravity.TOP }
+        sideNav = ui.vbox().apply {
+            setBackgroundColor(Theme.SIDEBAR); visibility = View.GONE
+            setPadding(ui.dp(28), ui.dp(30), ui.dp(16), ui.dp(20))
+            clipChildren = false; clipToPadding = false
+        }
+        body.addView(sideNav, LinearLayout.LayoutParams(ui.dp(250), LinearLayout.LayoutParams.MATCH_PARENT))
+        body.addView(column, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f))
+        previewPanel = ui.vbox().apply { visibility = View.GONE; setPadding(0, ui.dp(34), ui.dp(40), ui.dp(20)) }
+        body.addView(previewPanel, LinearLayout.LayoutParams(ui.dp(300), LinearLayout.LayoutParams.MATCH_PARENT))
+        root.addView(body, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
         setContentView(root)
+    }
+
+    /** Široká obrazovka, Nastavení nebo Titulky: menu vlevo jako v Nastavení PS5 (Obecné · Vzhled titulků · Čtení a překlad · Experimentální). */
+    private fun sideNavOn() = !narrow && wizard < 0 && (section == Section.SETTINGS || section == Section.LOOK)
+
+    private fun renderSideNav() {
+        val nav = sideNav ?: return
+        val prev = previewPanel
+        nav.removeAllViews(); prev?.removeAllViews()
+        val on = sideNavOn()
+        nav.visibility = if (on) View.VISIBLE else View.GONE
+        prev?.visibility = if (on && section == Section.LOOK) View.VISIBLE else View.GONE
+        if (!on) return
+        nav.addView(ui.text(t("m_settings"), 24f, Theme.TEXT, bold = true), ui.lp().apply { bottomMargin = ui.dp(16) })
+        fun item(icon: String, label: String, active: Boolean, tag: String, go: () -> Unit) {
+            val v = ui.hbox().apply {
+                isFocusable = true; isClickable = true
+                gravity = Gravity.CENTER_VERTICAL
+                background = ui.focusBg(if (active) Theme.ACCENT else Theme.SIDEBAR, radius = 12)
+                setPadding(ui.dp(14), ui.dp(12), ui.dp(12), ui.dp(12))
+                addView(ui.text(icon, 17f, if (active) Theme.TEXT else Theme.MUTED, bold = true), LinearLayout.LayoutParams(ui.dp(30), LinearLayout.LayoutParams.WRAP_CONTENT))
+                addView(ui.text(label, 16f, if (active) Theme.TEXT else Theme.MUTED, bold = active).apply { maxLines = 1 })
+                setOnClickListener { go() }
+            }
+            nav.addView(tagged(v, tag), ui.lp().apply { bottomMargin = ui.dp(6) })
+        }
+        val set = section == Section.SETTINGS
+        fun tab(tb: SettingsTab) { section = Section.SETTINGS; settingsTab = tb; render(keepFocus = true); pageScroll?.post { pageScroll?.scrollTo(0, 0) } }
+        item("◍", t(SettingsTab.GENERAL.key), set && settingsTab == SettingsTab.GENERAL, "stab_GENERAL") { tab(SettingsTab.GENERAL) }
+        item("Aa", ct("m_look"), section == Section.LOOK, "stab_LOOK") { section = Section.LOOK; render(keepFocus = true); pageScroll?.post { pageScroll?.scrollTo(0, 0) } }
+        item("≡", t(SettingsTab.READ.key), set && settingsTab == SettingsTab.READ, "stab_READ") { tab(SettingsTab.READ) }
+        item("⚗", t(SettingsTab.EXPERIMENTAL.key), set && settingsTab == SettingsTab.EXPERIMENTAL, "stab_EXPERIMENTAL") { tab(SettingsTab.EXPERIMENTAL) }
+        if (prev != null && section == Section.LOOK) lookPreview(prev)
+    }
+
+    /** Náhled vzhledu titulků vedle voleb (velikost, barva, tučně, průhlednost pruhu) – mění se hned s volbou. */
+    private fun lookPreview(panel: LinearLayout) {
+        panel.addView(ui.text("NÁHLED", 13f, Theme.MUTED, bold = true), ui.lp().apply { bottomMargin = ui.dp(10) })
+        val scene = FrameLayout(this).apply {
+            background = GradientDrawable(GradientDrawable.Orientation.TL_BR, intArrayOf(Color.rgb(0x3A, 0x4A, 0x5E), Color.rgb(0x1C, 0x24, 0x30), Color.rgb(0x0F, 0x14, 0x1B))).apply { cornerRadius = ui.dp(16).toFloat() }
+            clipToOutline = true
+        }
+        // úkol vlevo nahoře (žlutý štítek jako v pruhu úkolu)
+        scene.addView(ui.text("ÚKOL  Dojet do obchodu", 11f, Theme.WARN, bold = true).apply {
+            background = GradientDrawable().apply { setColor(Color.argb(210, 10, 16, 30)); cornerRadius = ui.dp(8).toFloat() }
+            setPadding(ui.dp(9), ui.dp(6), ui.dp(9), ui.dp(6))
+        }, FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.TOP or Gravity.START).apply { setMargins(ui.dp(12), ui.dp(12), ui.dp(12), 0) })
+        // titulek podle voleb (písmo zmenšené v poměru náhledu k obrazovce)
+        val size = Prefs.textSize(this) * 0.62f
+        val color = Prefs.TEXT_COLORS[Prefs.textColorIndex(this)]
+        val alpha = (Prefs.opacity(this).coerceIn(0, 100) * 255 / 100)
+        val line = android.text.SpannableStringBuilder().apply {
+            append("Lucia: ")
+            setSpan(android.text.style.ForegroundColorSpan(Color.rgb(0x7F, 0xB2, 0xFF)), 0, length, 0)
+            append("Byl to jen instinkt. Špatný instinkt.")
+        }
+        scene.addView(ui.text(line, size, color, bold = Prefs.boldText(this)).apply {
+            gravity = Gravity.CENTER
+            background = GradientDrawable().apply { setColor(Color.argb(alpha, 6, 10, 22)); cornerRadius = ui.dp(10).toFloat() }
+            setPadding(ui.dp(10), ui.dp(8), ui.dp(10), ui.dp(8))
+        }, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM).apply { setMargins(ui.dp(12), 0, ui.dp(12), ui.dp(14)) })
+        panel.addView(scene, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, ui.dp(200)))
+        panel.addView(ui.text("Dialogy dole, úkol vlevo nahoře, mobil vedle telefonu.", 13f, Theme.MUTED), ui.lp(top = 10))
     }
 
     /** Pod kterou položkou menu právě zobrazená stránka patří. */
@@ -686,7 +765,9 @@ class MainActivity : Activity() {
         UiState.previewWanted = wizard < 0 && section == Section.PS5 && "preview" in openGroups
         // pevná hlavička jen v Nastavení (nadpis a záložky), jinde schovaná a obsah s běžným odsazením
         pinned.removeAllViews()
-        val pin = wizard < 0 && section == Section.SETTINGS
+        renderSideNav()
+        // s menu vlevo (široká obrazovka) záložky Nastavení nahoře nejsou
+        val pin = wizard < 0 && section == Section.SETTINGS && !sideNavOn()
         pinned.visibility = if (pin) View.VISIBLE else View.GONE
         content.setPadding(content.paddingLeft, if (pin) ui.dp(8) else contentTop, content.paddingRight, content.paddingBottom)
         if (wizard >= 0) { renderWizard(focusedTag); return }
@@ -1407,8 +1488,26 @@ class MainActivity : Activity() {
         }
         // telefon, který nastavuje TV, sám nepřekládá – Spustit je v TV
         // tlačítka nahoře nad přehledem (od 0.97.129, přání majitele)
-        if (!remote) add(buttons, 14)
-        if (!remote && !narrow) homeTiles()
+        // Titulky PS5 na široké obrazovce: dlaždice jako menu PS5 (velká hlavní akce + zkratky), stav vedle mřížky kartiček
+        val tilesWide = !remote && !narrow && lic.canRun && !demoRun
+        if (tilesWide) homeTileRow(running, paused, paired, onXbox)
+        else {
+            if (!remote) add(buttons, 14)
+            if (!remote && !narrow) homeTiles()
+        }
+        if (tilesWide) {
+            val rowsBox = ui.vbox()
+            statusRows(rowsBox, running, demoRun, overlayOk, modelOk, paired)
+            val extra = mutableListOf<View>()
+            (busyText ?: sub).takeIf { it.isNotEmpty() }?.let { extra += ui.text(it, 16f, Theme.MUTED) }
+            if (busyText != null && OfflineTranslator.isDownloading(Prefs.lang(this))) extra += ui.progress(null)
+            if (update != null && Updater.state == Updater.State.FAILED)
+                extra += ui.text(Updater.text(this, Updater.problem ?: "upd_fail"), 16f, Theme.BAD, bold = true)
+            add(stateBlock(title, color, extra, rowsBox), 22)
+            if (crashNote) add(ui.card().apply { addView(ui.text(t("cr_note") + " " + t("m_help") + " → " + t("rep_btn"), 15f, Theme.WARN)) }, 12)
+            warnings()
+            return
+        }
         val status = ui.card()
         // velký nadpis jen, když je potřeba něco vědět (připojuje se, PS5 spí, chyba, čeká na TV…); „Překlad běží“ a „Připraveno“
         // ne – to ukazují tlačítka nahoře a body přehledu (od 0.97.129, přání majitele)
@@ -1458,9 +1557,22 @@ class MainActivity : Activity() {
                 PcReceiverService.start(this); main.postDelayed({ render(true) }, 300)
             }, "start"), ui.lp())
         }
-        add(buttons, 14)
-        if (!narrow) homeTiles()
-        val card = ui.card()
+        if (narrow) add(buttons, 14)
+        else {
+            val tl = mutableListOf<HomeTile>()
+            if (!on) tl += HomeTile("▶", "Spustit překlad z PC", "start", big = true) {
+                if (!SubtitleOverlay.canShow(this)) { toast(t("need_overlay")); return@HomeTile }
+                PcReceiverService.start(this); main.postDelayed({ render(true) }, 300)
+            } else {
+                if (Prefs.isTv(this)) tl += HomeTile("⤶", t("b_go_game"), "start", big = true) { moveTaskToBack(true) }
+                tl += HomeTile("■", t("b_stop"), "stop", big = !Prefs.isTv(this), color = STOP_RED) {
+                    PcReceiverService.stop(this); main.postDelayed({ render(true) }, 300)
+                }
+            }
+            tl += shortcutTiles()
+            tileRow(tl)
+        }
+        val card = if (narrow) ui.card() else ui.vbox()
         fun line(color: Int, text: String, tag: String, onClick: (() -> Unit)? = null) {
             val r = ui.hbox().apply {
                 setPadding(ui.dp(6), ui.dp(7), ui.dp(6), ui.dp(7))
@@ -1490,7 +1602,111 @@ class MainActivity : Activity() {
             if (overlayOk) null else { { section = Section.SETTINGS; render() } })
         Prefs.pcAddress(this)?.let { line(Theme.MUTED, "Poslední PC · $it", "pclast") }
         line(Theme.MUTED, if (Prefs.pcMac(this) != null) "Probuzení PC ze spánku · zapnuto" else "Probuzení PC ze spánku · po prvním spojení", "pcwake")
-        add(card, 18)
+        if (narrow) { add(card, 18); return }
+        val (title, color) = when {
+            !overlayOk -> "Chybí povolení" to Theme.WARN
+            PcReceiverService.state == PcReceiverService.State.CONNECTED -> "Překlad z PC běží" to Theme.OK
+            PcReceiverService.state == PcReceiverService.State.SEARCHING -> "Hledám PC" to Theme.WARN
+            else -> t("st_ready") to Theme.ACCENT
+        }
+        val extra = if (PcReceiverService.state == PcReceiverService.State.OFF && overlayOk)
+            listOf<View>(ui.text("OK spustí čtení na PC a vrátí obraz do hry.", 16f, Theme.MUTED)) else emptyList()
+        add(stateBlock(title, color, extra, card), 22)
+    }
+
+    /** Dlaždice na Domů (široká obrazovka): [big] = hlavní akce (větší, modrá), ostatní zkratky. */
+    private class HomeTile(val icon: String, val title: String, val tag: String, val big: Boolean = false,
+                           val color: Int? = null, val go: () -> Unit)
+
+    /** Zkratky za hlavní akcí: Vzhled titulků, Mobil ve hře, Konzole, Nastavení, Nápověda. */
+    private fun shortcutTiles(): List<HomeTile> = listOf(
+        HomeTile("Aa", ct("m_look"), "tile_look") { section = Section.LOOK; render() },
+        HomeTile("▯", "Mobil ve hře", "tile_phone") { section = Section.LOOK; lookOpen = 0; render() },
+        HomeTile("◎", consoleName() ?: ct("c_console"), "tile_console") { section = Section.PS5; render() },
+        HomeTile("⚙", t("m_settings"), "tile_settings") { section = Section.SETTINGS; render() },
+        HomeTile("?", ct("m_help"), "tile_help") { section = Section.HELP; render() },
+    )
+
+    /** Domů na široké obrazovce: hlavní akce podle stavu (Spustit / Zpět do hry + Pozastavit + Zastavit) a zkratky. */
+    private fun homeTileRow(running: Boolean, paused: Boolean, paired: Boolean, onXbox: Boolean) {
+        val tl = mutableListOf<HomeTile>()
+        when {
+            !running && !paired && !onXbox -> tl += HomeTile("▶", t("ps5_pair"), "start", big = true) { startFlow() }
+            !running -> tl += HomeTile("▶", t("b_start"), "start", big = true) { startFlow() }
+            else -> {
+                if (Prefs.isTv(this)) tl += HomeTile("⤶", t("b_go_game"), "start", big = true) { moveTaskToBack(true) }
+                tl += HomeTile(if (paused) "▶" else "❚❚", t(if (paused) "b_resume" else "b_pause"), "pause", big = !Prefs.isTv(this)) { togglePause() }
+                tl += HomeTile("■", t("b_stop"), "stop", color = STOP_RED) { stopTranslation() }
+            }
+        }
+        // při překladu se nevejde všech pět zkratek – Nápověda je v horní liště
+        tl += shortcutTiles().let { if (tl.size > 1) it.dropLast(1) else it }
+        tileRow(tl)
+    }
+
+    private fun tileRow(tiles: List<HomeTile>) {
+        val row = ui.hbox().apply { gravity = Gravity.BOTTOM; clipChildren = false; clipToPadding = false }
+        for (tl in tiles) {
+            val bg = if (tl.big) Theme.ACCENT else (tl.color?.let { Color.argb(70, Color.red(it), Color.green(it), Color.blue(it)) } ?: Theme.CARD)
+            val v = ui.vbox().apply {
+                isFocusable = true; isClickable = true
+                background = ui.focusBg(bg, radius = if (tl.big) 22 else 18)
+                ui.pop(this)
+                setPadding(ui.dp(18), ui.dp(16), ui.dp(16), ui.dp(16))
+                addView(ui.text(tl.icon, if (tl.big) 38f else 26f, Theme.TEXT, bold = true))
+                addView(View(this@MainActivity), LinearLayout.LayoutParams(1, 0, 1f))
+                addView(ui.text(tl.title, if (tl.big) 20f else 15f, Theme.TEXT, bold = true).apply { maxLines = 2 })
+                setOnClickListener { tl.go() }
+            }
+            row.addView(tagged(v, tl.tag), LinearLayout.LayoutParams(0, ui.dp(if (tl.big) 172 else 128), if (tl.big) 1.5f else 1f).apply {
+                if (row.childCount > 0) leftMargin = ui.dp(14)
+            })
+        }
+        add(row, 18)
+    }
+
+    /**
+     * Stav na Domů (široká obrazovka): vlevo „STAV“ a velký nápis s tečkou, vpravo body přehledu jako kartičky ve dvou
+     * sloupcích. Body bere hotové z [rows] (řádek s tečkou + případné tlačítko či pruh pod ním = jedna kartička).
+     */
+    private fun stateBlock(title: String, color: Int, extra: List<View>, rows: LinearLayout): View {
+        val wrap = ui.hbox().apply { gravity = Gravity.TOP }
+        val left = ui.vbox()
+        left.addView(ui.text("STAV", 13f, Theme.MUTED, bold = true))
+        val head = ui.hbox().apply { gravity = Gravity.CENTER_VERTICAL }
+        head.addView(View(this).apply { background = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(color) } },
+            LinearLayout.LayoutParams(ui.dp(16), ui.dp(16)).apply { rightMargin = ui.dp(14) })
+        head.addView(ui.text(title, 30f, Theme.TEXT, bold = true))
+        left.addView(head, ui.lp(top = 6))
+        extra.forEach { left.addView(it, ui.lp(top = 8)) }
+        wrap.addView(left, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 0.36f).apply { rightMargin = ui.dp(28) })
+        // body → kartičky
+        val kids = (0 until rows.childCount).map { rows.getChildAt(it) }
+        rows.removeAllViews()
+        val groups = mutableListOf<MutableList<View>>()
+        for (k in kids) {
+            val isRow = k is LinearLayout && k.orientation == LinearLayout.HORIZONTAL && (k.tag as? String)?.endsWith("_fix") != true
+            if (isRow || groups.isEmpty()) groups += mutableListOf(k) else groups.last() += k
+        }
+        val grid = ui.vbox()
+        groups.chunked(2).forEach { pair ->
+            val line = ui.hbox()
+            pair.forEachIndexed { i, g ->
+                val cell = ui.vbox().apply {
+                    background = GradientDrawable().apply { setColor(Theme.CARD); cornerRadius = ui.dp(14).toFloat() }
+                    setPadding(ui.dp(8), ui.dp(6), ui.dp(8), ui.dp(6))
+                }
+                g.forEach { v ->
+                    val lp = v.layoutParams as? LinearLayout.LayoutParams
+                    cell.addView(v, if (lp != null) LinearLayout.LayoutParams(lp).apply { topMargin = 0 } else ui.lp())
+                }
+                line.addView(cell, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f).apply { if (i > 0) leftMargin = ui.dp(12) })
+            }
+            if (pair.size == 1) line.addView(View(this), LinearLayout.LayoutParams(0, 1, 1f).apply { leftMargin = ui.dp(12) })
+            grid.addView(line, ui.lp(top = if (grid.childCount > 0) 12 else 0))
+        }
+        wrap.addView(grid, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 0.64f))
+        return wrap
     }
 
     /** Titulky PS5: velké dlaždice jako v menu PS5 – rychlý skok na Vzhled titulků, Konzoli, Nápovědu a Nastavení. */
@@ -3050,6 +3266,7 @@ class MainActivity : Activity() {
         val tabs = ui.hbox()
         var activeTab: View? = null
         for (tab in SettingsTab.values()) {
+            if (sideNavOn()) break   // na široké obrazovce jsou záložky v menu vlevo
             val active = tab == settingsTab
             tabs.addView(ui.text(t(tab.key), 16f, if (active) Theme.BG else Theme.TEXT, bold = true).apply {
                 isFocusable = true
@@ -3064,7 +3281,7 @@ class MainActivity : Activity() {
             }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { rightMargin = ui.dp(8) })
         }
         val tabScroll = HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; clipChildren = false; clipToPadding = false; addView(tabs) }
-        pinned.addView(tabScroll, ui.lp())
+        if (!sideNavOn()) pinned.addView(tabScroll, ui.lp())
         // vybraná záložka celá na obrazovce (řada se překresluje, takže by jinak začínala vždy zleva)
         scrollTabIntoView(tabScroll, activeTab, smooth = false)
 
@@ -3950,6 +4167,6 @@ class MainActivity : Activity() {
 }
 
 object BuildInfo {
-    const val VERSION = "verze 1.3-z1"
-    const val VERSION_CODE = 318
+    const val VERSION = "verze 1.3-z4"
+    const val VERSION_CODE = 321
 }

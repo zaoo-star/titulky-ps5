@@ -90,7 +90,11 @@ jobs:
           CODE=$("$AAPT" dump badging TitulkyPS5.apk | grep -oE "versionCode='[0-9]+'" | grep -oE "[0-9]+")
           NAME=$("$AAPT" dump badging TitulkyPS5.apk | grep -oE "versionName='[^']+'" | cut -d"'" -f2)
           echo "$CODE $NAME" > version.txt; cat version.txt
-          ls -la TitulkyPS5*.apk
+          # aplikace pro TV LG a Samsung (pro překlad z PC) – přímo z APK, stejná verze jako v něm
+          unzip -p TitulkyPS5.apk assets/lg/receiver.ipk > TitulkyPS5-LG.ipk
+          unzip -p TitulkyPS5.apk assets/samsung/receiver.wgt > TitulkyPS5-Samsung.wgt
+          test -s TitulkyPS5-LG.ipk && test -s TitulkyPS5-Samsung.wgt
+          ls -la TitulkyPS5*.apk TitulkyPS5-LG.ipk TitulkyPS5-Samsung.wgt
 
       - name: Kontrola podpisu
         env:
@@ -108,6 +112,8 @@ jobs:
             TitulkyPS5.apk
             TitulkyPS5-arm64.apk
             TitulkyPS5-arm32.apk
+            TitulkyPS5-LG.ipk
+            TitulkyPS5-Samsung.wgt
             version.txt
             podpis.txt
 
@@ -118,6 +124,6 @@ jobs:
         run: |
           if [ "$(cat podpis.txt)" != "stálý" ]; then echo "Dočasný podpis – nevydávám."; exit 0; fi
           gh release view latest >/dev/null 2>&1 || gh release create latest --title "Titulky PS5 (nejnovější)" --notes "Titulky PS5 – české titulky do her z PS5 na Android TV. Licence AGPL-3.0, zdrojový kód je v tomto repozitáři."
-          gh release upload latest TitulkyPS5.apk TitulkyPS5-arm64.apk TitulkyPS5-arm32.apk version.txt --clobber
+          gh release upload latest TitulkyPS5.apk TitulkyPS5-arm64.apk TitulkyPS5-arm32.apk TitulkyPS5-LG.ipk TitulkyPS5-Samsung.wgt version.txt --clobber
           V=$(cut -d' ' -f2 version.txt)
           gh release view "v$V" >/dev/null 2>&1 || gh release create "v$V" TitulkyPS5.apk --title "Titulky PS5 $V" --notes "Verze $V (commit ${GITHUB_SHA::7})."
