@@ -10,12 +10,16 @@ Potřeba: **Windows 10 nebo 11 (64 bit)** ve stejné domácí síti jako PS5 a T
 ## 1. Stáhnout a spustit
 
 1. **[Stáhnout TitulkyPS5-PC.zip](https://github.com/zaoo-star/titulky-ps5/releases/download/pc/TitulkyPS5-PC.zip)**
-   (asi 250 MB).
+   (asi 200 MB).
 2. ZIP rozbalit (pravé tlačítko → **Extrahovat vše**) třeba do Dokumentů a ve složce spustit **TitulkyPS5.exe**.
    Nic se neinstaluje; smazáním složky zmizí.
 3. Aplikace není podepsaná, Windows proto může ukázat „Systém Windows ochránil váš počítač“ –
    **Další informace → Přesto spustit**.
 4. **Brána firewall** – na dotaz Windows **Povolit přístup** (soukromá síť). Bez toho počítač TV nenajde.
+   Když se Windows nezeptá a TV PC nenajde: Start → **Povolit aplikaci přes bránu Windows Firewall** →
+   **Změnit nastavení** → u **TitulkyPS5** zaškrtnout **Soukromá** (když v seznamu není: **Povolit jinou aplikaci** →
+   TitulkyPS5.exe). Domácí síť musí být ve Windows nastavená jako **Soukromá** (Nastavení → Síť a internet →
+   vlastnosti sítě).
 
 <a id="nastaveni"></a>
 ## 2. Nastavení v PC (jen poprvé)
@@ -24,16 +28,32 @@ Potřeba: **Windows 10 nebo 11 (64 bit)** ve stejné domácí síti jako PS5 a T
 - **⚙ Nastavení → Spouštět s Windows · Ano** – program naběhne po zapnutí PC jen na liště a čeká na TV.
 - Překladový model a chiaki-ng (program pro Remote Play) si PC stáhne samo, když je TV poprvé zavolá
   (nebo ručně na Domů: **Připravit** a **Stáhnout**).
+- **Titulky → Hra** – vybrat hru, kterou hraješ (třeba **Grand Theft Auto VI**). Hru si PC z TV nebere; jen s vybranou
+  hrou umí číst i telefon a menu ve hře, s „Univerzální“ jen titulky.
+- Režim **⚙ → Použití → Čtečka pro TV** se zapne sám, když TV poprvé zavolá.
 
 <a id="tv"></a>
 ## 3. V TV
 
-1. V Titulkách PS5 na TV mít PS5 spárovanou jako obvykle (🔵 účet pro Titulky PS5).
-2. **Nastavení → Obecné → Překlad z PC · zapnuto.**
-3. Na Domů **Spustit** – TV najde PC v síti a zapne na něm čtení.
-4. Když PC PS5 ještě spárovanou nemá, na Domů se ukáže **Poslat spárování z TV** – jedno potvrzení a PC se
-   spáruje stejně jako TV. (Kdyby PS5 spojení z PC odmítla, spáruje se PC samo: na PC Domů → **Spárovat**.)
-5. **Zastavit** na TV čtení na PC zase vypne.
+1. **⚙ Nastavení → Obecné → Překlad z PC · zapnuto.**
+2. Na Domů musí svítit **Pruh přes obraz · povoleno** – jinak povolit zobrazení titulků
+   ([návod](android-tv.md#zobrazeni)).
+3. Na Domů **Spustit překlad z PC** – TV najde PC v síti a zapne na něm čtení. PS5 musí být zapnutá.
+4. Když PC PS5 ještě spárovanou nemá a TV ji spárovanou má, ukáže se na Domů **Poslat spárování z TV** –
+   jedno potvrzení a PC použije spárování z TV.
+5. Jinak se PS5 spáruje přímo na PC: Domů → **Spárovat**. Přihlásit se 🔵 účtem pro Titulky PS5 (čtvereček telefonem,
+   nebo **Přihlásit v prohlížeči**) a na PS5 **pod stejným 🔵 uživatelem** vyvolat **Spárovat zařízení** a osmimístné
+   číslo opsat do PC. Když je číslo z jiného účtu než přihlášení (třeba z 🟢 herního), PS5 spárování odmítne
+   (chyba 403 / 0x80108b02) – pak vyvolat číslo pod správným uživatelem. Po spárování se na PS5 přepnout zpět
+   na 🟢 herní účet.
+6. **Zastavit** na TV čtení na PC zase vypne.
+
+<a id="deepl"></a>
+## DeepL na PC (volitelné)
+
+**⚙ Nastavení → DeepL → Klíč DeepL** – vložit klíč ([kde ho vzít](deepl.md)). **DeepL online**: **Ano** = DeepL pro
+všechno, **Jen telefon** = DeepL jen pro zprávy v telefonu ve hře, titulky offline. Bezplatný klíč má omezený počet
+znaků; když dojde, PC samo přepne na offline překlad.
 
 <a id="probuzeni"></a>
 ## Probuzení PC ze spánku
