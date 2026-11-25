@@ -32,10 +32,13 @@ object SubtitleBox {
         return n.toFloat() / (b - a)
     }
 
-    /** Nejlepší shoda hrany nad ([top]) / pod řádkem [l..r]×[t..b] (body výřezu). */
-    fun edgeScore(luma: IntArray, w: Int, h: Int, l: Int, t: Int, r: Int, b: Int, top: Boolean, look: Look): Float {
+    /**
+     * Nejlepší shoda hrany nad ([top]) / pod textem [l..r]×[t..b] (body výřezu). [lineH] = výška jednoho řádku
+     * (u několika řádků nad sebou menší než [b]−[t]) – podle ní je okraj pruhu a hledaný pás.
+     */
+    fun edgeScore(luma: IntArray, w: Int, h: Int, l: Int, t: Int, r: Int, b: Int, top: Boolean, look: Look, lineH: Int = b - t): Float {
         if (w <= 0 || h <= 0 || luma.size < w * h) return 0f
-        val lh = (b - t).coerceAtLeast(1)
+        val lh = lineH.coerceAtLeast(1)
         val k = maxOf(1, Math.round(lh / 10f))
         val a = (l + lh / 2).coerceIn(0, w); val e = (r - lh / 2).coerceIn(0, w)
         if (e - a < lh) return 0f
@@ -52,6 +55,38 @@ object SubtitleBox {
             edgeScore(luma, w, h, line.left, line.top, line.right, line.bottom, false, look) >= MIN_FIT
 
     /**
+     * Řádky v pruhu titulků – i titulek na dva (tři) řádky ve společném pruhu: řádky nad sebou (mezera nejvýš výška
+     * řádku, vodorovně se překrývají) se posoudí dohromady – hrana nad prvním a pod posledním (přání majitele: „občas
+     * jsou origo titulky 2 řádky nad sebou“). Hra s pruhem pro každý řádek zvlášť projde už po jednom.
+     */
+    fun boxedLines(luma: IntArray, w: Int, h: Int, lines: List<OcrLine>, look: Look): Set<OcrLine> {
+        val out = HashSet<OcrLine>()
+        for (l in lines) if (boxed(luma, w, h, l, look)) out += l
+        val rest = lines.filter { it !in out }.sortedBy { it.top }
+        var i = 0
+        while (i < rest.size) {
+            val group = arrayListOf(rest[i])
+            var j = i + 1
+            while (j < rest.size && group.size < 4) {
+                val a = group.last(); val b = rest[j]
+                val lh = maxOf(a.height, b.height, 1)
+                val overlap = minOf(a.right, b.right) - maxOf(a.left, b.left)
+                if (b.top - a.bottom > lh || overlap < minOf(a.right - a.left, b.right - b.left) / 2) break
+                group += b; j++
+            }
+            if (group.size >= 2) {
+                val l = group.minOf { it.left }; val r = group.maxOf { it.right }
+                val t = group.first().top; val b = group.last().bottom
+                val lh = group.maxOf { it.height }
+                if (edgeScore(luma, w, h, l, t, r, b, true, look, lh) >= MIN_FIT &&
+                    edgeScore(luma, w, h, l, t, r, b, false, look, lh) >= MIN_FIT) out += group
+            }
+            i = j
+        }
+        return out
+    }
+
+    /**
      * Pamatuje si, jestli hra pruh pod titulky opravdu kreslí (hráč ho mohl ve hře vypnout). Dokud pruh nebyl vidět
      * (nebo není vidět [FORGET_MS]), nic se nevyřazuje – titulky bez pruhu se čtou jako dřív.
      */
@@ -64,8 +99,7 @@ object SubtitleBox {
          * se vyřadí – jen když pruh hra kreslí. Vrací řádky a počet vyřazených.
          */
         fun apply(blocks: List<OcrBlock>, luma: IntArray, w: Int, h: Int, keepFrom: Int, now: Long): Pair<List<OcrBlock>, Int> {
-            val inBox = HashSet<OcrLine>()
-            for (b in blocks) for (l in b.lines) if (boxed(luma, w, h, l, look)) inBox += l
+            val inBox = boxedLines(luma, w, h, blocks.flatMap { it.lines }, look)
             if (inBox.isNotEmpty()) lastSeen = now
             if (lastSeen == 0L || now - lastSeen > FORGET_MS) return blocks to 0
             var dropped = 0

@@ -88,4 +88,33 @@ class SubtitleBoxTest {
         val bad = json.replace("[0.334,22.6]", "[2,22.6]")
         assertEquals(null, GameListJson.parse(bad, 999).catalog!!.games.single().subtitleLook)
     }
+
+    private val first = OcrLine("Dunk: we give these guys Dr. Bill,", 200, 100, 440, 120)
+    private val second = OcrLine("and then they give us the pills.", 240, 128, 400, 148)
+
+    @Test fun dvaRadkyVeSpolecnemPruhu() {
+        for ((base, noise) in listOf(60 to 25, 10 to 4, 140 to 40)) {
+            val px = scene(base, noise)
+            box(px, 185, 90, 455, 158)
+            text(px, 200, 100, 440, 120); text(px, 240, 128, 400, 148)
+            // každý řádek sám neprojde (pod prvním / nad druhým je text, ne hrana)…
+            assertFalse(SubtitleBox.boxed(px, w, h, first, look))
+            // …dohromady ano
+            assertEquals("pozadí $base", setOf(first, second), SubtitleBox.boxedLines(px, w, h, listOf(second, first), look))
+        }
+    }
+
+    @Test fun kazdyRadekVeVlastnimPruhu() {
+        val px = scene(60, 25)
+        box(px, 190, 90, 450, 124); box(px, 230, 124, 410, 158)
+        text(px, 200, 100, 440, 120); text(px, 240, 132, 400, 152)
+        val a = OcrLine("a", 200, 100, 440, 120); val b = OcrLine("b", 240, 132, 400, 152)
+        assertEquals(setOf(a, b), SubtitleBox.boxedLines(px, w, h, listOf(a, b), look))
+    }
+
+    @Test fun dveCeduleNadSebouNejsou() {
+        val px = scene(60, 25)
+        text(px, 200, 100, 440, 120); text(px, 240, 128, 400, 148)
+        assertTrue(SubtitleBox.boxedLines(px, w, h, listOf(first, second), look).isEmpty())
+    }
 }
