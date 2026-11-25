@@ -91,11 +91,18 @@ class PcReceiverService : Service() {
             update()
             // povel pro program na PC: přepnout na Čtečku pro TV a spustit (a probudit PC, když známe jeho MAC)
             val replies = PcWake.send("spust", Prefs.pcMac(this))
-            replies.firstOrNull { it.second != null }?.let { (name, mac) ->
-                if (mac != Prefs.pcMac(this)) Prefs.setPcMac(this, mac)
-                pcName = name
+            replies.firstOrNull { it.mac != null }?.let { r ->
+                if (r.mac != Prefs.pcMac(this)) Prefs.setPcMac(this, r.mac)
+                pcName = r.name
             }
-            if (replies.isNotEmpty()) log("PC odpovědělo na povel: ${replies.joinToString { it.first }}")
+            if (replies.isNotEmpty()) log("PC odpovědělo na povel: ${replies.joinToString { it.name }}")
+            // PC ještě nemá PS5 spárovanou: pošle se mu spárování z TV (jen tomu PC, které odpovědělo)
+            val host = Prefs.ps5Host(this)
+            if (host != null) for (r in replies) if (r.paired == false && r.from != null) {
+                PcWake.sendPairing(PcWake.Pairing(host.name, host.ip, host.registKey, host.morning, host.mac,
+                    Prefs.psnId(this).ifBlank { null }, Prefs.psnName(this).ifBlank { null }), r.from)
+                log("spárování PS5 posláno do PC ${r.name}")
+            }
             val c = PcFinder.find(Prefs.pcAddress(this), stop = { !running })
             if (c == null) { sleep(5000); continue }
             client = c

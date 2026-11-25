@@ -317,14 +317,43 @@ private class Aplikace {
 
     /** Titulky PS5: povely z TV (Překlad z PC) – spustit / zastavit čtečku pro TV ([PcWake]). */
     private val povely = PcWake.Listener(runCatching { java.net.InetAddress.getLocalHost().hostName }.getOrNull() ?: "PC",
-        log = { m -> SwingUtilities.invokeLater { zapis(m) } }) { akce, _ ->
+        log = { m -> SwingUtilities.invokeLater { zapis(m) } },
+        paired = { runCatching { Chiaki.konzole(Chiaki.PROFIL_CTECKY).isNotEmpty() }.getOrNull() },
+        onPairing = { p, _ -> SwingUtilities.invokeLater { zTvSparovani(p) } }) { akce, _ ->
         SwingUtilities.invokeLater { if (akce == "spust") zTvSpust() else zTvZastav() }
+    }
+
+    /**
+     * Spárování PS5 poslané z TV (Titulky PS5, „přihlásím se na TV a na PC už bude“): zapíše se do profilu čtečky
+     * chiaki-ng jako po vlastním spárování; jen když čtečka ještě žádnou konzoli nemá (vlastní spárování PC se nepřepíše).
+     * Jestli PS5 tytéž klíče od PC přijme, ukáže první spojení – jinak Domů → Spárovat jako dřív.
+     */
+    private fun zTvSparovani(p: PcWake.Pairing) {
+        if (!nast.zTv) return
+        if (runCatching { Chiaki.konzole(Chiaki.PROFIL_CTECKY).isNotEmpty() }.getOrDefault(true)) return
+        try {
+            Chiaki.uloz(Registrace.Konzole(p.name, p.mac, p.registKey, p.morning, 0,
+                listOf("ap_ssid", "ap_bssid", "ap_key", "ap_name").associateWith { "" }), Chiaki.PROFIL_CTECKY)
+            p.accountId?.let { id ->
+                nast.ucetParovani("ctecka", p.name, id)
+                if (nast.ucetCteckaId.isBlank()) { nast.ucetCteckaId = id; nast.ucetCteckaJmeno = p.accountName ?: "" }
+            }
+            zapis("Spárování PS5 převzato z TV: ${p.name}")
+            konzoleSeznam = emptyList()
+            zTvSpust()
+            hledatPs5()
+            obnovDomu()
+        } catch (e: Exception) {
+            zapis("Spárování z TV se nepodařilo uložit (${e.javaClass.simpleName})")
+        }
     }
 
     private fun zTvSpust() {
         if (!nast.zTv) { zapis("TV chce překlad · v Nastavení vypnuto"); return }
         if (!nast.ctecka) Nastaveni.POUZITI.indexOfFirst { it.first == "ctecka" }.takeIf { it >= 0 }?.let { zmenPouziti(it, tichy = true) }
         if (cteckaBezi()) return
+        // seznam spárovaných konzolí čtečky hned (po přepnutí režimu ho hledání na pozadí ještě nenačetlo)
+        if (konzoleSeznam.isEmpty()) konzoleSeznam = runCatching { Chiaki.konzole(Chiaki.PROFIL_CTECKY) }.getOrDefault(emptyList())
         if (!Nastroje.pripraveno(nast.jazyk)) { zapis("TV chce překlad · chybí příprava (Domů → Připravit)"); obnovDomu(); return }
         if (vybranaKonzole() == null) { zapis("TV chce překlad · PS5 není spárovaná pro čtečku (Domů → Spárovat)"); obnovDomu(); return }
         zapis("Spuštěno z TV")

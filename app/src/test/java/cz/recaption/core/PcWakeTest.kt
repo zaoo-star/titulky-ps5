@@ -16,8 +16,8 @@ class PcWakeTest {
         assertNull(PcWake.parseCommand("{\"typ\":\"titulkyps5\",\"akce\":\"smaz\"}"))
         assertNull(PcWake.parseCommand("{\"typ\":\"jiny\",\"akce\":\"spust\"}"))
         assertNull(PcWake.parseCommand("nesmysl"))
-        assertEquals("Herní PC" to "aa:bb:cc:dd:ee:0f", PcWake.parseReply(PcWake.reply("Herní PC", "AA-BB-CC-DD-EE-0F")))
-        assertEquals("PC" to null, PcWake.parseReply(PcWake.reply("PC", null)))
+        assertEquals(PcWake.Reply("Herní PC", "aa:bb:cc:dd:ee:0f", false), PcWake.parseReply(PcWake.reply("Herní PC", "AA-BB-CC-DD-EE-0F", false)))
+        assertEquals(PcWake.Reply("PC", null, null), PcWake.parseReply(PcWake.reply("PC", null)))
     }
 
     @Test fun mac() {
@@ -44,15 +44,47 @@ class PcWakeTest {
     @Test fun pcPrijmePovelAOdpovi() {
         val port = DatagramSocket(0).use { it.localPort }
         val got = CopyOnWriteArrayList<String>()
-        val l = PcWake.Listener("Herní PC", port) { a, _ -> got += a }
+        val l = PcWake.Listener("Herní PC", port, paired = { false }) { a, _ -> got += a }
         assertTrue(l.start())
         try {
             val r = PcWake.send("spust", waitMs = 1500, port = port, targets = listOf("127.0.0.1"))
             assertEquals(listOf("spust"), got.toList())
             assertEquals(1, r.size)
-            assertEquals("Herní PC", r[0].first)
+            assertEquals("Herní PC", r[0].name)
+            assertEquals(false, r[0].paired)
+            assertEquals("127.0.0.1", r[0].from)
             PcWake.send("zastav", waitMs = 500, port = port, targets = listOf("127.0.0.1"))
             assertEquals(listOf("spust", "zastav"), got.toList())
+        } finally { l.stop() }
+    }
+
+    private val pairing = PcWake.Pairing("PS5-151", "192.168.1.40", ByteArray(16) { (0x30 + it % 10).toByte() },
+        ByteArray(16) { it.toByte() }, byteArrayOf(1, 2, 3, 4, 5, 6), "1234567890123456789", "Druhy_ucet")
+
+    @Test fun sparovaniTamAZpet() {
+        val p = PcWake.parsePairing(PcWake.pairingMessage(pairing))!!
+        assertEquals("PS5-151", p.name); assertEquals("192.168.1.40", p.ip)
+        assertArrayEquals(pairing.registKey, p.registKey); assertArrayEquals(pairing.morning, p.morning); assertArrayEquals(pairing.mac, p.mac)
+        assertEquals("1234567890123456789", p.accountId); assertEquals("Druhy_ucet", p.accountName)
+        // bez účtu i s neplatnými klíči
+        assertNull(PcWake.parsePairing(PcWake.pairingMessage(pairing.copy(accountId = null)))!!.accountId)
+        assertNull(PcWake.parsePairing(PcWake.pairingMessage(pairing.copy(registKey = ByteArray(5)))))
+        assertNull(PcWake.parseCommand(PcWake.pairingMessage(pairing)))
+    }
+
+    @Test fun pcPrijmeSparovaniJenOdNekohoKdoOdpovedel() {
+        val port = DatagramSocket(0).use { it.localPort }
+        val got = CopyOnWriteArrayList<PcWake.Pairing>()
+        val l = PcWake.Listener("PC", port, onPairing = { p, _ -> got += p }) { _, _ -> }
+        assertTrue(l.start())
+        try {
+            PcWake.sendPairing(pairing, "127.0.0.1", port)
+            val end = System.currentTimeMillis() + 2000
+            while (got.isEmpty() && System.currentTimeMillis() < end) Thread.sleep(20)
+            assertEquals(1, got.size)
+            assertEquals("PS5-151", got[0].name)
+            // cizí (ne domácí) adresa se nepošle
+            PcWake.sendPairing(pairing, "8.8.8.8", port)
         } finally { l.stop() }
     }
 }
