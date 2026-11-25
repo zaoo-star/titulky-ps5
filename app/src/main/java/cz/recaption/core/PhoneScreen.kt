@@ -546,7 +546,7 @@ object PhoneScreen {
      * široký 0,24, shora od telefonu, dole nejníž 0,80 (pod tím titulky).
      */
     fun panel(r: PhoneRead): FloatArray {
-        val w = 0.24f
+        val w = 0.27f   // Titulky PS5: dřív 0,24 – víc místa, ať se vejde celá viditelná konverzace
         val top = (r.top - 0.03f).coerceIn(0.08f, 0.5f)
         val phoneL = r.left - 0.03f; val phoneR = r.right + 0.03f
         return if ((r.left + r.right) / 2f < 0.58f && phoneR + w <= 0.97f) floatArrayOf(phoneR, top, phoneR + w, 0.80f)
@@ -568,7 +568,7 @@ object PhoneScreen {
     const val BLUE_REL = 15
     /** O kolik je bublina příchozí zprávy světlejší než pozadí displeje (jas; ve hře ~12–20, ztlumený displej ~6). */
     const val BUBBLE_LIFT = 3
-    const val MAX_CHARS = 700
+    const val MAX_CHARS = 2000   // Titulky PS5: dřív 700 – delší konverzace se uřízla (panel si písmo zmenší sám)
 }
 
 /**
@@ -619,6 +619,33 @@ class PhoneTracker {
         return n
     }
 
+    /**
+     * Odstavec [p] je z [a]: stejný / podobný, nebo jen kus odstavce z [a] (zpráva napůl useknutá na kraji displeje při
+     * scrollování – začátek nebo konec, aspoň [EDGE_MIN] znaků).
+     */
+    private fun seen(a: List<String>, p: String) =
+        a.any { alike(it, p) } || (p.length >= EDGE_MIN && a.any { it.length > p.length && (it.startsWith(p) || it.endsWith(p)) })
+
+    /**
+     * Posun obsahu (scrollování): ze staršího čtení [a] zůstal souvislý blok odstavců, v novém čtení [b] je na jednom kraji
+     * a v [a] na opačném (dolů: v [a] dole → v [b] nahoře, nové přibylo dole; nahoru obráceně). Aspoň jeden odstavec je
+     * společný a aspoň jeden nový.
+     */
+    internal fun scrolled(a: List<String>, b: List<String>): Boolean {
+        if (a.isEmpty() || b.isEmpty()) return false
+        val inA = b.map { seen(a, it) }
+        val inB = a.map { seen(b, it) }
+        val k = inA.count { it }; val k2 = inB.count { it }
+        if (k == 0 || k == b.size || k2 == 0) return false
+        val f = inA.indexOf(true); val l = inA.lastIndexOf(true)
+        val f2 = inB.indexOf(true); val l2 = inB.lastIndexOf(true)
+        // společné odstavce musí být souvislý blok v obou čteních
+        if (l - f + 1 != k || l2 - f2 + 1 != k2) return false
+        val down = f == 0 && l2 == a.size - 1       // společné v novém nahoře, ve starém dole → scroll dolů
+        val up = l == b.size - 1 && f2 == 0         // společné v novém dole, ve starém nahoře → scroll nahoru
+        return down || up
+    }
+
     fun update(read: List<String>): Result {
         if (read.isEmpty()) {
             // jedno čtení bez telefonu (rozmazaný snímek, jas karty na hranici) rozpracovaný obsah neruší – dřív se tak
@@ -650,6 +677,10 @@ class PhoneTracker {
         if (s.isNotEmpty() && known(s, r) * 3 <= r.size && known(r, s) * 3 <= s.size) {
             pending = null; shown = read; return Result(shown, true)
         }
+        // Titulky PS5: posun (scrollování konverzace) – část ukázaného zůstala na jednom kraji ve stejném pořadí a na druhém
+        // přibylo nové. Dřív to čekalo na dvě shodná čtení, jenže při scrollování je každé čtení jiné, takže se překlad
+        // nepotvrdil a visel starý. Teď hned; už přeložené odstavce vrátí paměť překladů bez nového překladu.
+        if (s.isNotEmpty() && scrolled(s, r)) { pending = null; shown = read; return Result(shown, true) }
         val q = p?.map(::norm)?.filter { it.isNotEmpty() }
         if (q == null || known(q, r) < r.size * CONFIRM || known(r, q) < q.size * CONFIRM) { pending = read; return Result(shown, false) }
         pending = null
@@ -659,5 +690,5 @@ class PhoneTracker {
 
     fun reset() { shown = emptyList(); pending = null; misses = 0; pendingMisses = 0 }
 
-    companion object { const val MISSES = 2; const val QUICK_PARAS = 2; const val CONFIRM = 0.7f }
+    companion object { const val MISSES = 2; const val QUICK_PARAS = 2; const val CONFIRM = 0.7f; const val EDGE_MIN = 8 }
 }

@@ -893,7 +893,8 @@ class SubtitleOverlay(
             var from = 0
             build(px, from)
             while (root.measuredHeight > room) {
-                if (px > base * 0.72f) px *= 0.9f
+                // Titulky PS5: písmo se smí zmenšit víc (dřív na 72 %), než se začnou zahazovat starší zprávy
+                if (px > base * 0.6f) px *= 0.9f
                 else if (from < msgs.size - 1) from++
                 else break
                 build(px, from)
