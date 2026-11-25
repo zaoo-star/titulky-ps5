@@ -478,6 +478,8 @@ def vety_textu(text):
     """Rozdělí titulek na věty. Čtečka mezeru za „?“, „!“ a „.“ často spolkne („huh?You“),
     proto se nejdřív doplní – ale ne v číslech („1.5“) ani ve zkratkách s tečkou uvnitř („U.S.“)."""
     text = re.sub(r"([?!])(?=[A-Za-z\"'])", r"\1 ", text)
+    # „Yeah,alright,we“ – mezera za čárkou mezi písmeny (čísla jako 1,000 zůstanou)
+    text = re.sub(r"(?<=[A-Za-z]),(?=[A-Za-z])", ", ", text)
     text = re.sub(r"(?<=[a-z]{2})\.(?=[A-Z][a-z])", ". ", text)
     vety = []
     for v in re.split(r"(?<=[.?!…])\s+(?=[\"'A-Z0-9¿¡])", text):
@@ -575,6 +577,23 @@ def vzorky_jasu(sedy, l, t, r, b):
     return sedy[y0:y1:sy, x0:x1:sx].astype(np.int32).ravel()
 
 
+def zvetseni_telefonu(vyska):
+    """Kolikrát zvětšit výřez telefonu: na ~1600 bodů výšky (telefon zabírá ~70 % výšky obrazu), nejvýš 2×."""
+    if vyska <= 0:
+        return 1.0
+    return max(1.0, min(2.0, 1600.0 / vyska))
+
+
+def zvetsi(obraz, k):
+    try:
+        import cv2
+        return cv2.resize(obraz, None, fx=k, fy=k, interpolation=cv2.INTER_CUBIC)
+    except ImportError:
+        from PIL import Image
+        h, w = obraz.shape[:2]
+        return np.asarray(Image.fromarray(obraz).resize((int(w * k), int(h * k)), Image.BICUBIC))
+
+
 def cti_telefon(ocr, obraz, box):
     """Výřez kolem telefonu v plném rozlišení: řádky v bodech celého snímku se sklonem a vzorky jasu."""
     h, w = obraz.shape[:2]
@@ -582,16 +601,21 @@ def cti_telefon(ocr, obraz, box):
     y0 = min(max(int(box[1] * h), 0), h - 1); y1 = min(max(int(box[3] * h), y0 + 8), h)
     vyrez = obraz[y0:y1, x0:x1]
     sedy = jas_bgr(obraz)
+    # písmo v telefonu je malé (~20 bodů) a čtečka pak slepuje slova („askwhenIgoseeher“, 25. 11. 2026) –
+    # výřez se čte zvětšený, souřadnice se pak vrátí zpět
+    k = zvetseni_telefonu(vyrez.shape[0])
+    if k > 1.0:
+        vyrez = zvetsi(vyrez, k)
     vysledek, _ = ocr(np.ascontiguousarray(vyrez), use_cls=False)
     radky = []
     for ctyruhelnik, text, jistota in (vysledek or []):
         if jistota < 0.5:
             continue
-        xs = [p[0] for p in ctyruhelnik]
-        ys = [p[1] for p in ctyruhelnik]
+        xs = [p[0] / k for p in ctyruhelnik]
+        ys = [p[1] / k for p in ctyruhelnik]
         l, t, r, b = int(min(xs)) + x0, int(min(ys)) + y0, int(max(xs)) + x0, int(max(ys)) + y0
-        dx = float(ctyruhelnik[1][0] - ctyruhelnik[0][0])
-        sklon = float(ctyruhelnik[1][1] - ctyruhelnik[0][1]) / dx if dx > 8 else 0.0
+        dx = float(ctyruhelnik[1][0] - ctyruhelnik[0][0]) / k
+        sklon = float(ctyruhelnik[1][1] - ctyruhelnik[0][1]) / k / dx if dx > 8 else 0.0
         vz = ",".join(str(int(v)) for v in vzorky_jasu(sedy, l, t, r, b))
         radky.append((l, t, r, b, "%.4f" % sklon, vz, velka(text.replace("\t", " ").replace("\n", " "))))
     return radky, w, h
