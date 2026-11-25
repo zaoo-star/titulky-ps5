@@ -734,6 +734,25 @@ object TextLogic {
             else listOf(splitSpeaker(l))
         }
 
+    /**
+     * Doznívající předchozí titulek: když jeden titulek mizí a hned naskočí další, čtečka na jednom
+     * snímku přečte oba („Workers:Leavebroalone!“ nad „Workers: C'mon bro…“, GTA VI, 25. 11. 2026)
+     * a slepily by se do jednoho. Řádek, který je jen [shown] (to, co už pruh ukazuje), se vynechá –
+     * ale jen když zbude aspoň jeden jiný řádek. Mezery a jméno mluvčího se při porovnání nepočítají
+     * (mizející text je čtený hůř a často bez mezer).
+     */
+    fun withoutFading(text: String, shown: String): String {
+        if (shown.isEmpty() || '\n' !in text) return text
+        val lines = text.split('\n')
+        val old = (shown.split('\n') + shown).map { fadingKey(it) }.filter { it.length >= 4 }
+        if (old.isEmpty()) return text
+        val keep = lines.filter { l -> val k = fadingKey(l); k.length < 4 || old.none { similar(k, it, 0.85f) } }
+        return if (keep.isEmpty() || keep.size == lines.size) text else keep.joinToString("\n")
+    }
+
+    private fun fadingKey(line: String): String =
+        line.replaceFirst(Regex("^\\s*[^:\\n]{1,24}:"), "").lowercase().filter { it.isLetterOrDigit() }
+
     /** Podobnost dvou textů (tolerance chyb OCR mezi snímky). */
     fun similar(a: String, b: String, threshold: Float = 0.88f): Boolean {
         if (a == b) return true

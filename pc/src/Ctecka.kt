@@ -580,7 +580,7 @@ class Ctecka(
                         val staleMs = if (TextLogic.hasChoices(picked.text)) TextLogic.CHOICES_STALE_MS else STALE_MS
                         if (picked.text.isNotEmpty() && now - steadySince > staleMs) {
                             if (shown) { hideAt = 0; hide(); hlas("schováno (text stojí dlouho – není to titulek)") }
-                        } else when (val action = tracker.onOcr(picked.text, slowDevice = r.ms > 500)) {
+                        } else when (val action = tracker.onOcr(TextLogic.withoutFading(picked.text, tracker.shown), slowDevice = r.ms > 500)) {
                             is SubtitleTracker.Action.Show -> translateSegments(action.text)?.let { all ->
                                 tracker.confirmShown(action.text)
                                 hideAt = 0

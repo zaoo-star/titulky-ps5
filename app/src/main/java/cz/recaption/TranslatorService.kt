@@ -2226,7 +2226,7 @@ class TranslatorService : Service() {
         }
         // slabé zařízení (jedno čtení trvá déle než půl sekundy): pruh se schová hned po prvním prázdném čtení
         // otisk obrazu: na nezměněném obrazu ochuzené čtení (jen poslední řádek…) nenahradí celý titulek
-        when (val action = tracker.onOcr(picked.text, slowDevice = lastOcrMs > 500, sig = sig, cellPixels = frame.cellPixels)) {
+        when (val action = tracker.onOcr(TextLogic.withoutFading(picked.text, tracker.shown), slowDevice = lastOcrMs > 500, sig = sig, cellPixels = frame.cellPixels)) {
             is SubtitleTracker.Action.Show -> {
                 // jiná varianta téhož titulku, kterou čtečka potvrdila jako opravu (ne nový titulek)
                 val correction = tracker.shown.isNotEmpty() && TextLogic.similar(action.text, tracker.shown)
