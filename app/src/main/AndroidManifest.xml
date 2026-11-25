@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- spojení s PlayStationem v domácí síti -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- telefon jako čtečka: dotaz „běh na pozadí bez omezení“, jinak ho šetření baterie při zhasnutém displeji uspí -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+    <!-- aktualizace přímo z aplikace: předání nové verze systému k instalaci -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- Android 12+: další aktualizace bez dotazu, když poslední instalovala aplikace sama -->
+    <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
+    <!-- telefon: přečtení adresy a Passphrase z obrazovky televize LG (LgScanActivity); nic se neukládá -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- funguje na televizích, boxech, Chromecastu i projektorech -->
+    <uses-feature android:name="android.software.leanback" android:required="false" />
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+    <!-- Kamera je jen volitelná pomůcka v telefonu. Bez required="false" by povolení CAMERA
+         udělalo z kamery povinnou výbavu a televize a boxy bez kamery by aplikaci nenainstalovaly. -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.any" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+
+    <!-- průvodce TV Samsung: je v telefonu Apps2Samsung? (Android 11+ jinak cizí aplikace nevidí) -->
+    <queries>
+        <package android:name="nl.madebypatrick.apps2samsung" />
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="apps2samsung" />
+        </intent>
+    </queries>
+
+    <application
+        android:name=".App"
+        android:allowBackup="false"
+        android:banner="@drawable/banner"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="false"
+        android:theme="@style/AppTheme">
+        <!-- kanál APK: zkusebni = testerské (Tester.kt), latest = pro všechny; doplní app/build.gradle.kts -->
+        <meta-data android:name="recaption.kanal" android:value="${kanal}" />
+
+        <!-- Sdílení hlášení o stavu jako souboru (DiagActivity → Sdílet). Jen jeden soubor, jen ke čtení,
+             jen s jednorázovým povolením ze Sdílet. -->
+        <provider
+            android:name=".ReportProvider"
+            android:authorities="${applicationId}.hlaseni"
+            android:exported="false"
+            android:grantUriPermissions="true" />
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- ReCaption v telefonu: pomocník pro přihlášení účtem PlayStation. Otevírá ho odkaz ze
+             stránky, kterou televize vystavuje (čtvereček), nebo sdílení adresy z prohlížeče. -->
+        <activity
+            android:name=".PhoneHelperActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="recaption" android:host="login" />
+            </intent-filter>
+            <!-- čtvereček „Nastavit z telefonu“ v Android TV: ReCaption v telefonu nastaví TV (RemoteClient) -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="recaption" android:host="tv" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+
+        <!-- hlášení o stavu aplikace přes celou obrazovku (k vyfocení a poslání) -->
+        <activity
+            android:name=".DiagActivity"
+            android:exported="false"
+            android:theme="@style/FullScreen" />
+        <!-- nahrání ReCaption do televize LG ve vývojářském režimu (z Nastavení a z pomocníka) -->
+        <activity
+            android:name=".LgInstallActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- nahrání ReCaption z telefonu do Android TV přes ladění po síti (z pomocníka v telefonu) -->
+        <activity
+            android:name=".AtvInstallActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- stránka „Nastavení TV“ v prohlížeči telefonu: „📷 Načíst kamerou“ přečte číslo z PS5 a pošle ho TV (bez vzhledu) -->
+        <activity
+            android:name=".ScanCodeActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="recaption" android:host="kod" />
+            </intent-filter>
+        </activity>
+
+        <!-- čtení adresy a Passphrase z obrazovky televize LG kamerou telefonu -->
+        <activity
+            android:name=".LgScanActivity"
+            android:exported="false"
+            android:theme="@style/FullScreen" />
+
+        <!-- ReCaption do televize Samsung: návod, uložení balíčku .wgt a ověření připojení -->
+        <activity
+            android:name=".SamsungInstallActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden" />
+
+        <!-- videonávod přes celou obrazovku (Nápověda → Videonávod), video ze stránek s pomocí -->
+        <activity
+            android:name=".VideoGuideActivity"
+            android:exported="false"
+            android:screenOrientation="sensorLandscape"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden"
+            android:theme="@style/FullScreen" />
+
+        <!-- černý displej telefonu při překladu (☾ na Domů) -->
+        <activity
+            android:name=".BlackScreenActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden"
+            android:theme="@style/FullScreen" />
+        <!-- titulky ke čtení v telefonu (Domů pod řadou přehrávače) -->
+        <activity
+            android:name=".ReadFeedActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden"
+            android:theme="@style/FullScreen" />
+
+        <activity
+            android:name=".TestCardActivity"
+            android:exported="true"
+            android:theme="@style/FullScreen" />
+
+        <!-- po aktualizaci aplikaci znovu otevře -->
+        <receiver
+            android:name=".UpdatedReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- kontrola nové verze, i když ReCaption neběží (UpdateNotifier) -->
+        <service
+            android:name=".UpdateJob"
+            android:exported="false"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+
+        <service
+            android:name=".TranslatorService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
+
+        <service
+            android:name=".TitulkyAccessibility"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service" />
+        </service>
+    </application>
+</manifest>

@@ -1,0 +1,76 @@
+# Projekt pro Xcode se skládá z tohoto souboru nástrojem XcodeGen (`xcodegen generate` ve složce ios/),
+# soubor .xcodeproj se do repozitáře neukládá. Sestavení a zkoušku dělá .github/workflows/ios.yml.
+# Před ním je potřeba sestavit knihovnu pro PS5 a společnou logiku – ios/priprav.sh (PlChiaki.xcframework, Jadro.xcframework).
+name: ReCaption
+options:
+  bundleIdPrefix: cz.recaption
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    MARKETING_VERSION: "0.1"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_VERSION: "5.0"
+targets:
+  ReCaption:
+    type: application
+    platform: iOS
+    sources:
+      - ReCaption
+    info:
+      path: ReCaption/Info.plist
+      properties:
+        CFBundleDisplayName: ReCaption
+        CFBundleDevelopmentRegion: cs
+        CFBundleLocalizations: [cs, sk, en]
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UILaunchScreen:
+          UIColorName: ""
+        UIStatusBarStyle: UIStatusBarStyleLightContent
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        # TV se připojuje k iPhonu v domácí síti – iOS se jednou zeptá
+        NSLocalNetworkUsageDescription: "ReCaption posílá přeložené titulky do aplikace ReCaption v TV v domácí síti."
+        NSBonjourServices:
+          - _recaption._tcp
+        # zatím jen šifrování systému (HTTPS); se spojením s PS5 (chiaki-ng) projít znovu
+        ITSAppUsesNonExemptEncryption: false
+    dependencies:
+      # společná logika z Androidu (core) přeložená Kotlinem: ./gradlew -p ios/jadro assembleJadroReleaseXCFramework
+      - framework: jadro/build/XCFrameworks/release/Jadro.xcframework
+        embed: false
+      # spojení s PS5: chiaki-ng + vrstva pro Swift (ios/chiaki, sestaví ios/priprav.sh)
+      - framework: chiaki/build/PlChiaki.xcframework
+        embed: false
+      - sdk: SystemConfiguration.framework
+      - sdk: libresolv.tbd
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: cz.recaption
+        TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        CODE_SIGN_STYLE: Automatic
+  ReCaptionTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - ReCaptionTests
+    dependencies:
+      - target: ReCaption
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: cz.recaption.testy
+schemes:
+  ReCaption:
+    build:
+      targets:
+        ReCaption: all
+        ReCaptionTests: [test]
+    test:
+      targets:
+        - ReCaptionTests

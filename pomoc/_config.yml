@@ -1,0 +1,10 @@
+# GitHub Pages pro složku pomoc/ (viz .github/workflows/pomoc.yml). Markdown → stránky .html,
+# README.md je úvodní stránka, odkazy na lg.md apod. se samy přepíšou na .html.
+title: ReCaption – pomoc
+lang: cs
+theme: jekyll-theme-primer
+plugins:
+  - jekyll-optional-front-matter
+  - jekyll-readme-index
+  - jekyll-relative-links
+  - jekyll-titles-from-headings

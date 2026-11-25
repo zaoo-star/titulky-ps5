@@ -1,0 +1,264 @@
+# ReCaption pro Mac jako aplikace ke stažení (ReCaption-Mac.dmg): otevřít, přetáhnout ReCaption do Aplikací a spustit.
+# Nic dalšího se neinstaluje – Java i Python s knihovnami pro čtení a překlad jsou uvnitř ReCaption.app; po prvním
+# spuštění se jen stáhne překladový model (Domů → Připravit) a program Remote Play chiaki-ng (Domů → Stáhnout).
+# Balíček je pro Macy s Apple Silicon (M1 a novější), sestavuje se na Macu s Apple Silicon (macos-26).
+# Na čem se sestavuje, nemění, pro které Macy balíček je (dál macOS 12 a novější). 23. 11. 2026 úlohy na macos-15
+# (i macos-latest) 15 min čekaly ve frontě a GitHub je zrušil, macos-14 už nepodporuje – proto macos-26 jako ios.yml.
+#
+# Každý push, který mění pc/ nebo core (pc se z core překládá), složí aplikaci a vyzkouší ji na skutečném Macu:
+#   - části pro Mac (`--zkouska-mac`): okna od systému, nastavení chiaki-ng v předvolbách macOS, Klíčenka, okno pruhu,
+#   - přibalený Python přečte a přeloží ukázkový titulek (pc/zkouska_balicku.py) a přečte ho i ze snímku okna,
+#   - chiaki-ng se stáhne stejně jako tlačítkem Stáhnout a vypíše konzoli, kterou ReCaption „spárovalo“,
+#   - okno aplikace se otevře a uloží snímky stránek (artefakt „snimky-mac“).
+# Hotový balíček se pak zkouší ještě na novějších verzích macOS (úloha „zkouska“).
+# Z větve jde balíček do zkušebního vydání „mac-zkusebni“, z main do vydání „mac“
+# (https://github.com/adusa89/ReCaption/releases/download/mac/ReCaption-Mac.dmg), na které vede stránka pomoc/mac.md.
+#
+# Aplikace není podepsaná vývojářským účtem Apple (jen místně, „ad hoc“), proto ji macOS poprvé odmítne otevřít –
+# jak ji povolit, je v pomoc/mac.md.
+name: ReCaption pro Mac
+
+# Jen ruční spuštění (přání majitele 24. 11. 2026): Mac s 1.00 nevychází, GitHub Mac často nedá a při každé verzi
+# pro Android, která měnila společnou logiku, chodil majiteli e-mail „build failed“. Spustit: Actions → Run workflow.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mac-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # pomocné soubory Pythonu (.pyc) mimo aplikaci – zápis do ReCaption.app by porušil její podpis
+  PYTHONPYCACHEPREFIX: /tmp/recaption-pyc
+  KNIHOVNY: >-
+    ctranslate2 subword-nmt sacremoses rapidocr-onnxruntime>=1.3 pillow numpy
+    pyobjc-framework-Quartz pyobjc-framework-ScreenCaptureKit
+
+jobs:
+  balicek:
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Sestavit ReCaption pro počítač
+        run: ./gradlew -p pc installDist --console=plain
+
+      - name: Aplikace ReCaption.app (Java uvnitř)
+        run: |
+          VERZE=$(sed -n 's/.*versionName = "\([0-9.]*\).*/\1/p' app/build.gradle.kts | head -1)
+          echo "VERZE=$VERZE" >> "$GITHUB_ENV"
+          # macOS nedovolí číslo verze začínající nulou – jpackage dostane zbytek (97.68) a celé číslo se doplní níž
+          jpackage --type app-image --name ReCaption --dest out \
+            --input pc/build/install/recaption-pc/lib --main-jar recaption-pc.jar --main-class cz.recaption.pc.AplikaceKt \
+            --java-options '-Drecaption.pc=$APPDIR' --java-options '-Dfile.encoding=UTF-8' \
+            --app-version "${VERZE#0.}" --vendor ReCaption --description "ReCaption pro Mac" \
+            --mac-package-identifier cz.recaption.mac --mac-package-name ReCaption --icon pc/ReCaption.icns
+          cp pc/cteni.py pc/priprava.sh out/ReCaption.app/Contents/app/
+          chmod +x out/ReCaption.app/Contents/app/priprava.sh
+
+      - name: Python s knihovnami pro čtení a překlad
+        run: |
+          # samostatný Python, který jde přenést jinam (ten ze systému ani z Homebrew přenést nejde)
+          uv python install 3.12 --install-dir "$PWD/pyt"
+          PY=$(ls -d pyt/cpython-3.12*/ | head -1)
+          CIL=out/ReCaption.app/Contents/app/python
+          cp -R "$PY" "$CIL"
+          rm -f "$CIL"/lib/python3.12/EXTERNALLY-MANAGED
+          uv pip install --python "$CIL/bin/python3" --break-system-packages --only-binary=:all: $KNIHOVNY
+          find "$CIL" -name __pycache__ -type d -prune -exec rm -rf {} +
+          rm -rf "$CIL"/lib/python3.12/test "$CIL"/lib/python3.12/idlelib "$CIL"/share
+          "$CIL/bin/python3" -c "import sys, platform; print(sys.version, platform.machine())"
+          du -sh out/ReCaption.app
+
+      - name: Údaje aplikace a podpis
+        run: |
+          PLIST=out/ReCaption.app/Contents/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERZE" "$PLIST"
+          # dotaz macOS na přístup do domácí sítě (PS5 a TV) dostane srozumitelný důvod
+          /usr/libexec/PlistBuddy -c "Add :NSLocalNetworkUsageDescription string 'ReCaption hledá v domácí síti PlayStation a televizi, které posílá překlad titulků.'" "$PLIST"
+          # místní podpis celé aplikace po doplnění souborů (bez něj by ji Mac s Apple Silicon nespustil)
+          codesign --force --deep --sign - out/ReCaption.app
+          codesign --verify --verbose=2 out/ReCaption.app
+          /usr/libexec/PlistBuddy -c "Print" "$PLIST"
+
+      - name: Zkouška – části pro Mac (okna, nastavení chiaki-ng, Klíčenka, pruh)
+        run: |
+          # --nechat: zkušební profil chiaki-ng zůstane pro další krok (víc slov příkazu dělí čárka)
+          JAVA_TOOL_OPTIONS="-Drecaption.prikaz=--zkouska-mac,--nechat" out/ReCaption.app/Contents/MacOS/ReCaption
+
+      - name: Zkouška – chiaki-ng se stáhne a vidí konzoli spárovanou ReCaptionem
+        continue-on-error: true
+        run: |
+          JAVA_TOOL_OPTIONS="-Drecaption.prikaz=--stahni-chiaki" out/ReCaption.app/Contents/MacOS/ReCaption
+          CHIAKI="$HOME/Library/Application Support/ReCaptionTools/chiaki-ng/chiaki-ng.app/Contents/MacOS/chiaki"
+          "$CHIAKI" --profile recaption-zkouska list | tee chiaki-list.txt
+          grep -q "Host: PS5-Zkouska" chiaki-list.txt
+          grep -q "Host: PS5-Druha" chiaki-list.txt
+
+      - name: Úklid zkušebního profilu chiaki-ng
+        if: always()
+        run: defaults delete com.chiaki.Chiaki-recaption-zkouska || true
+
+      - name: Zkouška – přibalený Python přečte a přeloží titulek
+        run: |
+          APP=out/ReCaption.app/Contents/app
+          NASTROJE="$HOME/Library/Application Support/ReCaptionTools"
+          bash "$APP/priprava.sh" cs "$NASTROJE" "$APP/python/bin/python3"
+          MODEL=$(ls -d "$NASTROJE"/modely/en_cs/*/ | head -1)
+          echo "MODEL=${MODEL%/}" >> "$GITHUB_ENV"
+          "$APP/python/bin/python3" pc/zkouska_balicku.py "$APP/python/bin/python3" "$APP/cteni.py" "${MODEL%/}"
+
+      - name: Zkouška – čtení ze snímku okna (jako okno hry)
+        continue-on-error: true
+        run: |
+          APP=out/ReCaption.app/Contents/app
+          "$APP/python/bin/python3" "$APP/cteni.py" --okna || true
+          JAVA_TOOL_OPTIONS="-Drecaption.prikaz=--zkouska-okno" out/ReCaption.app/Contents/MacOS/ReCaption > okno.txt 2>&1 &
+          OKNO_PID=$!
+          sleep 12
+          cat okno.txt
+          OKNO=$(sed -n 's/^OKNO \(pid:[0-9]*\)$/\1/p' okno.txt | head -1)
+          "$APP/python/bin/python3" "$APP/cteni.py" --okna || true
+          echo "--- snímek starší cestou (Quartz)"
+          "$APP/python/bin/python3" pc/zkouska_balicku.py "$APP/python/bin/python3" "$APP/cteni.py" "$MODEL" "$OKNO" "$PWD/snimky/quartz"
+          echo "--- snímek přes ScreenCaptureKit"
+          RECAPTION_SNIMEK=sck "$APP/python/bin/python3" pc/zkouska_balicku.py "$APP/python/bin/python3" "$APP/cteni.py" "$MODEL" "$OKNO" "$PWD/snimky/sck"
+          kill $OKNO_PID || true
+
+      - name: Zkouška – okno aplikace (snímky stránek)
+        continue-on-error: true
+        run: |
+          mkdir -p snimky
+          JAVA_TOOL_OPTIONS="-Drecaption.snimek=$PWD/snimky" out/ReCaption.app/Contents/MacOS/ReCaption &
+          APP_PID=$!
+          ( sleep 150; kill $APP_PID 2>/dev/null ) &
+          sleep 6
+          screencapture -x snimky/obrazovka.png || true
+          wait $APP_PID
+          ls -la snimky
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: snimky-mac
+          path: snimky
+          if-no-files-found: ignore
+
+      - name: Obraz disku ReCaption-Mac.dmg
+        run: |
+          # zkoušky do aplikace nic zapsat nesmějí – podpis musí pořád sedět
+          codesign --verify --verbose=2 out/ReCaption.app
+          mkdir dmg
+          cp -R out/ReCaption.app dmg/
+          ln -s /Applications dmg/Applications
+          hdiutil create -volname "ReCaption" -srcfolder dmg -ov -format UDZO ReCaption-Mac.dmg
+          ls -la ReCaption-Mac.dmg
+          # kontrola: obraz jde připojit a aplikace v něm má platný podpis
+          hdiutil attach -nobrowse -readonly -mountpoint "$PWD/bod" ReCaption-Mac.dmg
+          codesign --verify --verbose=2 bod/ReCaption.app
+          hdiutil detach "$PWD/bod"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ReCaption-Mac
+          path: ReCaption-Mac.dmg
+          compression-level: 0
+
+      # Z větve, která mění soubory sestavení (.github/workflows), GitHub vydání vytvořit nedovolí – balíček je pak
+      # jen jako artefakt běhu (ReCaption-Mac), proto krok sestavení neshodí.
+      - name: Vydání „mac“ (z main) / „mac-zkusebni“ (z větve)
+        continue-on-error: true
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          # vydání „mac“ pro hráče jen se svolením majitele (proměnná repozitáře MAC_VYDAT = 1) – verze pro Mac zatím
+          # není vyzkoušená (přání majitele 23. 11. 2026); bez ní je balíček jen artefakt běhu
+          MAC_VYDAT: ${{ vars.MAC_VYDAT }}
+        run: |
+          if [ "$GITHUB_REF" = "refs/heads/main" ] && [ "$MAC_VYDAT" != "1" ]; then
+            echo "Vydání „mac“ vypnuté (proměnná MAC_VYDAT není 1) – balíček jen v artefaktech."; exit 0
+          fi
+          if [ "$GITHUB_REF" = "refs/heads/main" ]; then ZNACKA=mac; NAZEV="ReCaption pro Mac (zkušební) $VERZE"
+          else ZNACKA=mac-zkusebni; NAZEV="ReCaption pro Mac – zkušební z větve ${GITHUB_REF_NAME} ($VERZE)"; fi
+          gh release delete "$ZNACKA" --yes --cleanup-tag || true
+          gh release create "$ZNACKA" ReCaption-Mac.dmg --target "$GITHUB_SHA" --prerelease --latest=false \
+            --title "$NAZEV" \
+            --notes "ReCaption pro Mac s Apple Silicon (M1 a novější, macOS 12 a novější), zkušební. Otevřít ReCaption-Mac.dmg a přetáhnout ReCaption do Aplikací. Aplikace není podepsaná u Applu – první otevření povolit v Nastavení systému → Soukromí a zabezpečení → Přesto otevřít. Návod: https://recaption.pages.dev/mac.html. Spojení s PlayStationem obstarává program chiaki-ng (AGPL-3.0), který si ReCaption stáhne samo; zdrojový kód je v tomto repozitáři."
+
+  # Hotový balíček na novějších verzích macOS: otevře se, části pro Mac fungují, okno jde vyfotit a přečíst.
+  zkouska:
+    needs: balicek
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-26]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: ReCaption-Mac
+
+      - name: Aplikace z obrazu disku
+        run: |
+          sw_vers
+          hdiutil attach -nobrowse -readonly -mountpoint "$PWD/bod" ReCaption-Mac.dmg
+          mkdir out && cp -R bod/ReCaption.app out/
+          hdiutil detach "$PWD/bod"
+
+      - name: Části pro Mac
+        run: |
+          JAVA_TOOL_OPTIONS="-Drecaption.prikaz=--zkouska-mac" out/ReCaption.app/Contents/MacOS/ReCaption
+
+      - name: Čtení, překlad a snímek okna
+        run: |
+          APP=out/ReCaption.app/Contents/app
+          NASTROJE="$HOME/Library/Application Support/ReCaptionTools"
+          bash "$APP/priprava.sh" cs "$NASTROJE" "$APP/python/bin/python3"
+          MODEL=$(ls -d "$NASTROJE"/modely/en_cs/*/ | head -1); MODEL=${MODEL%/}
+          "$APP/python/bin/python3" pc/zkouska_balicku.py "$APP/python/bin/python3" "$APP/cteni.py" "$MODEL"
+          JAVA_TOOL_OPTIONS="-Drecaption.prikaz=--zkouska-okno" out/ReCaption.app/Contents/MacOS/ReCaption > okno.txt 2>&1 &
+          OKNO_PID=$!
+          sleep 12
+          OKNO=$(sed -n 's/^OKNO \(pid:[0-9]*\)$/\1/p' okno.txt | head -1)
+          "$APP/python/bin/python3" "$APP/cteni.py" --okna || true
+          STAV=0
+          echo "--- snímek starší cestou (Quartz)"
+          "$APP/python/bin/python3" pc/zkouska_balicku.py "$APP/python/bin/python3" "$APP/cteni.py" "$MODEL" "$OKNO" "$PWD/snimky/quartz" || STAV=1
+          echo "--- snímek přes ScreenCaptureKit"
+          RECAPTION_SNIMEK=sck "$APP/python/bin/python3" pc/zkouska_balicku.py "$APP/python/bin/python3" "$APP/cteni.py" "$MODEL" "$OKNO" "$PWD/snimky/sck" || STAV=1
+          kill $OKNO_PID || true
+          exit $STAV
+
+      - name: Okno aplikace (snímky stránek)
+        run: |
+          mkdir -p snimky
+          JAVA_TOOL_OPTIONS="-Drecaption.snimek=$PWD/snimky" out/ReCaption.app/Contents/MacOS/ReCaption &
+          APP_PID=$!
+          ( sleep 150; kill $APP_PID 2>/dev/null ) &
+          sleep 6
+          screencapture -x snimky/obrazovka.png || true
+          wait $APP_PID
+          ls -la snimky
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: snimky-${{ matrix.os }}
+          path: snimky
+          if-no-files-found: ignore

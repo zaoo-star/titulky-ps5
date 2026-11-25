@@ -1,0 +1,95 @@
+/* Psáno pro starý prohlížeč v televizích z roku 2017 (Chromium 38):
+   bez proměnných, bez mřížky, jen flexbox a pevné rozměry pro 1920×1080. */
+
+html, body {
+  margin: 0;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  background: #0E1014;
+  color: #E9E6DF;
+  font-family: "LG Smart UI", "Museo Sans", Arial, sans-serif;
+  font-size: 32px;
+  line-height: 1.4;
+}
+
+/* Při zkoušce musí být pozadí průhledné, obraz ze vstupu je pod stránkou. */
+body.hraje { background: transparent; }
+
+#uvod { padding: 90px 140px 0 140px; }
+#zkouska { display: none; position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+body.hraje #uvod { display: none; }
+body.hraje #zkouska { display: block; }
+
+.znacka {
+  color: #F2C14E;
+  font-size: 30px;
+  font-weight: bold;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+}
+h1 { margin: 10px 0 20px 0; font-size: 72px; font-weight: bold; color: #FFFFFF; }
+.popis { margin: 0 0 44px 0; width: 1300px; color: #B9B5AC; }
+
+.udaje { display: flex; margin-bottom: 56px; }
+.udaje div { margin-right: 80px; }
+.udaje span { display: block; font-size: 24px; color: #8C887F; text-transform: uppercase; letter-spacing: 2px; }
+.udaje b { font-size: 36px; color: #FFFFFF; }
+
+.krok { margin: 0 0 22px 0; font-size: 38px; color: #FFFFFF; }
+.tlacitka { display: flex; }
+.tl {
+  width: 340px;
+  height: 150px;
+  margin-right: 30px;
+  line-height: 150px;
+  text-align: center;
+  font-size: 46px;
+  font-weight: bold;
+  color: #E9E6DF;
+  background: #1A1D24;
+  border: 4px solid #2A2E37;
+  border-radius: 14px;
+}
+.tl.vybrane { background: #F2C14E; border-color: #F2C14E; color: #0E1014; }
+.napoveda { margin-top: 36px; font-size: 26px; color: #8C887F; }
+
+#obraz, #obraz video {
+  position: absolute; left: 0; top: 0; width: 1920px; height: 1080px;
+}
+
+#vysledky {
+  position: absolute;
+  left: 60px;
+  top: 50px;
+  width: 980px;
+  padding: 26px 34px 28px 34px;
+  background: rgba(14, 16, 20, 0.88);
+  border-left: 8px solid #F2C14E;
+  border-radius: 6px;
+}
+#vysledky .nadpis { font-size: 34px; font-weight: bold; color: #F2C14E; margin-bottom: 12px; }
+#vysledky .nadpis span { color: #E9E6DF; font-weight: normal; }
+.radek { display: flex; font-size: 28px; padding: 5px 0; border-bottom: 1px solid #2A2E37; }
+.radek i { width: 44px; font-style: normal; color: #8C887F; }
+.radek span { width: 400px; color: #B9B5AC; }
+.radek b { flex: 1; color: #FFFFFF; }
+.radek b.ano { color: #8FD694; }
+.radek b.ne { color: #F08A7B; }
+.pokyn { margin-top: 18px; font-size: 28px; color: #FFFFFF; }
+
+/* Stejný černý pruh jako v aplikaci pro Android TV. */
+#pruh {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 1920px;
+  height: 150px;
+  background: #000000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#titulek { font-size: 50px; color: #FFFFFF; text-align: center; padding: 0 80px; }
+
+#platno { position: absolute; left: -500px; top: 0; }

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>ReCaption</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Neviditelné video na pozadí celé obrazovky (přání majitele 24. 11. 2026, zkušebně): LG dokumentace říká,
+     že se spořič nespouští při přehrávání videa na celou obrazovku – app.js (blokujSporic) ho nakrmí nehybným
+     černým obrazem z plátna, ať TV během hry nepřepadá do spořiče. Na skutečné TV neověřeno, může nezabrat. -->
+<video id="protiSporici" muted loop playsinline style="position:fixed;left:0;top:0;width:100%;height:100%;z-index:-1;pointer-events:none"></video>
+
+<!-- Domů (od 1.5.17 jen poprvé, pak se jde rovnou do hry na zapamatovaném HDMI; Zpět při hře sem vrátí):
+     vstupy HDMI, pod nimi stav (ReCaption · připojeno / hledá se a řádky z Androidu), Nápověda, Jazyk, Ukončit -->
+<div id="domu" class="strana">
+  <div class="hlavicka">
+    <div class="znacka">ReCaption</div>
+    <div class="podnadpis" data-t="nadpis"></div>
+  </div>
+
+  <p class="krok" data-t="otazka"></p>
+  <div class="rada">
+    <div class="tl hdmi" data-akce="hdmi" data-hdmi="1">HDMI 1</div>
+    <div class="tl hdmi" data-akce="hdmi" data-hdmi="2">HDMI 2</div>
+    <div class="tl hdmi" data-akce="hdmi" data-hdmi="3">HDMI 3</div>
+    <div class="tl hdmi" data-akce="hdmi" data-hdmi="4">HDMI 4</div>
+  </div>
+  <div id="domu-stav"></div>
+  <div class="rada">
+    <div class="tl mensi" data-akce="napoveda" data-t="tl_napoveda"></div>
+    <div class="tl mensi" data-akce="jazyk" data-t="tl_jazyk"></div>
+    <div class="tl mensi" data-akce="konec" data-t="tl_konec"></div>
+  </div>
+  <p class="drobne" data-t="ovladani"></p>
+</div>
+
+<!-- Hra: obraz ze vstupu HDMI a přes něj pruh s překladem -->
+<div id="hra" class="strana">
+  <div id="obraz"></div>
+  <div id="hlaseni"></div>
+</div>
+
+<!-- Ukázka: jak překlad vypadá, bez PlayStationu i bez telefonu -->
+<div id="ukazka" class="strana">
+  <div class="scena">
+    <div class="stitek" data-t="uk_stitek"></div>
+    <div class="uk-text" data-t="uk_popis"></div>
+    <div id="original"></div>
+  </div>
+</div>
+
+<!-- Nápověda; vpravo nahoře Ukázka (od 1.5.17 jen odtud) a Zpět -->
+<div id="napoveda" class="strana">
+  <div id="np-ukazka" class="tl" data-t="tl_ukazka"></div>
+  <div class="znacka">ReCaption</div>
+  <h1 data-t="np_nadpis"></h1>
+  <div class="kroky">
+    <div class="bod"><i>1</i><span data-t="np_1"></span></div>
+    <div class="bod"><i>2</i><span data-t="np_2"></span></div>
+    <div class="bod"><i>3</i><span data-t="np_3"></span></div>
+    <div class="bod"><i>4</i><span data-t="np_4"></span></div>
+    <div class="bod"><i>5</i><span data-t="np_5"></span></div>
+  </div>
+  <p class="drobne" data-t="np_sony"></p>
+</div>
+
+<!-- Pruh s překladem (hra a ukázka), úkol ve hře (vlastní prvek, od 1.5.11) a tlačítko Zpět (ukázka, nápověda) -->
+<div id="pruh"><span id="titulek"></span></div>
+<div id="ukol"></div>
+<div id="menupopis"></div>
+<div id="menunadpis"></div>
+<div id="menuseznam"></div>
+<div id="roh"></div>
+<div id="predmety"></div>
+<div id="menupolozky"></div>
+<div id="telefon"></div>
+<div id="telefonpres"></div>
+<div id="zpet" class="tl vybrane" data-t="tl_zpet"></div>
+<div id="panel"></div>
+<div id="kafe"></div>
+
+<!-- platforma.js je jiný pro LG a Samsung, ostatní soubory jsou stejné (viz app.js) -->
+<script src="platforma.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

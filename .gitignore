@@ -1,0 +1,33 @@
+.gradle/
+build/
+app/build/
+local.properties
+.idea/
+*.iml
+.cxx/
+app/.cxx/
+webos/**/*.ipk
+
+# podpisové klíče nikdy do repozitáře
+*.p12
+*.jks
+*.keystore
+
+# APK sestavené na PC (sestavit-na-pc.ps1)
+*.apk
+tizen/**/*.wgt
+
+# záznamy stažené ze zařízení (ci/stahni-zaznam.ps1)
+zaznamy/
+
+# Python
+__pycache__/
+
+# schránka na hlášení (server/hlaseni)
+node_modules/
+.wrangler/
+ci/videonavody/tx-*.json
+ci/videonavody/texty-*.json
+ci/videonavody/node_modules/
+.claude/worktrees/
+ci/build-zkousky/

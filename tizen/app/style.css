@@ -1,0 +1,566 @@
+/* Psáno pro starý prohlížeč v televizích z roku 2017 (Chromium 38):
+   bez proměnných, bez mřížky, jen flexbox a pevné rozměry pro 1920×1080. */
+
+/* Hebrejština a thajština (od přípravy jazyků 23. 11. 2026): televize LG / Samsung tato písma mít nemusí, proto
+   přibalené Noto Sans Hebrew a Noto Sans Thai (SIL Open Font License 1.1, fonty/OFL.txt; z github.com/notofonts,
+   zúžené pyftsubset jen na hebrejské / thajské znaky, WOFF – umí Chromium 38). unicode-range = soubor se načte
+   jen pro tyto znaky; latinka, azbuka atd. jdou dál písmem televize, takže ostatní jazyky vypadají jako dřív. */
+@font-face { font-family: "ReCaption Hebrew"; font-weight: normal; src: url("fonty/NotoSansHebrew-Regular.woff") format("woff");
+  unicode-range: U+0590-05FF, U+FB1D-FB4F; }
+@font-face { font-family: "ReCaption Hebrew"; font-weight: bold; src: url("fonty/NotoSansHebrew-Bold.woff") format("woff");
+  unicode-range: U+0590-05FF, U+FB1D-FB4F; }
+@font-face { font-family: "ReCaption Thai"; font-weight: normal; src: url("fonty/NotoSansThai-Regular.woff") format("woff");
+  unicode-range: U+0E01-0E5B; }
+@font-face { font-family: "ReCaption Thai"; font-weight: bold; src: url("fonty/NotoSansThai-Bold.woff") format("woff");
+  unicode-range: U+0E01-0E5B; }
+/* Hindština (dévanágarí, od 24. 11. 2026): Noto Sans Devanagari (OFL 1.1, z balíčku @fontsource/noto-sans-devanagari,
+   jen znaky dévanágarí včetně pravidel pro spojování písmen). Na skutečné TV neověřeno. */
+@font-face { font-family: "ReCaption Devanagari"; font-weight: normal; src: url("fonty/NotoSansDevanagari-Regular.woff") format("woff");
+  unicode-range: U+0900-097F, U+A8E0-A8FF; }
+@font-face { font-family: "ReCaption Devanagari"; font-weight: bold; src: url("fonty/NotoSansDevanagari-Bold.woff") format("woff");
+  unicode-range: U+0900-097F, U+A8E0-A8FF; }
+
+html, body {
+  margin: 0;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  background: #0E1014;
+  background-image: radial-gradient(ellipse at 15% 0%, #23262E 0%, #0E1014 60%);
+  color: #E9E6DF;
+  font-family: "ReCaption Hebrew", "ReCaption Thai", "ReCaption Devanagari", "LG Smart UI", "SamsungOne", "Museo Sans", Arial, sans-serif;
+  font-size: 32px;
+  line-height: 1.4;
+}
+
+/* Při hře musí být pozadí průhledné, obraz ze vstupu je pod stránkou
+   (na Samsungu pod celou stránkou, proto i <html>). */
+html.s-hra, body.s-hra { background: transparent; }
+
+.strana { display: none; position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; box-sizing: border-box; }
+body.s-domu #domu, body.s-hra #hra, body.s-ukazka #ukazka, body.s-napoveda #napoveda { display: block; }
+#domu, #napoveda { padding: 90px 140px 0 140px; }
+.hlavicka { display: flex; align-items: baseline; margin-bottom: 60px; }
+.hlavicka .znacka { font-size: 64px; letter-spacing: 3px; text-transform: none; }
+.podnadpis { margin-left: 30px; font-size: 34px; color: #8C887F; }
+
+.znacka {
+  color: #F2C14E;
+  font-size: 30px;
+  font-weight: bold;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+}
+h1 { margin: 10px 0 20px 0; font-size: 68px; font-weight: bold; color: #FFFFFF; }
+.krok { margin: 0 0 24px 0; font-size: 30px; color: #B9B5AC; letter-spacing: 1px; text-transform: uppercase; }
+.drobne { margin-top: 14px; font-size: 26px; color: #6E6A63; }
+
+.rada { display: flex; margin-bottom: 40px; }
+.tl {
+  width: 380px;
+  height: 170px;
+  margin-right: 40px;
+  line-height: 170px;
+  text-align: center;
+  font-size: 48px;
+  font-weight: bold;
+  color: #E9E6DF;
+  background: #1A1D24;
+  background-image: linear-gradient(#22262E, #171A20);
+  border: 3px solid #2A2E37;
+  border-radius: 22px;
+  cursor: pointer;
+}
+.rada .tl:last-child { margin-right: 0; }
+/* tři menší tlačítka jsou dohromady stejně široká jako čtyři vstupy nad nimi (1640 px) */
+.tl.mensi { width: 520px; height: 100px; line-height: 100px; font-size: 32px; }
+.tl.vybrane {
+  background: #F2C14E; background-image: none; border-color: #F2C14E; color: #0E1014;
+  box-shadow: 0 0 0 8px rgba(242, 193, 78, 0.22), 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* Stav na úvodní obrazovce (od 1.5.17): stejné body s tečkou jako stav při hře, mezi vstupy a tlačítky. */
+#domu-stav { min-height: 50px; margin: -10px 0 30px 0; font-size: 28px; color: #E9E6DF; }
+#domu-stav .st-radek, #hlaseni .st-radek { display: flex; align-items: center; padding: 6px 0; }
+#domu-stav .tecka, #hlaseni .tecka { flex: none; width: 18px; height: 18px; margin-right: 18px; border-radius: 9px; background: #8C887F; }
+#domu-stav .tecka.ok, #hlaseni .tecka.ok { background: #4ADE80; }
+#domu-stav .tecka.pozor, #hlaseni .tecka.pozor { background: #F59E0B; }
+#domu-stav .tecka.info, #hlaseni .tecka.info { background: #8C887F; }
+#domu-stav .st-radek { padding: 3px 0; }
+/* stav při hře menší (od 1.5.21, majitel: nabídka a stav zakrývaly titulek) */
+#hlaseni .st-radek { padding: 2px 0; }
+#hlaseni .tecka { width: 14px; height: 14px; margin-right: 12px; border-radius: 7px; }
+#hlaseni .st-ceka { margin-left: 26px; max-width: 360px; }
+/* Slabý běžící pruh pod řádkem, na který se čeká (od 1.5.18; jako v ReCaptionu na Androidu): tenký, poloprůhledný,
+   odsazený jako text za tečkou. Jen takový řádek se zalamuje (flex-wrap) – pruh je pod textem. */
+#domu-stav .st-radek.ceka, #hlaseni .st-radek.ceka { -webkit-flex-wrap: wrap; flex-wrap: wrap; }
+.st-ceka {
+  -webkit-flex: none; flex: none; width: 100%; width: calc(100% - 36px); max-width: 480px; margin: 6px 0 2px 36px;
+  height: 4px; position: relative; overflow: hidden; border-radius: 2px; opacity: 0.45;
+  background: rgba(242, 193, 78, 0.3);
+}
+.st-ceka-beh {
+  position: absolute; left: 0; top: 0; width: 40%; height: 4px; border-radius: 2px; background: #F2C14E;
+  -webkit-animation: st-ceka-beh 1.4s linear infinite; animation: st-ceka-beh 1.4s linear infinite;
+}
+@-webkit-keyframes st-ceka-beh {
+  from { -webkit-transform: translateX(-100%); transform: translateX(-100%); }
+  to { -webkit-transform: translateX(250%); transform: translateX(250%); }
+}
+@keyframes st-ceka-beh {
+  from { -webkit-transform: translateX(-100%); transform: translateX(-100%); }
+  to { -webkit-transform: translateX(250%); transform: translateX(250%); }
+}
+
+/* Hra */
+#obraz, #obraz video { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+/* Stav při hře (od 1.5.0): body s tečkou jako Domů v ReCaptionu na Androidu. */
+#hlaseni {
+  display: none;
+  position: absolute;
+  left: 40px;
+  top: 30px;
+  max-width: 760px;
+  padding: 10px 18px;
+  font-size: 22px;
+  color: #E9E6DF;
+  background: rgba(14, 16, 20, 0.88);
+  border-radius: 14px;
+}
+/* tlačítko ovladače (OK) v rámečku místo tečky */
+#hlaseni .klavesa {
+  flex: none; margin-right: 10px; padding: 0 8px; border: 2px solid #E9E6DF; border-radius: 6px;
+  font-size: 17px; font-weight: bold; line-height: 24px; color: #E9E6DF;
+}
+
+/* Stejný černý pruh jako v aplikaci pro Android TV. */
+#pruh {
+  display: none;
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 1920px;
+  min-height: 0;
+  background: #000000;
+  align-items: center;
+  justify-content: center;
+}
+/* pre-line: titulek o dvou mluvčích přijde po síti jako dva řádky */
+#titulek { font-size: 50px; line-height: 1.25; color: #FFFFFF; text-align: center; padding: 0 80px; white-space: pre-line; }
+/* Řádky z pole casti: jméno mluvčího v jeho barvě, volby odpovědí jako seznam zarovnaný vlevo. */
+#titulek .barevne { font-weight: bold; }
+#titulek .volby { display: inline-block; text-align: left; }
+#titulek .odrazka { color: #F2C14E; }
+/* anglický originál pod překladem (volba „Ukazovat i originál“ v ReCaptionu na Androidu) */
+#titulek .puvodni { font-size: 0.62em; color: #A8B0B8; }
+/* pokyn pro hráče pod replikou (GTA „Take your shot“) – menší a šedý */
+#titulek .pokyn { font-size: 0.75em; color: #A8B0B8; }
+
+/* Úkol ve hře (od 1.5.11, GTA VI dole pod titulky) – vlastní prvek, na pruhu nezávislý.
+   Poloha, písmo a pozadí přijdou z Androidu (ukolUkaz v app.js); šířka podle textu, nejvýš 90 %. */
+#ukol {
+  display: none;
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 4;
+  box-sizing: border-box;
+  max-width: 1728px;
+  padding: 0.04em 0.5em 0.08em;
+  font-size: 40px;
+  line-height: 1.12;
+  color: #FFFFFF;
+  text-align: center;
+  white-space: pre-line;
+  background: rgba(0, 0, 0, 0.9);
+  border-radius: 18px;
+  text-shadow: 0 0 3px #000000, 0 0 6px #000000, 0 2px 4px #000000;
+}
+
+/* Popis volby Nastavení hry (od 1.5.13, GTA VI vpravo) – vlastní prvek přes anglický popis, text vlevo.
+   Poloha, šířka, písmo a pozadí přijdou z Androidu (popisUkaz v app.js). */
+#menupopis, #menunadpis {
+  display: none;
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 4;
+  box-sizing: border-box;
+  padding: 0.3em 0.5em 0.35em;
+  font-size: 32px;
+  line-height: 1.25;
+  color: #FFFFFF;
+  text-align: left;
+  white-space: pre-line;
+  background: rgba(0, 0, 0, 0.9);
+  border-radius: 12px;
+  text-shadow: 0 0 3px #000000, 0 2px 4px #000000;
+}
+
+/* Nadpis volby nad anglickým nadpisem (od 1.5.25) – tučně, šířka podle textu. */
+#menunadpis { font-weight: bold; white-space: normal; padding: 0.12em 0.4em; letter-spacing: -0.01em; font-stretch: condensed; }
+
+/* Menu vpravo dole (od 1.5.19, nápovědy tlačítek v GTA VI) – vlastní prvek, položka na řádek zarovnaná doprava.
+   Poloha, výška řádku, šířka, písmo, barva a pozadí každé položky přijdou z Androidu (rohUkaz v app.js). */
+#roh {
+  display: none;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  z-index: 4;
+  pointer-events: none;
+}
+#roh .roh-pol {
+  position: absolute;
+  box-sizing: border-box;
+  padding: 0 0.35em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: right;
+  color: #FFFFFF;
+  border-radius: 6px;
+  text-shadow: 0 0 3px #000000, 0 2px 4px #000000;
+  /* užší písmo jako originál ovládání ve hře (1.0.3, hlášení DSXW-MJSD: „moc velké písmo“) */
+  font-family: "Arial Narrow", "Liberation Sans Narrow", "Noto Sans Condensed", sans-serif;
+  letter-spacing: -0.02em;
+}
+/* Ikona tlačítka za textem položky (od 1.5.25, rohIkony v app.js): bílý kotouč, znak z rámečků – bez znaků Unicode.
+   Větší jako na telefonu a ve hře: kotouč 1,05 výšky písma (dřív 0,8) – celá ikona se zvětší vlastním písmem
+   (všechny její rozměry jsou v em), záporné okraje nahoře a dole = řádek se kvůli ní neroztáhne. */
+#roh .roh-ik,
+#menupolozky .roh-ik {
+  display: inline-block;
+  position: relative;
+  font-size: 1.3125em;
+  width: 0.8em;
+  height: 0.8em;
+  margin: -0.1em 0 -0.1em 0.3em;
+  vertical-align: middle;
+  border-radius: 50%;
+  background: #FFFFFF;
+  box-shadow: 0 0 3px #000000;
+}#roh .roh-ik i,
+#menupolozky .roh-ik i {
+  position: absolute;
+  display: block;
+  box-sizing: border-box;
+}#roh .roh-ik-x i,
+#menupolozky .roh-ik-x i {
+  left: 0.13em;
+  top: 0.355em;
+  width: 0.54em;
+  height: 0.09em;
+  border-radius: 0.045em;
+  background: #1A1A1A;
+  -webkit-transform: rotate(45deg);
+  transform: rotate(45deg);
+}#roh .roh-ik-x .z2,
+#menupolozky .roh-ik-x .z2 {
+  -webkit-transform: rotate(-45deg);
+  transform: rotate(-45deg);
+}#roh .roh-ik-o i,
+#menupolozky .roh-ik-o i {
+  left: 0.15em;
+  top: 0.15em;
+  width: 0.5em;
+  height: 0.5em;
+  border: 0.085em solid #1A1A1A;
+  border-radius: 50%;
+}#roh .roh-ik-s i,
+#menupolozky .roh-ik-s i {
+  left: 0.17em;
+  top: 0.17em;
+  width: 0.46em;
+  height: 0.46em;
+  border: 0.085em solid #1A1A1A;
+}/* △: tmavý trojúhelník z okrajů a přes něj menší bílý (stejný střed vepsané kružnice) = obrys */
+#roh .roh-ik-t i,
+/* △: tmavý trojúhelník z okrajů a přes něj menší bílý (stejný střed vepsané kružnice) = obrys */
+#menupolozky .roh-ik-t i {
+  box-sizing: content-box;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-color: transparent;
+}#roh .roh-ik-t .z1,
+#menupolozky .roh-ik-t .z1 {
+  left: 0.15em;
+  top: 0.14em;
+  border-width: 0 0.25em 0.44em 0.25em;
+  border-bottom-color: #1A1A1A;
+}#roh .roh-ik-t .z2,
+#menupolozky .roh-ik-t .z2 {
+  left: 0.27em;
+  top: 0.282em;
+  border-width: 0 0.13em 0.228em 0.13em;
+  border-bottom-color: #FFFFFF;
+}/* páčka LS / RS (od 1.5.42): písmeno uprostřed a čtyři malé tmavé trojúhelníky u okraje (šipky) */
+#roh .roh-ik-pa b,
+#menupolozky .roh-ik-pa b {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0.8em;
+  height: 0.8em;
+  line-height: 0.8em;
+  text-align: center;
+  font-size: 1em;
+  font-weight: bold;
+  color: #1A1A1A;
+  text-shadow: none;
+  -webkit-transform: scale(0.5);
+  transform: scale(0.5);
+}#roh .roh-ik-pa i,
+#menupolozky .roh-ik-pa i {
+  box-sizing: content-box;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-color: transparent;
+}#roh .roh-ik-pa .z1,
+#menupolozky .roh-ik-pa .z1 {
+  left: 0.34em;
+  top: 0.04em;
+  border-width: 0 0.06em 0.08em 0.06em;
+  border-bottom-color: #1A1A1A;
+}#roh .roh-ik-pa .z2,
+#menupolozky .roh-ik-pa .z2 {
+  left: 0.68em;
+  top: 0.34em;
+  border-width: 0.06em 0 0.06em 0.08em;
+  border-left-color: #1A1A1A;
+}#roh .roh-ik-pa .z3,
+#menupolozky .roh-ik-pa .z3 {
+  left: 0.34em;
+  top: 0.68em;
+  border-width: 0.08em 0.06em 0 0.06em;
+  border-top-color: #1A1A1A;
+}#roh .roh-ik-pa .z4,
+#menupolozky .roh-ik-pa .z4 {
+  left: 0.04em;
+  top: 0.34em;
+  border-width: 0.06em 0.08em 0.06em 0;
+  border-right-color: #1A1A1A;
+}#roh .roh-tl,
+#menupolozky .roh-tl {
+  display: inline-block;
+  margin-left: 0.65em;
+  padding: 0 0.3em;
+  height: 1.45em;
+  line-height: 1.45em;
+  vertical-align: middle;
+  font-size: 0.61em;
+  font-weight: bold;
+  color: #1A1A1A;
+  text-shadow: none;
+  border-radius: 0.35em;
+  background: #FFFFFF;
+}#roh .roh-seda,
+#roh .roh-tl.roh-seda,
+#menupolozky .roh-seda,
+#menupolozky .roh-tl.roh-seda {
+  background: #8C7C4C;
+}#roh .roh-ik-t.roh-seda .z2,
+#menupolozky .roh-ik-t.roh-seda .z2 {
+  border-bottom-color: #8C7C4C;
+}
+
+/* Pokyny u předmětů (od 1.5.20, GTA VI: „□ SMASH WINDOW“ u okna auta) – vlastní prvek, položka od levého horního rohu
+   anglického pokynu, jeden řádek. Poloha, výška řádku, šířka, písmo, barva a pozadí přijdou z Androidu (predmetyUkaz v app.js). */
+#predmety {
+  display: none;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  z-index: 4;
+  pointer-events: none;
+}
+#predmety .predmet {
+  position: absolute;
+  box-sizing: border-box;
+  padding: 0 0.35em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+  color: #FFFFFF;
+  border-radius: 6px;
+  text-shadow: 0 0 3px #000000, 0 2px 4px #000000;
+}
+
+/* Telefon ve hře (od 1.5.22, GTA VI) – přeložený obsah telefonu jako malý telefon s bublinami. Poloha, šířka, nejvyšší výška,
+   písmo a průhlednost pozadí přijdou z Androidu (telefonUkaz v app.js); rozměry uvnitř v em, ať se zmenšují s písmem.
+   Bez flexboxu: bublina má šířku podle textu (fit-content), vlastní zpráva se odsune doprava okrajem auto. */
+#telefon {
+  display: none;
+  position: absolute;
+  box-sizing: border-box;
+  z-index: 4;
+  overflow: hidden;
+  padding: 0.5em 0.55em 0.6em;
+  color: #FFFFFF;
+  background: rgba(18, 20, 26, 0.9);
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  line-height: 1.25;
+  pointer-events: none;
+}
+/* panel na volné straně obrazu (od 1.5.46): přesun na druhou stranu dojede plynule */
+#telefon.tel-volna {
+  -webkit-transition: left 0.3s linear, top 0.3s linear;
+  transition: left 0.3s linear, top 0.3s linear;
+}
+#telefon .tel-nadpis {
+  margin: 0 0 0.45em;
+  padding-bottom: 0.35em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+  font-weight: bold;
+  font-size: 0.9em;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#telefon .tel-zprava {
+  box-sizing: border-box;
+  margin-top: 0.4em;
+  white-space: pre-line;
+  word-wrap: break-word;
+}
+#telefon .tel-zprava:first-child { margin-top: 0; }
+#telefon .tel-l, #telefon .tel-p {
+  width: -webkit-fit-content;
+  width: fit-content;
+  max-width: 82%;
+  padding: 0.35em 0.6em;
+  color: #FFFFFF;
+  border-radius: 14px;
+}
+/* Barvy jako telefon ve hře (od 1.5.30): příchozí světle šedá, vlastní modrá. Od ReCaption 1.00-rc21 (přání majitele: modrá byla
+   tmavší než ve hře a neprůhledná) světle modrá jako ve hře a obě bubliny průhledné jako ostatní překlady (40 % jako menu), písmo bílé se stínem. */
+#telefon .tel-l {
+  margin-right: auto;
+  text-shadow: 0 0 3px #000000;
+  background: rgba(157, 178, 210, 0.4);
+  border-bottom-left-radius: 4px;
+}
+#telefon .tel-p {
+  margin-left: auto;
+  text-shadow: 0 0 3px #000000;
+  background: rgba(58, 120, 216, 0.4);
+  border-bottom-right-radius: 4px;
+}
+#telefon .tel-emoji img { display: block; height: 1.6em; }
+#telefon .tel-obrazek { display: block; width: 100%; max-height: 9em; margin: 0.4em 0 0 0; border-radius: 0.5em; }
+#telefon .tel-cara { height: 0; margin: 0.6em 8%; border-top: 2px solid rgba(255, 255, 255, 0.22); }
+#telefon .tel-s {
+  width: 100%;
+  padding: 0.1em 0.2em;
+  color: #E6E8EC;
+  text-shadow: 0 0 3px #000000;
+}
+
+/* Ukázka v nápovědě (od 1.5.17) vlevo od tlačítka Zpět */
+#np-ukazka {
+  position: absolute;
+  right: 330px;
+  top: 30px;
+  width: 260px;
+  height: 90px;
+  margin: 0;
+  line-height: 90px;
+  font-size: 34px;
+}
+
+#zpet {
+  display: none;
+  position: absolute;
+  right: 40px;
+  top: 30px;
+  width: 260px;
+  height: 90px;
+  margin: 0;
+  line-height: 90px;
+  font-size: 34px;
+}
+
+/* Ukázka: nakreslená „hra“ s anglickým titulkem, pod ní pruh s překladem. */
+.scena {
+  position: absolute; left: 0; top: 0; width: 1920px; height: 1080px;
+  background: linear-gradient(#27405C, #16222F 55%, #2C2A22 56%, #14130F);
+}
+.stitek {
+  position: absolute; left: 40px; top: 30px;
+  padding: 10px 22px; font-size: 26px; letter-spacing: 2px; text-transform: uppercase;
+  color: #0E1014; background: #F2C14E; border-radius: 6px; font-weight: bold;
+}
+.uk-text { position: absolute; left: 140px; top: 250px; width: 1300px; font-size: 44px; color: #FFFFFF; }
+#original {
+  position: absolute; left: 0; bottom: 190px; width: 1920px; text-align: center;
+  font-size: 34px; color: #FFFFFF; text-shadow: 0 0 6px #000000, 0 2px 4px #000000; white-space: pre-line;
+}
+
+/* Nápověda */
+.kroky { width: 1560px; margin-top: 30px; }
+.bod { display: flex; margin-bottom: 26px; font-size: 34px; color: #E9E6DF; }
+.bod i {
+  flex: none; width: 60px; height: 60px; margin-right: 30px; border-radius: 30px;
+  line-height: 60px; text-align: center; font-style: normal; font-weight: bold;
+  color: #0E1014; background: #F2C14E;
+}
+.bod span { flex: 1; }
+.bod b { color: #FFFFFF; }
+
+/* Nabídka Vzhled titulků při hře (OK na ovladači) – nad hrou vpravo nahoře, nad pruhem. */
+#panel {
+  display: none; position: absolute; right: 50px; top: 40px; width: 640px; z-index: 5;
+  padding: 16px 24px; background: rgba(14, 16, 20, 0.94); border-left: 6px solid #F2C14E; border-radius: 8px;
+  color: #E9E6DF; font-size: 25px;
+}
+#panel .pn-nadpis { font-size: 30px; font-weight: bold; color: #F2C14E; margin-bottom: 8px; }
+#panel .pn-radek { display: flex; justify-content: space-between; padding: 4px 12px; border-radius: 6px; }
+#panel .pn-radek.vybrane { background: #F2C14E; color: #0E1014; font-weight: bold; }
+#panel .pn-hodnota { margin-left: 18px; white-space: nowrap; }
+#panel .pn-ovladani { margin-top: 8px; font-size: 19px; color: #A8B0B8; }
+/* bez spojení s Androidem (od 1.5.17): změny se uloží v televizi */
+#panel .pn-offline { margin-top: 8px; padding-left: 12px; font-size: 21px; color: #F59E0B; }
+
+/* Překlad telefonu přes text v telefonu (od 1.5.28) – odstavce na místě originálu, jako text v telefonu ve hře. */
+#telefonpres { display: none; position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; z-index: 4; pointer-events: none; }
+#telefonpres .tp-odstavec {
+  position: absolute; box-sizing: border-box; padding: 0 0.15em 0.1em; line-height: 1.2;
+  color: #161618; background: #F4F4F6; border-radius: 4px; text-align: left; white-space: normal;
+}
+/* Náhledy v seznamu zpráv vedle telefonu (od ReCaption 1.00-rc21, „vedle“): každý u svého řádku, průhledné jako ostatní překlady. */
+#telefonpres .tp-vedle { color: #FFFFFF; background: rgba(0, 0, 0, 0.4); text-shadow: 0 0 3px #000000; }
+
+/* Vybraná položka přeloženého menu hry (od 1.5.29) – černý text na bílém jako ve hře. */
+#titulek .vybrana { color: #000000; background: #FFFFFF; padding: 0 0.25em; border-radius: 3px; text-shadow: none; }
+
+/* Seznam pod popisem volby Nastavení (od 1.5.29) – položky pod sebou vpravo od originálu. */
+#menuseznam { display: none; position: absolute; z-index: 4; padding: 0 0.4em; color: #FFFFFF; background: rgba(0, 0, 0, 0.85);
+  border-radius: 8px; white-space: nowrap; text-shadow: 0 0 3px #000000; }
+
+/* Popisky menu hry na svém místě (od 1.5.31) – překlad položky hned vpravo od originálu, vybraná černě v bílém pruhu hry. */
+#menupolozky { display: none; position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; z-index: 4; pointer-events: none; }
+#menupolozky .menupolozka {
+  position: absolute; box-sizing: border-box; padding: 0 0.25em; white-space: nowrap; color: #FFFFFF; border-radius: 4px;
+  text-shadow: 0 0 3px #000000, 0 0 6px #000000, 0 2px 4px #000000;
+}
+#menupolozky .mp-vybrana { color: #000000; text-shadow: none; background: transparent; }
+#menupolozky .mp-ikona { height: 0.95em; width: auto; margin-right: 0.4em; vertical-align: -0.12em; }
+#menupolozky .mp-vybrana .mp-ikona { -webkit-filter: brightness(0); filter: brightness(0); }
+
+/* Podpořit ReCaption (od 1.5.39): čtvereček z Androidu – na úvodní obrazovce vpravo dole, při hře vlevo od nabídky OK */
+#kafe { display: none; position: absolute; z-index: 5; width: 230px; padding: 14px; box-sizing: border-box; text-align: center;
+  background: rgba(14, 16, 20, 0.94); border-radius: 8px; color: #E9E6DF; }
+#kafe img { display: block; width: 180px; height: 180px; margin: 0 auto 10px auto; background: #FFFFFF; padding: 6px; box-sizing: border-box; border-radius: 4px; }
+#kafe .kafe-text { font-size: 22px; font-weight: bold; color: #F2C14E; line-height: 1.2; }
+#kafe .kafe-pod { font-size: 18px; color: #A8B0B8; line-height: 1.3; }
+#kafe.kafe-domu { right: 80px; bottom: 70px; }
+#kafe.kafe-panel { right: 714px; top: 40px; }

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ReCaption pro televize Samsung (Tizen). Verze musí být stejná jako VERZE v platforma.js
+     (hlídá sestavení APK). Balíček ReCaption je 10 písmen/číslic podle pravidel Tizenu;
+     id aplikace = balíček + "." + název. Podpis (author + distributor) do balíčku přidává až
+     nástroj Samsung u uživatele – viz tizen/CTI-ME.md. -->
+<widget xmlns="http://www.w3.org/ns/widgets" xmlns:tizen="http://tizen.org/ns/widgets" id="https://github.com/adusa89/ReCaption/tizen" version="1.5.60" viewmodes="maximized">
+    <tizen:application id="ReCaption1.ReCaption" package="ReCaption1" required_version="2.3"/>
+    <content src="index.html"/>
+    <feature name="http://tizen.org/feature/screen.size.all"/>
+    <icon src="icon.png"/>
+    <name>ReCaption</name>
+    <tizen:profile name="tv-samsung"/>
+    <tizen:setting screen-orientation="landscape" context-menu="disable" background-support="disable" encryption="disable" install-location="auto" hwkey-event="enable"/>
+    <tizen:privilege name="http://tizen.org/privilege/tv.window"/>
+    <tizen:privilege name="http://tizen.org/privilege/tv.inputdevice"/>
+    <tizen:privilege name="http://tizen.org/privilege/internet"/>
+    <tizen:privilege name="http://tizen.org/privilege/system"/>
+    <tizen:privilege name="http://tizen.org/privilege/power"/>
+    <access origin="*" subdomains="true"/>
+</widget>

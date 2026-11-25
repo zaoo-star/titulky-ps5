@@ -1,0 +1,77 @@
+name: Vydat aplikaci pro TV
+# Jen aplikace pro TV LG / Samsung, BEZ nové verze pro Android (přání majitele 24. 11. 2026).
+# Sestaví balíčky stejnými úlohami jako APK (lgBalicek, samsungBalicek → core/LgIpk.kt, core/SamsungWgt.kt) a ve vydání
+# zvoleného kanálu přepíše jen ReCaption-LG.ipk, ReCaption-Samsung.wgt a tv-verze.txt (ReCaption.apk ani version.txt
+# se nemění). Telefon / Android TV si novější balíček sám stáhne (TvPackages.kt) a nabídne „Aktualizovat v TV“;
+# Apps2Samsung bere ReCaption-Samsung.wgt z vydání latest.
+#   zkusebni → jen testeři (z jakékoli větve), latest → všichni (jen z main, se souhlasem majitele), oba.
+# Spouští se jen ručně: Actions → Vydat aplikaci pro TV → Run workflow (nebo gh workflow run tv.yml -f kanal=…).
+# Verze v TV nejde zpátky: nižší než už vydaná se do kanálu nevydá.
+
+on:
+  workflow_dispatch:
+    inputs:
+      kanal:
+        description: "Kam vydat: zkusebni (jen testeři), latest (všichni, jen z main), oba"
+        type: choice
+        options: [zkusebni, latest, oba]
+        default: zkusebni
+
+permissions:
+  contents: write
+
+jobs:
+  tv:
+    # stejná fronta jako vydání APK z téže větve (build.yml) – vydání latest se nepřekryjí
+    concurrency:
+      group: vydani-${{ github.ref }}
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - name: Zkouška aplikace pro TV bez televize
+        run: node tizen/test/prijimac.test.js
+
+      - name: Testy balíčků
+        run: chmod +x gradlew && bash ci/opakuj-sit.sh ./gradlew -p ci/mistni-kontrola test --no-daemon --tests 'cz.recaption.core.TvUpdateTest' --tests 'cz.recaption.core.SamsungTest' --tests 'cz.recaption.core.LgInstallTest'
+
+      - name: Sestavit balíčky pro TV
+        run: |
+          bash ci/opakuj-sit.sh ./gradlew :app:lgBalicek :app:samsungBalicek --no-daemon
+          cp app/build/generated/lgAssets/lg/receiver.ipk ReCaption-LG.ipk
+          cp app/build/generated/samsungAssets/samsung/receiver.wgt ReCaption-Samsung.wgt
+          LG=$(grep -oE '"version": "[^"]+"' app/build/generated/lgAssets/lg/receiver-manifest.json | cut -d'"' -f4)
+          SA=$(grep -oE '"version": "[^"]+"' app/build/generated/samsungAssets/samsung/receiver-manifest.json | cut -d'"' -f4)
+          if [ "$LG" != "$SA" ]; then echo "::error::Verze pro LG ($LG) a Samsung ($SA) se liší – zvyš obě stejně (appinfo.json, webos platforma.js, config.xml, tizen platforma.js)."; exit 1; fi
+          echo "$LG" > tv-verze.txt
+          echo "VERZE=$LG" >> "$GITHUB_ENV"
+          ls -la ReCaption-LG.ipk ReCaption-Samsung.wgt tv-verze.txt
+
+      - name: Vydat
+        env:
+          GH_TOKEN: ${{ github.token }}
+          KANAL: ${{ inputs.kanal }}
+        run: |
+          case "$KANAL" in latest) K="latest" ;; zkusebni) K="zkusebni" ;; oba) K="zkusebni latest" ;; *) echo "::error::Neznámý kanál $KANAL"; exit 1 ;; esac
+          if [[ " $K " == *" latest "* ]] && [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::Do latest (všichni) jen z main. Spusť workflow na main, nebo zvol zkusebni."; exit 1
+          fi
+          vyssi() {  # 0 = $1 je vyšší verze než $2 (číselně, 1.5.44 < 1.5.100)
+            [ "$1" != "$2" ] && [ "$(printf '%s\n%s\n' "$1" "$2" | sort -V | tail -1)" = "$1" ]
+          }
+          for k in $K; do
+            if ! gh release view "$k" >/dev/null 2>&1; then echo "::error::Vydání $k neexistuje (nejdřív musí vyjít APK do $k)."; exit 1; fi
+            STARA=$(gh release download "$k" --pattern tv-verze.txt --output - 2>/dev/null | head -1 | tr -d '\r\n ' || true)
+            if [ -n "$STARA" ] && vyssi "$STARA" "$VERZE"; then
+              echo "::warning::V kanálu $k je novější aplikace pro TV ($STARA), $VERZE se tam nevydává."; continue
+            fi
+            gh release upload "$k" ReCaption-LG.ipk ReCaption-Samsung.wgt tv-verze.txt --clobber
+            echo "::notice::Aplikace pro TV $VERZE vydaná do $k (předtím ${STARA:-žádná samostatná})."
+          done

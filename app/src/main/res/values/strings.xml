@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ReCaption</string>
+    <string name="a11y_desc">ReCaption zobrazuje přeložené titulky nad hrou. Služba se používá jen k zobrazení pruhu s překladem nad obrazem. Nečte obsah obrazovky televize a nic neodesílá.</string>
+</resources>
