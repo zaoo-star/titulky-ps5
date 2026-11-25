@@ -354,6 +354,14 @@ private class Aplikace {
         if (cteckaBezi()) return
         // seznam spárovaných konzolí čtečky hned (po přepnutí režimu ho hledání na pozadí ještě nenačetlo)
         if (konzoleSeznam.isEmpty()) konzoleSeznam = runCatching { Chiaki.konzole(Chiaki.PROFIL_CTECKY) }.getOrDefault(emptyList())
+        // PS5 spárovaná jen pro hraní na PC: čtečka si spárování převezme (stejné PC, stejná PS5)
+        if (konzoleSeznam.isEmpty()) {
+            val n = runCatching { Chiaki.prevezmiDoCtecky() }.getOrDefault(0)
+            if (n > 0) {
+                zapis("Spárování PS5 z hraní na PC převzato i pro TV ($n)")
+                konzoleSeznam = runCatching { Chiaki.konzole(Chiaki.PROFIL_CTECKY) }.getOrDefault(emptyList())
+            }
+        }
         // co chybí a jde stáhnout, se stáhne samo; TV povel opakuje, takže se čtení spustí, až bude hotovo
         if (Chiaki.exe() == null) {
             if (stahovani == null) { zapis("TV chce překlad · stahuji chiaki-ng"); stahnoutChiaki() }

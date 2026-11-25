@@ -347,8 +347,34 @@ object Chiaki {
         Advapi32Util.registrySetIntValue(hk, pole, "size", maxOf(i, indexy.maxOrNull() ?: 0))
     }
 
+    /**
+     * PS5 spárovaná jen pro hraní na PC (výchozí profil) se zkopíruje i do profilu čtečky pro TV.
+     * Bez toho by „Překlad z PC“ v TV hlásil „PS5 není spárovaná pro čtečku“, i když PC s PS5 spojit umí
+     * (25. 11. 2026: spárováno přes Domů → Spárovat v režimu Hraji na PC). Vrací počet převzatých konzolí.
+     */
+    fun prevezmiDoCtecky(): Int {
+        if (!Os.windows) return 0
+        val hk = WinReg.HKEY_CURRENT_USER
+        val zdroj = "${reg(null)}\\registered_hosts"
+        if (!Advapi32Util.registryKeyExists(hk, zdroj)) return 0
+        var n = 0
+        for (i in Advapi32Util.registryGetKeys(hk, zdroj)) {
+            val h = "$zdroj\\$i"
+            val jmeno = hodnota(h, "server_nickname")?.let { qtZpet(it) }?.takeIf { it.isNotBlank() } ?: continue
+            val mac = bajty(hodnota(h, "server_mac"))?.takeIf { it.size == 6 } ?: continue
+            val regist = bajty(hodnota(h, "rp_regist_key")) ?: continue
+            val relace = bajty(hodnota(h, "rp_key"))?.takeIf { it.size == 16 } ?: continue
+            val typ = runCatching { Advapi32Util.registryGetIntValue(hk, h, "rp_key_type") }.getOrDefault(0)
+            val ap = listOf("ap_ssid", "ap_bssid", "ap_key", "ap_name").associateWith { qtZpet(hodnota(h, it) ?: "") }
+            uloz(Registrace.Konzole(jmeno, mac, regist.copyOf(16), relace, typ, ap), PROFIL_CTECKY)
+            n++
+        }
+        return n
+    }
+
     /** Text tak, jak ho zapisuje Qt (začátek „@“ se zdvojí). */
     internal fun qtText(s: String) = if (s.startsWith("@")) "@$s" else s
+    private fun qtZpet(s: String) = if (s.startsWith("@@")) s.substring(1) else s
 
     private fun qtBajty(b: ByteArray): ByteArray =
         ("@ByteArray(" + String(b, Charsets.ISO_8859_1) + ")").toByteArray(Charsets.UTF_16LE)
