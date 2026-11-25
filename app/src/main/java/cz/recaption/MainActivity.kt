@@ -652,9 +652,12 @@ class MainActivity : Activity() {
         val set = section == Section.SETTINGS
         fun tab(tb: SettingsTab) { section = Section.SETTINGS; settingsTab = tb; render(keepFocus = true); pageScroll?.post { pageScroll?.scrollTo(0, 0) } }
         item("◍", t(SettingsTab.GENERAL.key), set && settingsTab == SettingsTab.GENERAL, "stab_GENERAL") { tab(SettingsTab.GENERAL) }
-        item("Aa", ct("m_look"), section == Section.LOOK, "stab_LOOK") { section = Section.LOOK; render(keepFocus = true); pageScroll?.post { pageScroll?.scrollTo(0, 0) } }
-        item("≡", t(SettingsTab.READ.key), set && settingsTab == SettingsTab.READ, "stab_READ") { tab(SettingsTab.READ) }
-        item("⚗", t(SettingsTab.EXPERIMENTAL.key), set && settingsTab == SettingsTab.EXPERIMENTAL, "stab_EXPERIMENTAL") { tab(SettingsTab.EXPERIMENTAL) }
+        if (!Prefs.pcMode(this)) item("Aa", ct("m_look"), section == Section.LOOK, "stab_LOOK") { section = Section.LOOK; render(keepFocus = true); pageScroll?.post { pageScroll?.scrollTo(0, 0) } }
+        // čtení a překlad dělá v režimu z PC program na PC – v TV zůstane jen Obecné
+        if (!Prefs.pcMode(this)) {
+            item("≡", t(SettingsTab.READ.key), set && settingsTab == SettingsTab.READ, "stab_READ") { tab(SettingsTab.READ) }
+            item("⚗", t(SettingsTab.EXPERIMENTAL.key), set && settingsTab == SettingsTab.EXPERIMENTAL, "stab_EXPERIMENTAL") { tab(SettingsTab.EXPERIMENTAL) }
+        } else settingsTab = SettingsTab.GENERAL
         if (prev != null && section == Section.LOOK) lookPreview(prev)
     }
 
@@ -697,7 +700,8 @@ class MainActivity : Activity() {
         for (s in Section.values()) {
             if (s == Section.HISTORY) continue
             // překlad z PC: PS5 páruje a čte PC, v TV stránka konzole není potřeba
-            if (s == Section.PS5 && Prefs.pcMode(this) && !remote) continue
+            // vzhled titulků se v režimu z PC nastavuje na PC (přání majitele 25. 11. 2026: „vše jen z PC“)
+            if ((s == Section.PS5 || s == Section.LOOK) && Prefs.pcMode(this) && !remote) continue
             val active = s == menuSection()
             if (s == Section.SETTINGS && narrow) {
                 // telefon: jen ozubené kolo v rohu lišty, vidět pořád
@@ -1577,7 +1581,6 @@ class MainActivity : Activity() {
                 }
             }
             // vše ostatní (PS5, hra, mobil, DeepL) se nastavuje v programu na PC
-            tl += HomeTile("Aa", ct("m_look"), "tile_look") { section = Section.LOOK; render() }
             tl += HomeTile("⚙", t("m_settings"), "tile_settings") { section = Section.SETTINGS; render() }
             tl += HomeTile("?", ct("m_help"), "tile_help") { section = Section.HELP; render() }
             tileRow(tl)
@@ -1612,6 +1615,7 @@ class MainActivity : Activity() {
             if (overlayOk) null else { { openAccessibility() } })
         Prefs.pcAddress(this)?.let { line(Theme.MUTED, "Poslední PC · $it", "pclast") }
         line(Theme.MUTED, if (Prefs.pcMac(this) != null) "Probuzení PC ze spánku · zapnuto" else "Probuzení PC ze spánku · po prvním spojení", "pcwake")
+        line(Theme.MUTED, "Vzhled titulků, hra, DeepL · nastavuje se na PC", "pcsettings")
         if (narrow) { add(card, 18); return }
         val (title, color) = when {
             !overlayOk -> "Chybí povolení" to Theme.WARN
@@ -4177,6 +4181,6 @@ class MainActivity : Activity() {
 }
 
 object BuildInfo {
-    const val VERSION = "verze 1.3-z5"
-    const val VERSION_CODE = 322
+    const val VERSION = "verze 1.3-z6"
+    const val VERSION_CODE = 323
 }

@@ -160,7 +160,15 @@ class PcReceiverService : Service() {
         val o = overlay ?: return
         when (m) {
             is PcMessage.Show -> {
-                o.show(m.segments, if (Prefs.showOriginal(this)) m.original else null, m.top, m.bottom, m.left, m.right)
+                // vzhled z PC (písmo, pozadí, barva, poloha…): jiný než minule = nový pruh s ním
+                val lk = m.look
+                val use = if (lk != null && lk != look) {
+                    look = lk
+                    o.destroy()
+                    makeOverlay(lk).also { overlay = it }
+                } else o
+                // originál posílá PC jen se zapnutou volbou na PC; bez vzhledu z PC (starší PC) podle nastavení v TV
+                use.show(m.segments, if (lk != null || Prefs.showOriginal(this)) m.original else null, m.top, m.bottom, m.left, m.right)
                 shownCount++
                 c.send(PcMessage.done(m.id))
             }
@@ -181,13 +189,16 @@ class PcReceiverService : Service() {
 
     private fun sleep(ms: Long) { try { Thread.sleep(ms) } catch (_: InterruptedException) {} }
 
-    private fun makeOverlay(): SubtitleOverlay {
+    /** Poslední vzhled z PC (null = zatím žádný, platí nastavení v TV). */
+    @Volatile private var look: cz.recaption.core.PcLook? = null
+
+    private fun makeOverlay(pc: cz.recaption.core.PcLook? = look): SubtitleOverlay {
         val (w, h) = screenSize()
         return SubtitleOverlay(
-            this, w, h, Prefs.layout(this), Prefs.textSize(this), Prefs.opacity(this),
+            this, w, h, pc?.layout(Prefs.layout(this)) ?: Prefs.layout(this), pc?.textSp ?: Prefs.textSize(this), pc?.opacity ?: Prefs.opacity(this),
             false, Prefs.coloredSpeaker(this),
-            Prefs.TEXT_COLORS[Prefs.textColorIndex(this)], Prefs.boldText(this), false,
-            barPad = Prefs.barPad(this),
+            pc?.color ?: Prefs.TEXT_COLORS[Prefs.textColorIndex(this)], pc?.bold ?: Prefs.boldText(this), false,
+            barPad = pc?.pad ?: Prefs.barPad(this),
             coverAll = Prefs.coverAll(this),
             origSp = Prefs.origSp(this),
             objSizeSp = Prefs.objSize(this),

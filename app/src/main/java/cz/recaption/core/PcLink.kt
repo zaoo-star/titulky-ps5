@@ -160,11 +160,52 @@ class WsClient private constructor(private val socket: Socket, private val input
     }
 }
 
+/**
+ * Vzhled pruhu, jak ho nastavilo PC (`TvLook.json`): Titulky PS5 se nastavují jen na PC (přání majitele 25. 11. 2026),
+ * TV ho jen použije. [textPx] = písmo na obrazovce 1080 (sp × 50/22), [position] pres / tesne / nad / stred.
+ */
+data class PcLook(val opacity: Int, val textPx: Int, val color: Int, val bold: Boolean, val pad: Int,
+                  val position: String, val width: Float, val center: Float, val origPercent: Int) {
+    /** Písmo v sp jako v nastavení TV (obrácené `TvLook.textPx`). */
+    val textSp: Int get() = kotlin.math.round(textPx * 22f / 50f).toInt().coerceIn(12, 48)
+
+    fun layout(base: ScreenLayout): ScreenLayout {
+        val l = when (position) {
+            "pres" -> base.withPosition(ScreenLayout.Position.OVER)
+            "tesne" -> base.withPosition(ScreenLayout.Position.ABOVE_TEXT)
+            "nad" -> base.withPosition(ScreenLayout.Position.ABOVE)
+            "stred" -> if (center > 0f) base.withBarCenter(center) else base
+            else -> base
+        }
+        return if (width > 0f) l.withBarWidth(width) else l
+    }
+
+    companion object {
+        fun parse(m: Map<String, Any?>): PcLook? {
+            fun num(k: String) = (m[k] as? Number)
+            val px = num("pismo")?.toInt() ?: return null
+            val color = (m["barva"] as? String)?.removePrefix("#")?.takeIf { it.length == 6 }
+                ?.toLongOrNull(16)?.let { (0xFF000000L or it).toInt() } ?: 0xFFFFFFFF.toInt()
+            return PcLook(
+                opacity = (num("pozadi")?.toInt() ?: 60).coerceIn(0, 100),
+                textPx = px.coerceIn(16, 120), color = color, bold = m["tucne"] == true,
+                pad = (num("okraj")?.toInt() ?: 1).coerceIn(0, 3),
+                position = (m["poloha"] as? String)?.take(10) ?: "",
+                width = (num("sirka")?.toFloat() ?: 0f).coerceIn(0f, 1f),
+                center = (num("stred")?.toFloat() ?: -1f).coerceIn(-1f, 1f),
+                origPercent = (num("pismoOrig")?.toInt() ?: 62).coerceIn(30, 100),
+            )
+        }
+    }
+}
+
 /** Zpráva z PC, kterou Android TV umí ukázat. Pole jsou z cizího zařízení – ořezaná a hlídaná. */
 sealed class PcMessage {
     /** Titulek: řádky (mluvčí, volby, pokyny), originál a kde byl anglický titulek ([top] < 0 = neví se). */
     data class Show(val id: Long, val segments: List<Segment>, val original: String?,
-                    val top: Float, val bottom: Float, val left: Float, val right: Float) : PcMessage()
+                    val top: Float, val bottom: Float, val left: Float, val right: Float,
+                    /** Vzhled pruhu z PC (vše se nastavuje na PC); null = PC ho neposlalo, platí nastavení v TV. */
+                    val look: PcLook? = null) : PcMessage()
     data class Hide(val id: Long) : PcMessage()
     /** Úkol; prázdný [text] = schovat. [box] = kde byl anglický úkol. */
     data class Objective(val text: String, val box: FloatArray?) : PcMessage()
@@ -202,7 +243,8 @@ sealed class PcMessage {
                     val ok = t != null && t.size >= 2 && t[1] > t[0]
                     val lr = ok && t!!.size >= 4 && t[3] > t[2]
                     Show(id, segments, str(look?.get("original"))?.takeIf { it.isNotBlank() },
-                        if (ok) t!![0] else -1f, if (ok) t!![1] else -1f, if (lr) t!![2] else -1f, if (lr) t!![3] else -1f)
+                        if (ok) t!![0] else -1f, if (ok) t!![1] else -1f, if (lr) t!![2] else -1f, if (lr) t!![3] else -1f,
+                        look?.let { PcLook.parse(it) })
                 }
                 "ukol" -> Objective(str(m["text"]) ?: "", box(m["misto"]))
                 "telefon" -> {

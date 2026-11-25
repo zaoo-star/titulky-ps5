@@ -17,8 +17,8 @@ android {
         applicationId = "cz.titulkyps5"
         minSdk = 26          // Android 8 a novější (prakticky všechny Android TV a boxy)
         targetSdk = 34
-        versionCode = 322
-        versionName = "1.3-z5"
+        versionCode = 323
+        versionName = "1.3-z6"
 
         // kanál APK (od 1.00-rc7, přání majitele – zkušební verze jen pro testery): „zkusebni“ = testerské APK z větví
         // (build.yml -Pkanal=zkusebni), jinak „latest“ (main, zaloha-…, místní sestavení). Čte Tester.kt z manifestu.
