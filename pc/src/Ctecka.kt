@@ -366,13 +366,15 @@ class Ctecka(
         runCatching { if (souborPameti.exists()) pamet.load(souborPameti.readText(Charsets.UTF_8)) }
     }
 
-    private fun ulozPamet() = synchronized(pamet) {
-        if (pamet.dirty == 0) return
-        runCatching {
-            souborPameti.parentFile?.mkdirs()
-            val tmp = File(souborPameti.path + ".tmp")
-            tmp.writeText(pamet.dump(), Charsets.UTF_8)
-            if (!tmp.renameTo(souborPameti)) { souborPameti.delete(); tmp.renameTo(souborPameti) }
+    private fun ulozPamet() {
+        synchronized(pamet) {
+            if (pamet.dirty == 0) return
+            runCatching {
+                souborPameti.parentFile?.mkdirs()
+                val tmp = File(souborPameti.path + ".tmp")
+                tmp.writeText(pamet.dump(), Charsets.UTF_8)
+                if (!tmp.renameTo(souborPameti)) { souborPameti.delete(); tmp.renameTo(souborPameti) }
+            }
         }
     }
 
