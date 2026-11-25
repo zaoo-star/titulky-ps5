@@ -108,7 +108,8 @@ class Nastaveni(private val soubor: File = File(Nastroje.slozka, "aplikace.prope
 
     companion object {
         /** Mac je hlavně čtečka pro TV (hra běží na PS5 v TV) – tam je výchozí; ve Windows zůstává hraní na PC. */
-        val VYCHOZI_POUZITI = if (Os.mac) "ctecka" else "pc"
+        // Titulky PS5: hlavní cesta je PC jako čtečka pro TV (přání majitele 25. 11. 2026 – „PC dělá vše“)
+        val VYCHOZI_POUZITI = "ctecka"
         /** Stejné hodnoty jako na Androidu a v TV (`TvSettings.TEXT_SIZES`, `TvSettings.OPACITIES`). */
         val PISMA = cz.recaption.core.TvSettings.TEXT_SIZES
         val POZADI = cz.recaption.core.TvSettings.OPACITIES

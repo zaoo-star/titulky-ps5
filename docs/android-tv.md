@@ -107,26 +107,27 @@ televize a APK se otevře správcem souborů (např. **File Commander** z Google
 „Neznámé zdroje“ pak dostane správce souborů, ne Downloaderu.
 
 <a id="prvni-spusteni"></a>
-## První spuštění – průvodce v TV
+## První spuštění
 
-Průvodce má 9 kroků: **Jazyky** → Zařízení → Konzole → Televize → Offline překlad → Lepší překlad (DeepL) →
-Zobrazení titulků → Připojení PlayStationu → Hotovo.
+Od verze 1.3-z4 se v TV nic nepáruje ani nenastavuje – **všechno dělá [program na PC](pc.md)** a TV jen ukazuje
+titulky. Po prvním otevření je rovnou Domů s velkou dlaždicí:
 
-- V kroku **Jazyky** se pod jazyky volí, jak dál: **Nastavit telefonem nebo počítačem (doporučeno)** – přihlášení,
-  spárování PS5 a DeepL na jedné stránce v telefonu nebo počítači – nebo **Nastavit přímo na TV** (vše ovladačem).
-- **Zařízení:** Android TV nebo box s Androidem. **Televize:** Android TV.
-- **Připojení PlayStationu:** předem je potřeba 🔵 účet pro Titulky PS5 na PS5 – [návod k PS5](ps5.md#ucet).
+1. **Povolit zobrazení titulků** – jednou povolit Usnadnění (níž).
+2. **Spustit překlad z PC** – TV najde PC v síti a zapne na něm čtení (PC musí mít Titulky PS5 zapnuté,
+   [návod pro PC](pc.md)).
+
+Čtení přímo v TV (bez PC, starší cesta) jde zapnout v ⚙ Nastavení → Obecné → Překlad z PC · vypnuto.
 
 <a id="zobrazeni"></a>
 ### Zobrazení titulků (Usnadnění)
 
 Aby Titulky PS5 mohl kreslit pruh přes hru, musí se mu jednou povolit Usnadnění:
 
-1. V kroku **Zobrazení titulků** zvolit **Otevřít nastavení TV** – otevře se seznam Usnadnění.
+1. Na Domů zvolit **Povolit zobrazení titulků** – otevře se seznam Usnadnění.
    (Ručně: Google TV Nastavení → Systém → **Usnadnění**; starší Android TV Nastavení → Předvolby zařízení →
    **Usnadnění**.)
 2. Dole v seznamu zvolit **Titulky PS5** → zapnout → potvrdit dotaz systému (**OK** / **Povolit**).
-3. Tlačítkem **Zpět** na ovladači se vrátit do Titulky PS5 – řádek se odškrtne a průvodce pokračuje.
+3. Tlačítkem **Zpět** na ovladači se vrátit do Titulky PS5 – řádek „Pruh přes obraz“ zezelená.
 
 
 Když TV obrazovku Usnadnění nemá, Titulky PS5 zkusí **Zobrazení přes jiné aplikace** (⚙ Nastavení → Obecné).

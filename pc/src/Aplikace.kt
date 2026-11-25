@@ -659,6 +659,8 @@ private class Aplikace {
 
         // hra (univerzální profil = řádek není, jako na Androidu)
         if (nast.hra != "all") rHra.nastav(B.OK, "Hra · " + nazevHry(nast.hra))
+        // čtečka pro TV: bez vybrané hry se čtou jen titulky (telefon a menu ve hře ne) – Domů nabídne výběr
+        else if (nast.ctecka) rHra.nastav(B.WARN, "Hra · nevybraná · jen titulky", "Vybrat hru") { prepni("Titulky") }
         else rHra.nastav(B.MUTED, "")
     }
 

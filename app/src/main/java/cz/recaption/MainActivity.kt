@@ -241,7 +241,12 @@ class MainActivity : Activity() {
         ui = Ui(this)
         initXbox()
         buildShell()
-        if (!Prefs.wizardDone(this)) wizard = 0
+        // Titulky PS5 (přání majitele 25. 11. 2026: „PC dělá vše“): nová instalace v TV jde rovnou do překladu z PC –
+        // párování PS5, DeepL ani hra se v TV nenastavují, TV jen ukazuje titulky z PC. Čtení přímo v TV zůstává v Nastavení.
+        if (!Prefs.wizardDone(this)) {
+            if (NetInfo.isTvDevice(this) && !Prefs.readerDevice(this)) { Prefs.setPcMode(this, true); Prefs.setWizardDone(this, true) }
+            else wizard = 0
+        }
         Updater.cleanUp(this)
         // odpověď systému na aktualizaci (po úspěšné instalaci otevře už novou verzi)
         if (savedInstanceState == null && Updater.onStatus(this, intent)) setIntent(Intent(this, MainActivity::class.java))
@@ -691,6 +696,8 @@ class MainActivity : Activity() {
         gear.removeAllViews()
         for (s in Section.values()) {
             if (s == Section.HISTORY) continue
+            // překlad z PC: PS5 páruje a čte PC, v TV stránka konzole není potřeba
+            if (s == Section.PS5 && Prefs.pcMode(this) && !remote) continue
             val active = s == menuSection()
             if (s == Section.SETTINGS && narrow) {
                 // telefon: jen ozubené kolo v rohu lišty, vidět pořád
@@ -1560,8 +1567,8 @@ class MainActivity : Activity() {
         if (narrow) add(buttons, 14)
         else {
             val tl = mutableListOf<HomeTile>()
-            if (!on) tl += HomeTile("▶", "Spustit překlad z PC", "start", big = true) {
-                if (!SubtitleOverlay.canShow(this)) { toast(t("need_overlay")); return@HomeTile }
+            if (!on && !overlayOk) tl += HomeTile("✓", "Povolit zobrazení titulků", "start", big = true) { openAccessibility() }
+            else if (!on) tl += HomeTile("▶", "Spustit překlad z PC", "start", big = true) {
                 PcReceiverService.start(this); main.postDelayed({ render(true) }, 300)
             } else {
                 if (Prefs.isTv(this)) tl += HomeTile("⤶", t("b_go_game"), "start", big = true) { moveTaskToBack(true) }
@@ -1569,7 +1576,10 @@ class MainActivity : Activity() {
                     PcReceiverService.stop(this); main.postDelayed({ render(true) }, 300)
                 }
             }
-            tl += shortcutTiles()
+            // vše ostatní (PS5, hra, mobil, DeepL) se nastavuje v programu na PC
+            tl += HomeTile("Aa", ct("m_look"), "tile_look") { section = Section.LOOK; render() }
+            tl += HomeTile("⚙", t("m_settings"), "tile_settings") { section = Section.SETTINGS; render() }
+            tl += HomeTile("?", ct("m_help"), "tile_help") { section = Section.HELP; render() }
             tileRow(tl)
         }
         val card = if (narrow) ui.card() else ui.vbox()
@@ -1599,7 +1609,7 @@ class MainActivity : Activity() {
                 LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { leftMargin = ui.dp(30); bottomMargin = ui.dp(4) })
         }
         line(if (overlayOk) Theme.OK else Theme.WARN, if (overlayOk) "Pruh přes obraz · povoleno" else "Pruh přes obraz · chybí povolení", "pcoverlay",
-            if (overlayOk) null else { { section = Section.SETTINGS; render() } })
+            if (overlayOk) null else { { openAccessibility() } })
         Prefs.pcAddress(this)?.let { line(Theme.MUTED, "Poslední PC · $it", "pclast") }
         line(Theme.MUTED, if (Prefs.pcMac(this) != null) "Probuzení PC ze spánku · zapnuto" else "Probuzení PC ze spánku · po prvním spojení", "pcwake")
         if (narrow) { add(card, 18); return }
@@ -4167,6 +4177,6 @@ class MainActivity : Activity() {
 }
 
 object BuildInfo {
-    const val VERSION = "verze 1.3-z4"
-    const val VERSION_CODE = 321
+    const val VERSION = "verze 1.3-z5"
+    const val VERSION_CODE = 322
 }
