@@ -642,6 +642,9 @@ class TranslatorService : Service() {
         )
         loadCornerSettings(); loadWorldSettings(); loadPhoneSettings(); loadTipSettings()
         whiteSubtitles = cz.recaption.core.GameProfiles.of(Prefs.gameId(this)).cornerSpec != null
+        // Titulky PS5: titulky jen v pruhu hry (core/SubtitleBox), jen u hry, jejíž profil pruh zná
+        subtitleBoxFilter = cz.recaption.core.GameProfiles.of(Prefs.gameId(this)).subtitleLook
+            ?.takeIf { Prefs.subtitleBox(this) }?.let { cz.recaption.core.SubtitleBox.Filter(it) }
         subtitleBackdrop = cz.recaption.core.SubtitleBackdrop()
         objectiveTracker.reset(); objectiveSeq++
         resetReading()
@@ -2165,7 +2168,7 @@ class TranslatorService : Service() {
         if (!tracker.isCurrent(token)) return
         ocrRuns++
         lastOcrMs = SystemClock.uptimeMillis() - ocrStart
-        val blocks = withoutPhone(withoutCorner(toBlocks(result, k, band?.left ?: 0, band?.top ?: 0), x0, y0), crop)
+        val blocks = boxFilter(withoutPhone(withoutCorner(toBlocks(result, k, band?.left ?: 0, band?.top ?: 0), x0, y0), crop), crop, y0)
         if (textScale.update(blocks.flatMap { b -> b.lines.filter { it.text.count { c -> c.isLetter() } >= 3 }.map { it.height } }, crop.width * crop.height))
             tp("SCALE|${textScale.scale}")
 
@@ -2369,6 +2372,29 @@ class TranslatorService : Service() {
             px[i] = (((c shr 16) and 0xFF) * 77 + ((c shr 8) and 0xFF) * 150 + (c and 0xFF) * 29) shr 8
         }
         return cz.recaption.core.TextBand.find(px, w, h)
+    }
+
+    // ---------------- Titulky PS5: titulky jen v pruhu hry ----------------
+
+    @Volatile private var subtitleBoxFilter: cz.recaption.core.SubtitleBox.Filter? = null
+    private var boxPixels = IntArray(0)
+
+    /** Řádky nad pásem úkolu, které nejsou v pruhu hry pod titulky, se vyřadí (cedule, billboardy) – viz core/SubtitleBox. */
+    private fun boxFilter(blocks: List<OcrBlock>, crop: Bitmap, y0: Int): List<OcrBlock> {
+        val f = subtitleBoxFilter ?: return blocks
+        if (blocks.isEmpty()) return blocks
+        val w = crop.width; val h = crop.height
+        if (boxPixels.size < w * h) boxPixels = IntArray(w * h)
+        val px = boxPixels
+        crop.getPixels(px, 0, w, 0, 0, w, h)
+        for (i in 0 until w * h) {
+            val c = px[i]
+            px[i] = (((c shr 16) and 0xFF) * 77 + ((c shr 8) and 0xFF) * 150 + (c and 0xFF) * 29) shr 8
+        }
+        val keepFrom = if (capH > 0) (capH * TextLogic.OBJECTIVE_ZONE_TOP).toInt() - y0 else -1
+        val (out, dropped) = f.apply(blocks, px, w, h, keepFrom, SystemClock.uptimeMillis())
+        if (dropped > 0) tp("BOX|mimo pruh $dropped")
+        return out
     }
 
     // ---------------- úkol pod titulky (GTA, od 0.97.43) ----------------

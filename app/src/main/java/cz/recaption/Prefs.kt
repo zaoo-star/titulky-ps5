@@ -373,6 +373,13 @@ object Prefs {
     fun pcMac(c: Context): String? = own(c).getString("pc_mac", null)
     fun setPcMac(c: Context, v: String?) = own(c).edit().putString("pc_mac", v).apply()
 
+    /**
+     * Titulky PS5: titulky jen v pruhu hry ([cz.recaption.core.SubtitleBox]) – text ve scéně nad pásem úkolu bez pruhu
+     * (cedule, billboardy) se nepřekládá. Jen u hry s `titulky.pruh` v profilu; výchozí vypnuto (nové chování).
+     */
+    fun subtitleBox(c: Context): Boolean = bool(c, "titulky_pruh", false)
+    fun setSubtitleBox(c: Context, v: Boolean) = setBool(c, "titulky_pruh", v)
+
     fun screenDim(c: Context): Boolean = bool(c, "displej_tlumeny", false)
     fun setScreenDim(c: Context, v: Boolean) = setBool(c, "displej_tlumeny", v)
     /**

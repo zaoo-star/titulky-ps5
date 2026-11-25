@@ -2617,6 +2617,13 @@ class MainActivity : Activity() {
         // od 0.97.98 zvlášť pro každou hru (Prefs → GameOptions); ukáže se jen u her, jejichž profil ten text zná.
         // Univerzální profil žádný nemá – jen šedý řádek.
         if (!cz.recaption.core.GameOptions.hasOptions(game.id)) add(ui.text(t("gp_only_subs"), 14f, Theme.MUTED), 8)
+        // Titulky PS5: titulek poznaný podle pruhu hry – cedule a nápisy ve scéně se nepřekládají
+        if (game.subtitleLook != null) add(tagged(ui.settingRow("Titulky jen v pruhu hry", onOff(Prefs.subtitleBox(this))) {
+            if (Prefs.subtitleBox(this)) { Prefs.setSubtitleBox(this, false); applyToService(); render(true) }
+            else confirmOn("Titulky jen v pruhu hry", "Titulek se pozná podle poloprůhledného pruhu, který hra kreslí pod titulky. " +
+                "Nápisy ve scéně (cedule, billboardy, poznávací značky) se pak nepřekládají. Ve hře musí být zapnuté pozadí titulků; " +
+                "když ho hra delší dobu nekreslí, čte se zase všechno.") { Prefs.setSubtitleBox(this, true); applyToService(); render(true) }
+        }, "gamebox"), 8)
         if (game.prompts) add(tagged(ui.settingRow(t("gp_prompts"), onOff(Prefs.gamePrompts(this))) {
             Prefs.setGamePrompts(this, !Prefs.gamePrompts(this)); applyToService(); render(true)
         }, "gameprompts"), 8)

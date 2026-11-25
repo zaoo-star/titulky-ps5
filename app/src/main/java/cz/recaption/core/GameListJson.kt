@@ -100,6 +100,7 @@ object GameListJson {
                 (if (sp.tilt != 0f) ",\"sklon\":" + num(sp.tilt) else "") + "}"
         } + "]" + (if (phoneColors.isEmpty()) "" else ",\"barvy\":" + phoneColors.joinToString(",", "{", "}") { (k, c) ->
             "\"" + k + "\":\"#" + String.format(java.util.Locale.ROOT, "%06X", c and 0xFFFFFF) + "\"" }) + "}"
+        g.subtitleLook?.let { f += "\"titulky\":{\"pruh\":[" + num(it.alpha) + "," + num(it.offset) + "]}" }
         g.hint?.let { f += "\"rada\":" + str(it) }
         return "{" + f.joinToString(",\n ") + "}"
     }
@@ -241,7 +242,17 @@ object GameListJson {
         return GameProfile(id, title, names, chars, langMap(o["pojmy"]), texts(o["napisy"]), texts(o["menu"]), skip,
             prompts = o["pokyny"] == true, colors = colors, menuSpec = menuSpec, cornerSpec = cornerSpec, hint = hint,
             common = texts(o["bezne"]).filter { it in names }, phoneSpots = spots(o["telefon"]),
-            phoneOwn = phoneColor(o["telefon"], "vlastni"), phoneIn = phoneColor(o["telefon"], "prichozi"))
+            phoneOwn = phoneColor(o["telefon"], "vlastni"), phoneIn = phoneColor(o["telefon"], "prichozi"),
+            subtitleLook = subtitleLook(o["titulky"]))
+    }
+
+    /** Titulky PS5: `"titulky":{"pruh":[alpha, offset]}` – ztlumení pruhu pod titulky (alpha 0,05–0,95, offset 0–120). */
+    private fun subtitleLook(v: Any?): SubtitleBox.Look? {
+        val a = ((v as? Map<*, *>)?.get("pruh") as? List<*>)?.takeIf { it.size == 2 } ?: return null
+        val alpha = (a[0] as? Number)?.toFloat() ?: return null
+        val off = (a[1] as? Number)?.toFloat() ?: return null
+        if (alpha !in 0.05f..0.95f || off !in 0f..120f) return null
+        return SubtitleBox.Look(alpha, off)
     }
 
     /** Slovníky překladu; neplatná položka se vynechá, chybějící pole = prázdné. */

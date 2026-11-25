@@ -44,6 +44,8 @@ data class GameProfile(
      */
     val phoneOwn: Int = 0,
     val phoneIn: Int = 0,
+    /** Titulky PS5: vzhled pruhu pod titulky ([SubtitleBox.Look]) – titulek se pozná podle něj; null = hra ho nemá / neznáme. */
+    val subtitleLook: SubtitleBox.Look? = null,
 ) {
     /** Barvy pro [SpeakerColors]: zjednodušené jméno i všechny přezdívky postavy → barva. */
     val colorsByKey: Map<String, Int> by lazy {
