@@ -37,11 +37,36 @@ class PcReceiverService : Service() {
         /** Kolik titulků z PC přišlo od spuštění (jen pro Domů). */
         @Volatile var shownCount = 0
             private set
+        /**
+         * PC, které odpovědělo, že PS5 spárovanou nemá, a ještě mu nebylo spárování posláno (hráč ho potvrdí na Domů –
+         * klíče PS5 se nepošlou jen tak komukoli v síti, kdo na povel odpoví).
+         */
+        @Volatile var pairRequest: PcWake.Reply? = null
+            private set
+
+        /** Hráč potvrdil: poslat spárování z TV do PC [pairRequest] a tomu PC dál věřit. */
+        fun sendPairing(c: Context) {
+            val r = pairRequest ?: return
+            val to = r.from ?: return
+            pairRequest = null
+            val app = c.applicationContext
+            Thread({ pairTo(app, to, r.name); Prefs.setPcTrusted(app, to) }, "tp-pc-pair").apply { isDaemon = true; start() }
+        }
+
+        private fun pairTo(c: Context, to: String, name: String) {
+            val host = Prefs.ps5Host(c) ?: return
+            PcWake.sendPairing(PcWake.Pairing(host.name, host.ip, host.registKey, host.morning, host.mac,
+                Prefs.psnId(c).ifBlank { null }, Prefs.psnName(c).ifBlank { null }), to)
+            try { DiagLog.add("PC|spárování PS5 posláno do PC $name") } catch (_: Throwable) {}
+        }
+
         /** Jméno PC z odpovědi na povel (jen pro Domů). */
         @Volatile var pcName: String? = null
             private set
 
         const val ACTION_STOP = "cz.titulkyps5.PC_STOP"
+        /** Po takovém tichu od PC se ověří, že PC pořád odpovídá. */
+        private const val IDLE_MS = 30_000
         private const val CHANNEL = "pc_prijem"
         private const val NOTIF_ID = 7301
 
@@ -78,7 +103,7 @@ class PcReceiverService : Service() {
         client?.close()
         worker?.interrupt()
         overlay?.destroy(); overlay = null
-        state = State.OFF; pcAddress = null
+        state = State.OFF; pcAddress = null; pairRequest = null
         log("zastaveno")
         super.onDestroy()
     }
@@ -96,13 +121,12 @@ class PcReceiverService : Service() {
                 pcName = r.name
             }
             if (replies.isNotEmpty()) log("PC odpovědělo na povel: ${replies.joinToString { it.name }}")
-            // PC ještě nemá PS5 spárovanou: pošle se mu spárování z TV (jen tomu PC, které odpovědělo)
-            val host = Prefs.ps5Host(this)
-            if (host != null) for (r in replies) if (r.paired == false && r.from != null) {
-                PcWake.sendPairing(PcWake.Pairing(host.name, host.ip, host.registKey, host.morning, host.mac,
-                    Prefs.psnId(this).ifBlank { null }, Prefs.psnName(this).ifBlank { null }), r.from)
-                log("spárování PS5 posláno do PC ${r.name}")
+            // PC ještě nemá PS5 spárovanou: spárování z TV jen PC, kterému to hráč už jednou potvrdil; jinak se zeptá na Domů
+            if (Prefs.ps5Host(this) != null) for (r in replies) if (r.paired == false && r.from != null) {
+                if (r.from == Prefs.pcTrusted(this)) pairTo(this, r.from, r.name)
+                else if (pairRequest?.from != r.from) { pairRequest = r; log("PC ${r.name} nemá PS5 spárovanou · čeká na potvrzení") }
             }
+            if (replies.any { it.paired == true && it.from == pairRequest?.from }) pairRequest = null
             val c = PcFinder.find(Prefs.pcAddress(this), stop = { !running })
             if (c == null) { sleep(5000); continue }
             client = c
@@ -112,9 +136,16 @@ class PcReceiverService : Service() {
             log("připojeno k ${c.address}")
             update()
             c.send(PcMessage.announce(Build.MODEL ?: "Android TV", PcMessage.RECEIVER_VERSION))
+            // PC posílá jen změny, takže dlouhé ticho je běžné; po 30 s ticha se jen ověří, že PC pořád odpovídá
+            // (uspané PC spojení samo neukončí a TV by na něj čekala navždy)
+            c.idleTimeout(IDLE_MS)
             try {
                 while (running) {
-                    val t = c.read() ?: break
+                    val t = try { c.read() } catch (_: WsClient.Idle) {
+                        val alive = PcFinder.probe(c.address, timeoutMs = 2000)?.also { it.close() } != null
+                        if (!alive) { log("PC neodpovídá"); break }
+                        continue
+                    } ?: break
                     val m = PcMessage.parse(t) ?: continue
                     handle(m, c)
                 }

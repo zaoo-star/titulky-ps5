@@ -13,7 +13,8 @@ package cz.recaption.core
 object Novinky {
     data class Zaznam(val vc: Int, val verze: String, val cs: List<String>, val en: List<String>)
 
-    const val URL = HelpLinks.BASE + "novinky.json"
+    /** Titulky PS5: vlastní novinky v kořeni repa (ne web původní aplikace – jiná čísla verzí). */
+    const val URL = "https://raw.githubusercontent.com/zaoo-star/titulky-ps5/main/novinky.json"
 
     private val VC = Regex("\"vc\"\\s*:\\s*(\\d+)")
     private val VERZE = Regex("\"verze\"\\s*:\\s*\"([^\"]{1,20})\"")

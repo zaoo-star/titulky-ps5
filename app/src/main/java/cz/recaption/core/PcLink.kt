@@ -27,9 +27,19 @@ class WsClient private constructor(private val socket: Socket, private val input
     @Volatile var closed = false
         private set
 
-    /** Další textová zpráva; "" = jiný rámec (ping…), null = konec spojení. */
+    /** PC po dobu limitu ([idleTimeout]) nic neposlalo – spojení ale platí dál (nic se nepřečetlo napůl). */
+    class Idle : Exception()
+
+    /**
+     * Limit ticha v ms (0 = čekat bez omezení). Po spojení je 0 – dřív zůstal limit 1,5 s z hledání a chvíle bez
+     * titulků spojení shodila (TV pak PC pořád hledala znovu).
+     */
+    fun idleTimeout(ms: Int) { try { socket.soTimeout = ms } catch (_: Throwable) {} }
+
+    /** Další textová zpráva; "" = jiný rámec (ping…), null = konec spojení. Dlouhé ticho = [Idle]. */
     fun read(): String? {
-        val r = readFrame(input)
+        val b0 = try { input.read() } catch (_: java.net.SocketTimeoutException) { throw Idle() } catch (_: Throwable) { -1 }
+        val r = if (b0 < 0) null else try { readFrame(input, b0) } catch (_: Throwable) { null }
         if (r == null) close()
         return r
     }
@@ -97,8 +107,15 @@ class WsClient private constructor(private val socket: Socket, private val input
 
         /** Rámec od serveru (nemaskovaný, i dlouhý – obrázky telefonu). */
         fun readFrame(input: InputStream): String? {
-            val b0 = input.read(); val b1 = input.read()
-            if (b0 < 0 || b1 < 0) return null
+            val b0 = input.read()
+            if (b0 < 0) return null
+            return readFrame(input, b0)
+        }
+
+        /** Zbytek rámce, když první bajt [b0] už je přečtený. */
+        fun readFrame(input: InputStream, b0: Int): String? {
+            val b1 = input.read()
+            if (b1 < 0) return null
             val opcode = b0 and 0x0F
             var len = (b1 and 0x7F).toLong()
             if (len == 126L) {
@@ -238,7 +255,7 @@ object PcFinder {
     fun probe(host: String, port: Int = TvSender.PORT, timeoutMs: Int = 1500): WsClient? {
         val c = WsClient.connect(host, port, timeoutMs) ?: return null
         val first = try { c.read() } catch (_: Throwable) { null }
-        if (first != null && PcMessage.parse(first) == PcMessage.Hello) return c
+        if (first != null && PcMessage.parse(first) == PcMessage.Hello) { c.idleTimeout(0); return c }
         c.close()
         return null
     }

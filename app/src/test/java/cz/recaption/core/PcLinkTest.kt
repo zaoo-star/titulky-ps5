@@ -23,7 +23,7 @@ class PcLinkTest {
     private fun next(c: WsClient, ms: Long = 3000, ok: (PcMessage) -> Boolean): PcMessage? {
         val end = System.currentTimeMillis() + ms
         while (System.currentTimeMillis() < end) {
-            val t = c.read() ?: return null
+            val t = try { c.read() } catch (_: WsClient.Idle) { continue } ?: return null
             val m = PcMessage.parse(t) ?: continue
             if (ok(m)) return m
         }
@@ -36,6 +36,33 @@ class PcLinkTest {
             val c = PcFinder.probe("127.0.0.1", p, 2000)
             assertNotNull("server se neozval vitej", c)
             c!!.close()
+        } finally { s.stop() }
+    }
+
+    /** Chvíle bez titulků (PC nic neposílá) spojení nesmí shodit (chyba: zůstal limit 1,5 s z hledání). */
+    @Test fun tichoNeniKonecSpojeni() {
+        val (s, p) = server()
+        try {
+            val c = PcFinder.probe("127.0.0.1", p, 1500)!!
+            // TV čte a čeká; PC pošle titulek až po 2,5 s ticha
+            Thread { Thread.sleep(2500); s.show("Ahoj", null, null) }.start()
+            assertNotNull(next(c, 6000) { it is PcMessage.Show })
+            c.close()
+        } finally { s.stop() }
+    }
+
+    /** S limitem ticha se pozná, že PC dlouho nic neposlalo – spojení ale zůstane použitelné. */
+    @Test fun limitTichaJeHlaseniNeKonec() {
+        val (s, p) = server()
+        try {
+            val c = PcFinder.probe("127.0.0.1", p, 1500)!!
+            c.idleTimeout(300)
+            var idle = false
+            try { c.read() } catch (_: WsClient.Idle) { idle = true }
+            assertTrue(idle)
+            s.show("Ahoj", null, null)
+            assertNotNull(next(c) { it is PcMessage.Show })
+            c.close()
         } finally { s.stop() }
     }
 

@@ -11,7 +11,7 @@ Co je jinak než v ReCaptionu:
 
 Licence: AGPL-3.0 jako ReCaption (soubor `LICENSE`). Zdrojový kód každé vydané verze je v tomto repozitáři.
 
-**Stažení:** https://github.com/zaoo-star/titulky-ps5/releases/download/latest/ReCaption.apk
+**Stažení:** https://github.com/zaoo-star/titulky-ps5/releases/download/latest/TitulkyPS5.apk
 
 ---
 

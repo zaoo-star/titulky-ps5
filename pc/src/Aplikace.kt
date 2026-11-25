@@ -354,7 +354,15 @@ private class Aplikace {
         if (cteckaBezi()) return
         // seznam spárovaných konzolí čtečky hned (po přepnutí režimu ho hledání na pozadí ještě nenačetlo)
         if (konzoleSeznam.isEmpty()) konzoleSeznam = runCatching { Chiaki.konzole(Chiaki.PROFIL_CTECKY) }.getOrDefault(emptyList())
-        if (!Nastroje.pripraveno(nast.jazyk)) { zapis("TV chce překlad · chybí příprava (Domů → Připravit)"); obnovDomu(); return }
+        // co chybí a jde stáhnout, se stáhne samo; TV povel opakuje, takže se čtení spustí, až bude hotovo
+        if (Chiaki.exe() == null) {
+            if (stahovani == null) { zapis("TV chce překlad · stahuji chiaki-ng"); stahnoutChiaki() }
+            return
+        }
+        if (!Nastroje.pripraveno(nast.jazyk)) {
+            if (priprava?.isAlive != true) { zapis("TV chce překlad · stahuji překladový model"); pripravit() }
+            return
+        }
         if (vybranaKonzole() == null) { zapis("TV chce překlad · PS5 není spárovaná pro čtečku (Domů → Spárovat)"); obnovDomu(); return }
         zapis("Spuštěno z TV")
         cistProTv()

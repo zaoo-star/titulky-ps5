@@ -16,7 +16,11 @@ object VideoSteps {
     val STEPS = listOf("jazyky", "zarizeni", "konzole", "preklad", "zobrazeni", "pripojeni", "hotovo")
 
     /** Adresa seznamu klipů. */
-    const val LIST_URL = VideoGuide.BASE + "kroky.json"
+    /**
+     * Titulky PS5: videa původní aplikace (se jménem a vzhledem ReCaptionu) se nenabízejí – seznam z vlastního repa,
+     * dokud tam není, řádky s videem se neukážou.
+     */
+    const val LIST_URL = "https://raw.githubusercontent.com/zaoo-star/titulky-ps5/main/videa/kroky.json"
 
     /**
      * Platné id klipu: `krok-<krok>[-<podkrok>][-<tv>][-<konzole>]` v tomto pořadí, jen malá písmena a pomlčky

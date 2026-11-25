@@ -186,6 +186,7 @@ class MainActivity : Activity() {
     /** Titulky PS5: stav „Překlad z PC“ při posledním vykreslení (Domů se obnoví při změně). */
     private var lastPc = PcReceiverService.State.OFF
     private var lastPcShown = 0
+    private var lastPcPair: cz.recaption.core.PcWake.Reply? = null
 
     private val ticker = object : Runnable {
         override fun run() {
@@ -209,7 +210,8 @@ class MainActivity : Activity() {
                 lastStage != TranslatorService.linkStatus().stage ||
                 (section == Section.HOME && (lastTv != TranslatorService.tvConnected || lastTvSeen != (TvSender.lastSeen?.at ?: 0L) ||
                     lastGuess != Prefs.gameGuess(this@MainActivity) || lastProbe != Ps5Probe.state ||
-                    lastPc != PcReceiverService.state || lastPcShown != PcReceiverService.shownCount))
+                    lastPc != PcReceiverService.state || lastPcShown != PcReceiverService.shownCount ||
+                    lastPcPair != PcReceiverService.pairRequest))
             // náhled obrazu z PlayStationu se obnovuje každé 3 s (ne když uživatel zrovna píše)
             // (jen na stránce Konzole – Domů náhled nemá a překreslovat ho každé 3 s bylo zbytečné)
             val preview = TranslatorService.running && ticks % 3 == 0 && wizard < 0 && section == Section.PS5 && "preview" in openGroups
@@ -1243,7 +1245,7 @@ class MainActivity : Activity() {
             orientation = LinearLayout.HORIZONTAL
             clipChildren = false; clipToPadding = false
             background = android.graphics.drawable.GradientDrawable().apply {
-                setColor(android.graphics.Color.rgb(0x13, 0x16, 0x1C)); cornerRadius = ui.dp(12).toFloat()
+                setColor(android.graphics.Color.rgb(0x08, 0x12, 0x2C)); cornerRadius = ui.dp(12).toFloat()
             }
             addView(View(this@MainActivity).apply {
                 background = android.graphics.drawable.GradientDrawable().apply { setColor(Theme.ACCENT); cornerRadius = ui.dp(2).toFloat() }
@@ -1442,6 +1444,7 @@ class MainActivity : Activity() {
     private fun pcHome() {
         lastPc = PcReceiverService.state
         lastPcShown = PcReceiverService.shownCount
+        lastPcPair = PcReceiverService.pairRequest
         val on = PcReceiverService.state != PcReceiverService.State.OFF
         val overlayOk = SubtitleOverlay.canShow(this)
         val buttons = row()
@@ -1477,6 +1480,12 @@ class MainActivity : Activity() {
         }
         if (PcReceiverService.state == PcReceiverService.State.CONNECTED)
             line(Theme.MUTED, "Titulky z PC · ${PcReceiverService.shownCount}", "pccount")
+        // PC nemá PS5 spárovanou: klíče PS5 se pošlou až po potvrzení (jen tomuto PC, pak už samo)
+        PcReceiverService.pairRequest?.let { r ->
+            line(Theme.WARN, "${r.name} · PS5 nespárovaná", "pcpair")
+            card.addView(tagged(ui.smallButton("Poslat spárování z TV") { PcReceiverService.sendPairing(this); main.postDelayed({ render(true) }, 300) }, "pcpair_fix"),
+                LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { leftMargin = ui.dp(30); bottomMargin = ui.dp(4) })
+        }
         line(if (overlayOk) Theme.OK else Theme.WARN, if (overlayOk) "Pruh přes obraz · povoleno" else "Pruh přes obraz · chybí povolení", "pcoverlay",
             if (overlayOk) null else { { section = Section.SETTINGS; render() } })
         Prefs.pcAddress(this)?.let { line(Theme.MUTED, "Poslední PC · $it", "pclast") }
@@ -1757,7 +1766,8 @@ class MainActivity : Activity() {
             setPadding(0, 0, 0, 0)
             // nejde = ztlumený vlastní podklad (na Domů i v kartě je vidět, že tlačítko je, jen teď nejde)
             background = ui.focusBg(color ?: MEDIA_OFF)
-            setTextColor(when (color) { null -> MEDIA_OFF_TEXT; STOP_RED, SEND_BLUE, MOON_GRAY -> android.graphics.Color.WHITE; else -> Theme.ACCENT_DARK })
+            // Titulky PS5: na světlém podkladu (zelená ▶, žlutá) tmavý symbol, na tmavém bílý
+            setTextColor(when (color) { null -> MEDIA_OFF_TEXT; Theme.OK, Theme.WARN -> Theme.BG; else -> android.graphics.Color.WHITE })
             contentDescription = label
         }
 
@@ -1768,8 +1778,8 @@ class MainActivity : Activity() {
         }
     }
 
-    private val MEDIA_OFF = android.graphics.Color.rgb(0x2A, 0x30, 0x3A)
-    private val MEDIA_OFF_TEXT = android.graphics.Color.rgb(0x5E, 0x67, 0x72)
+    private val MEDIA_OFF = android.graphics.Color.rgb(0x17, 0x24, 0x44)
+    private val MEDIA_OFF_TEXT = android.graphics.Color.rgb(0x5E, 0x6E, 0x92)
 
     private val STOP_RED = android.graphics.Color.rgb(0xE5, 0x48, 0x5F)
     private val SEND_BLUE = android.graphics.Color.rgb(0x3B, 0x82, 0xF6)
