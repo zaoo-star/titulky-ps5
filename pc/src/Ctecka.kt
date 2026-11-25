@@ -185,8 +185,9 @@ private class Helper(python: String, script: File, model: String, lang: String, 
         return if (v.size == cols * rows) v.toIntArray() else null
     }
 
-    override fun telefon(box: FloatArray): PhoneCrop? {
-        val head = ask("TELEFON", zlomky(box)).split('\t')
+    override fun telefon(box: FloatArray, zvetseni: Float?): PhoneCrop? {
+        val head = (if (zvetseni == null) ask("TELEFON", zlomky(box))
+            else ask("TELEFON", zlomky(box), String.format(java.util.Locale.ROOT, "%.2f", zvetseni))).split('\t')
         if (head[0] != "OK" || head.size < 5) return null
         val n = head[1].toInt()
         val lines = (0 until n).mapNotNull {
@@ -482,6 +483,8 @@ class Ctecka(
         val telefon = if (sender != null && telHelper != null) TelefonPc(profil, lang, { t, m -> prelozTelefon(telHelper, t, m) },
             { m -> zapis(m); if (m.startsWith("TELEFON brana") || (m.startsWith("TELEFON ") && "→" in m)) log(m) }).takeIf { it.zapnuto } else null
         fun telefonPryc() { telefon?.schovejPozdeji() }
+        val menuPc = if (telefon != null && telHelper != null) MenuPc(profil, { t, m -> prelozTelefon(telHelper, t, m) },
+            { m -> zapis(m); log(m) }).takeIf { it.zapnuto } else null
         val oknoTel = java.util.concurrent.atomic.AtomicReference<String?>(null)
         val telVlakno = if (telefon != null && telHelper != null && sender != null) kotlin.concurrent.thread(name = "telefon", isDaemon = true) {
             while (!konec) {
@@ -489,7 +492,10 @@ class Ctecka(
                     oknoTel.getAndSet(null)?.let { o -> telHelper.window(o) }
                     if (telHelper.snimek()) {
                         val v = vzhled()
-                        telefon.tick(System.currentTimeMillis(), telHelper, if (v.pismo > 0) v.pismo else 22, v.pozadi) { sender.sendPhone(it) }
+                        val now = System.currentTimeMillis()
+                        telefon.tick(now, telHelper, if (v.pismo > 0) v.pismo else 22, v.pozadi) { sender.sendPhone(it) }
+                        // obrazovky menu hry (mapa, Brief, Progress…) celé – jen když není otevřený telefon
+                        if (!telefon.shown) menuPc?.tick(now, telHelper) { sender.sendPhone(it) }
                     }
                 } catch (e: Exception) { zapis("TELEFON chyba ${e.message}"); Thread.sleep(1000) }
                 Thread.sleep(150)

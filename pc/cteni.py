@@ -38,7 +38,8 @@ MRIZKA <tab> vlevo <tab> nahoře <tab> vpravo <tab> dole <tab> sloupců <tab> ř
   PIXELY <tab> vlevo <tab> nahoře <tab> vpravo <tab> dole      (zlomky obrazu hry, viz ROZMER)
       -> OK <tab> barvy bodů 0xRRGGBB desítkově oddělené čárkou (mřížka nejvýš 40 × 8 – jako barevný snímek
          v aplikaci pro modrou bublinu vlastních zpráv)
-  TELEFON <tab> vlevo <tab> nahoře <tab> vpravo <tab> dole     (zlomky posledního snímku)
+  TELEFON <tab> vlevo <tab> nahoře <tab> vpravo <tab> dole [<tab> zvětšení]   (zlomky posledního snímku;
+         bez zvětšení se malý výřez čte zvětšený až 2×, 1 = bez zvětšení – menu přes celou obrazovku)
       -> OK <tab> N <tab> šířka <tab> výška <tab> ms  a za tím N řádků přečtených ve výřezu:
          vlevo <tab> nahoře <tab> vpravo <tab> dole <tab> sklon <tab> vzorky <tab> text
          (souřadnice v bodech celého snímku; sklon = dy/dx horní hrany; vzorky = jasy z rámečku řádku
@@ -611,7 +612,7 @@ def zvetsi(obraz, k):
         return np.asarray(Image.fromarray(obraz).resize((int(w * k), int(h * k)), Image.BICUBIC))
 
 
-def cti_telefon(ocr, obraz, box):
+def cti_telefon(ocr, obraz, box, k_pevne=None):
     """Výřez kolem telefonu v plném rozlišení: řádky v bodech celého snímku se sklonem a vzorky jasu."""
     h, w = obraz.shape[:2]
     x0 = min(max(int(box[0] * w), 0), w - 1); x1 = min(max(int(box[2] * w), x0 + 8), w)
@@ -620,7 +621,7 @@ def cti_telefon(ocr, obraz, box):
     sedy = jas_bgr(obraz)
     # písmo v telefonu je malé (~20 bodů) a čtečka pak slepuje slova („askwhenIgoseeher“, 25. 11. 2026) –
     # výřez se čte zvětšený, souřadnice se pak vrátí zpět
-    k = zvetseni_telefonu(vyrez.shape[0])
+    k = zvetseni_telefonu(vyrez.shape[0]) if k_pevne is None else k_pevne
     if k > 1.0:
         vyrez = zvetsi(vyrez, k)
     vysledek, _ = ocr(np.ascontiguousarray(vyrez), use_cls=False)
@@ -801,7 +802,8 @@ def main():
                     continue
                 t0 = time.time()
                 vx, vy, vw, vh = obraz_hry(posledni)
-                radky, w, h = cti_telefon(ocr, posledni[vy:vy + vh, vx:vx + vw], [float(c) for c in cast[1:5]])
+                radky, w, h = cti_telefon(ocr, posledni[vy:vy + vh, vx:vx + vw], [float(c) for c in cast[1:5]],
+                                          float(cast[5]) if len(cast) > 5 else None)
                 ven("OK", len(radky), w, h, int((time.time() - t0) * 1000))
                 for r in radky:
                     ven(*r)

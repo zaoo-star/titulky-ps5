@@ -52,6 +52,8 @@ internal class TelefonPc(
     private var shownTitle: String? = null
     var shown = false
         private set
+    private var iconAt = 0L
+    private var iconMiss = 0
 
     /** Obraz hry v posledním snímku (x0, y0, šířka, výška) – okno chiaki-ng mívá černé pruhy. */
     @Volatile private var video: IntArray? = null
@@ -86,6 +88,20 @@ internal class TelefonPc(
     fun tick(now: Long, helper: PhoneHelper, pismo: Int, pozadi: Int, send: (String) -> Unit) {
         if (!zapnuto) return
         if (schovat) { schovat = false; open.reset(); displej = null; schovej(send); checkAt = now; return }
+        // ukázaný překlad: jen ikonu ovládání vpravo dole hlídat často (levné) – po zavření telefonu pryč hned,
+        // ne až po dalším celém čtení (majitel 25. 11. 2026: „když telefon schovám, dlouho ještě zůstane překlad“)
+        if (shown && now - checkAt < 600 && now - iconAt >= 200) {
+            iconAt = now
+            val v0 = helper.rozmer() ?: return
+            val (ib, n) = PhoneGate.iconBox(v0[2], v0[3])
+            val ikona = helper.mrizka(ib, n, n)?.let { PhoneGate.icon(it, n) } ?: return
+            iconMiss = if (ikona) 0 else iconMiss + 1
+            if (iconMiss >= 2) {
+                iconMiss = 0; open.reset(); displej = null; grid = null; tracker = PhoneTracker()
+                shown = false; shownBase = null; send(TvSender.PHONE_HIDE); log("TELEFON brana zavreny (ovladani) – schovan hned")
+            }
+            return
+        }
         if (now - checkAt < (if (shown) 600 else 1000)) return
         checkAt = now
         val v = helper.rozmer() ?: return
@@ -247,8 +263,8 @@ internal interface PhoneHelper {
     fun pixely(box: FloatArray): IntArray?
     /** Mřížka jasu [cols] × [rows] z obdélníku [box] (zlomky) – jako `PhoneGate.sample`; null = snímek není. */
     fun mrizka(box: FloatArray, cols: Int, rows: Int): IntArray?
-    /** Řádky výřezu [box] (zlomky) v plném rozlišení se vzorky jasu; null = snímek není. */
-    fun telefon(box: FloatArray): PhoneCrop?
+    /** Řádky výřezu [box] (zlomky) v plném rozlišení se vzorky jasu; [zvetseni] null = malý výřez zvětšit; null = snímek není. */
+    fun telefon(box: FloatArray, zvetseni: Float? = null): PhoneCrop?
 }
 
 internal class PhoneCrop(val lines: List<Pair<MenuLine, IntArray>>, val w: Int, val h: Int, val ms: Long)
