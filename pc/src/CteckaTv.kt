@@ -40,7 +40,7 @@ class CteckaTv(
 
     fun zastav() {
         konec = true
-        proces?.destroy()
+        Chiaki.ukonci(proces)
     }
 
     private fun cekej(ms: Long) {

@@ -62,7 +62,7 @@ internal class MenuPc(
         }
         val vyska = radky.map { it.bottom - it.top }.sorted().let { if (it.isEmpty()) 24 else it[it.size / 2] }
         val px = (vyska * 1080f / h * 0.8f).toInt().coerceIn(14, 48)
-        send(zprava(odstavce.map { (t, b) -> (pevne(t) ?: words[t] ?: t) to b }, px))
+        send(zprava(sloucit(odstavce.map { (t, b) -> (pevne(t) ?: words[t] ?: t) to b }, MAX_KUSU), px))
         shown = true
         log("MENU " + odstavce.joinToString(" ¦ ") { (t, _) -> t.take(60) + " → " + (pevne(t) ?: words[t] ?: "").take(60) }.take(700))
     }
@@ -78,9 +78,38 @@ internal class MenuPc(
                 p.second[1] = minOf(p.second[1], l.top); p.second[2] = maxOf(p.second[2], l.right); p.second[3] = maxOf(p.second[3], l.bottom)
             } else out += StringBuilder(l.text.trim()) to intArrayOf(l.left, l.top, l.right, l.bottom)
         }
-        return out.take(10).map { (t, b) ->  // TV ukáže nejvýš 10 kousků přes text
-            t.toString() to floatArrayOf(b[0] / w, b[1] / h, b[2] / w, b[3] / h)
+        return out.map { (t, b) -> t.toString() to floatArrayOf(b[0] / w, b[1] / h, b[2] / w, b[3] / h) }
+    }
+
+    /**
+     * TV ukáže přes text nejvýš [max] kousků – dřív se další odstavce prostě zahodily (dlouhý seznam v Brief). Teď se
+     * spojí sousední odstavce pod sebou ve stejném sloupci (nejmenší mezera napřed), nic se neztratí.
+     */
+    private fun sloucit(items: List<Pair<String, FloatArray>>, max: Int): List<Pair<String, FloatArray>> {
+        val l = items.map { it.first to it.second.copyOf() }.toMutableList()
+        while (l.size > max) {
+            var best = -1; var bestI = -1; var bestJ = -1; var bestGap = Float.MAX_VALUE
+            for (i in l.indices) for (j in l.indices) {
+                if (i == j) continue
+                val a = l[i].second; val b = l[j].second
+                val gap = b[1] - a[3]
+                if (gap < -0.005f) continue
+                // stejný sloupec (levé okraje blízko) má přednost před čímkoli jiným
+                val sloupec = kotlin.math.abs(a[0] - b[0]) < 0.03f
+                val cena = gap + (if (sloupec) 0f else 1f)
+                if (cena < bestGap) { bestGap = cena; bestI = i; bestJ = j; best = 1 }
+            }
+            if (best < 0) { // nic pod sebou – spoj poslední dva
+                bestI = l.size - 2; bestJ = l.size - 1
+            }
+            val a = l[bestI]; val b = l[bestJ]
+            val box = floatArrayOf(minOf(a.second[0], b.second[0]), minOf(a.second[1], b.second[1]),
+                maxOf(a.second[2], b.second[2]), maxOf(a.second[3], b.second[3]))
+            val spojene = (a.first + "\n" + b.first) to box
+            l.removeAt(maxOf(bestI, bestJ)); l.removeAt(minOf(bestI, bestJ))
+            l.add(minOf(bestI, bestJ), spojene)
         }
+        return l
     }
 
     private fun zprava(items: List<Pair<String, FloatArray>>, px: Int): String {
@@ -95,6 +124,8 @@ internal class MenuPc(
     private fun pevne(t: String): String? = PEVNE[jednoduse(t)]
 
     private companion object {
+        /** Kolik kousků přes text TV ukáže (`SubtitleOverlay.showPhoneOver`). */
+        const val MAX_KUSU = 10
         fun jednoduse(t: String) = t.lowercase().filter { it.isLetter() }
         val PEVNE = mapOf("all" to "Vše", "dialogue" to "Dialogy", "helptext" to "Nápověda", "objectivetext" to "Úkoly",
             "map" to "Mapa", "brief" to "Přehled", "progress" to "Postup", "stats" to "Statistiky", "settings" to "Nastavení",

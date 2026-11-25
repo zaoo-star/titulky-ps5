@@ -406,6 +406,9 @@ class Ctecka(
         var shown = false
         var steadyText = ""
         var steadySince = 0L
+        // text v místě, kde hra ukazuje telefon: od kdy tam je a jaký (titulkem až po kontrole, že telefon zavřený není)
+        var sporneOd = 0L
+        var sporneText = ""
         var lastError = ""
         var lastTvs = -1
         // každý mluvčí má svou barvu jména; postavy z profilu hry jako ve hře (např. jedna postava žlutě, druhá tyrkysově)
@@ -492,10 +495,11 @@ class Ctecka(
             while (!konec) {
                 try {
                     oknoTel.getAndSet(null)?.let { o -> telHelper.window(o) }
+                    val snimekAt = System.currentTimeMillis()
                     if (telHelper.snimek()) {
                         val v = vzhled()
                         val now = System.currentTimeMillis()
-                        telefon.tick(now, telHelper, if (v.pismo > 0) v.pismo else 22, v.pozadi) { sender.sendPhone(it) }
+                        telefon.tick(now, telHelper, if (v.pismo > 0) v.pismo else 22, v.pozadi, { sender.sendPhone(it) }, snimekAt)
                         // obrazovky menu hry (mapa, Brief, Progress…) celé – jen když není otevřený telefon
                         if (!telefon.shown) menuPc?.tick(now, telHelper) { sender.sendPhone(it) }
                     }
@@ -633,9 +637,23 @@ class Ctecka(
                 is Helper.Read.Frame -> {
                     // text z displeje telefonu není titulek (bubliny zpráv ve spodní třetině obrazu)
                     val pb = telefon?.boxVeSnimku(r.w, r.h)
-                    val radky = if (pb == null || r.w <= 0 || r.h <= 0) r.lines else r.lines.filterNot { l ->
+                    val radky0 = if (pb == null || r.w <= 0 || r.h <= 0) r.lines else r.lines.filterNot { l ->
                         val cx = (r.x0 + (l.left + l.right) / 2f) / r.w; val cy = (r.y0 + (l.top + l.bottom) / 2f) / r.h
                         cx in (pb[0] - 0.02f)..(pb[2] + 0.02f) && cy in (pb[1] - 0.02f)..(pb[3] + 0.04f)
+                    }
+                    // telefon ještě nenahlášený (kontrola jen 1× za s): text v místě telefonu počká na kontrolu po svém
+                    // objevení – dřív mezi otevřením telefonu a kontrolou proklouzla zpráva jako titulek
+                    // (majitel 25. 11. 2026: „Stulrofffor ti nechal další balíček“)
+                    val vMiste = if (telefon == null || pb != null || r.w <= 0 || r.h <= 0) emptyList() else radky0.filter { l ->
+                        telefon.vMisteTelefonu(r.w, r.h, (r.x0 + (l.left + l.right) / 2f) / r.w, (r.y0 + (l.top + l.bottom) / 2f) / r.h)
+                    }
+                    val radky = if (vMiste.isEmpty()) { sporneOd = 0L; sporneText = ""; radky0 } else {
+                        val t = vMiste.joinToString(" ") { it.text }
+                        if (sporneOd == 0L || !TextLogic.similar(t, sporneText)) { sporneOd = now; sporneText = t }
+                        when (telefon?.zavrenoPo(sporneOd)) {
+                            true -> radky0
+                            else -> radky0 - vMiste.toSet()
+                        }
                     }
                     if (lastError.isNotEmpty()) { lastError = ""; hlas("obraz je zpět (${r.w}×${r.h})") }
                     stav = stav.copy(faze = Stav.Faze.BEZI, chyba = "", ms = r.ms)

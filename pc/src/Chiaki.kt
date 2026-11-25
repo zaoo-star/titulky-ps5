@@ -42,6 +42,33 @@ object Chiaki {
     /** Klíč nastavení profilu v registru (Qt: aplikace „Chiaki-<profil>“); null = výchozí profil chiaki-ng. */
     private fun reg(profil: String?) = if (profil.isNullOrEmpty()) REG else "$REG-$profil"
 
+    /** Číslo procesu chiaki-ng, který Titulky PS5 naposledy spustily (po pádu aplikace se podle něj ukončí). */
+    private val pidSoubor get() = File(Nastroje.slozka, "chiaki.pid")
+
+    /**
+     * chiaki-ng, který zůstal běžet po minulém spuštění Titulky PS5 (pád, ukončení ve Správci úloh) – ukončí ho, ať se
+     * nepere s novou čtečkou o PS5. Jen proces s uloženým číslem, který je opravdu chiaki-ng ze složky nástrojů
+     * (procházet všechny procesy ve Windows trvalo desítky sekund). Vrací true, když něco ukončil.
+     */
+    fun ukonciZbyle(): Boolean {
+        if (Os.mac) return false
+        val pid = runCatching { pidSoubor.readText().trim().toLong() }.getOrNull() ?: return false
+        runCatching { pidSoubor.delete() }
+        val ph = ProcessHandle.of(pid).orElse(null) ?: return false
+        val c = ph.info().command().orElse(null) ?: return false
+        val nase = runCatching { slozka.canonicalPath.lowercase() + File.separator }.getOrNull() ?: return false
+        if (!c.lowercase().startsWith(nase)) return false
+        ph.descendants().forEach { it.destroy() }
+        return ph.destroy()
+    }
+
+    /** Ukončí [p] i procesy, které spustil (chiaki-ng nesmí zůstat viset po zavření aplikace). */
+    fun ukonci(p: Process?) {
+        if (p == null) return
+        runCatching { p.descendants().forEach { it.destroy() } }
+        p.destroy()
+    }
+
     /** chiaki.exe – stažený do složky nástrojů, nebo nainstalovaný. */
     fun exe(): File? {
         if (Os.mac) return ChiakiMac.exe()
@@ -239,9 +266,11 @@ object Chiaki {
         cmd += "--exit-app-on-stream-exit"
         if (celaObrazovka) cmd += "--fullscreen"
         cmd += listOf("stream", konzole, adresa)
-        return ProcessBuilder(cmd)
+        val p = ProcessBuilder(cmd)
             .directory(exe.parentFile).redirectErrorStream(true)
             .redirectOutput(File(Nastroje.slozka, "chiaki-vystup.txt")).start()
+        runCatching { pidSoubor.writeText(p.pid().toString()) }
+        return p
     }
 
     // ---- profil čtečky pro TV ----

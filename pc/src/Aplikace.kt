@@ -982,7 +982,7 @@ private class Aplikace {
     private fun zastavit() {
         krok = null
         ctecka?.zastav()
-        chiaki?.destroy()
+        Chiaki.ukonci(chiaki)
         cteckaTv?.zastav()
         thread(isDaemon = true) {
             vlakno?.join(3000)
@@ -1370,7 +1370,7 @@ private class Aplikace {
         povely.stop()
         nezhasinat.uvolnit()
         ctecka?.zastav()
-        chiaki?.destroy()
+        Chiaki.ukonci(chiaki)
         cteckaTv?.zastav()
         priprava?.destroy()
         okno.isVisible = false
@@ -1392,6 +1392,8 @@ fun main() {
             javax.swing.JOptionPane.INFORMATION_MESSAGE)
         return
     }
+    // chiaki-ng z minula (aplikace spadla nebo byla ukončena násilím) by se s novou čtečkou pral o PS5
+    thread(isDaemon = true) { runCatching { Chiaki.ukonciZbyle() } }
     // seznam her (jména, postavy, menu) ze serveru – bez uloženého se na něj chvilku počká, ať je v nabídce her
     SeznamHer.priprav()
     // Okno aplikace se zvětšuje podle Windows (na handheldu bývá 150–200 %); pruh si polohu okna

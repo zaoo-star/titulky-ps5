@@ -61,6 +61,33 @@ internal class TelefonPc(
     @Volatile private var displej: FloatArray? = null
     /** Žádost z vlákna titulků (menu hry, obraz není): telefon schovat při příští kontrole. */
     @Volatile private var schovat = false
+    /** Čas snímku poslední kontroly ikony ovládání telefonu a co ukázala (true = ovládání telefonu je vidět). */
+    @Volatile private var stavAt = 0L
+    @Volatile private var ikonaNaposled = false
+    /** Žádost z vlákna titulků: zkontrolovat ikonu hned, ne až za sekundu. */
+    @Volatile private var chciKontrolu = false
+
+    /**
+     * Leží bod ([cx], [cy] – zlomky celého snímku [fw] × [fh]) v některém místě, kde hra ukazuje telefon? Tam se text
+     * jako titulek ukáže, až kontrola po jeho objevení potvrdí, že telefon otevřený není ([zavrenoPo]).
+     */
+    fun vMisteTelefonu(fw: Int, fh: Int, cx: Float, cy: Float): Boolean {
+        if (fw <= 0 || fh <= 0) return false
+        val v = video ?: intArrayOf(0, 0, fw, fh)
+        if (v[2] <= 0 || v[3] <= 0) return false
+        val x = (cx * fw - v[0]) / v[2]; val y = (cy * fh - v[1]) / v[3]
+        return spots.any { b -> x in b[0]..b[2] && y in b[1]..b[3] }
+    }
+
+    /**
+     * Telefon zavřený podle kontroly ze snímku po čase [od]: true = zavřený, false = ovládání telefonu je vidět,
+     * null = takovou kontrolu ještě nemám (požádá o ni hned).
+     */
+    fun zavrenoPo(od: Long): Boolean? {
+        if (stavAt >= od) return !ikonaNaposled
+        chciKontrolu = true
+        return null
+    }
 
     /** Displej otevřeného telefonu jako zlomky celého snímku [fw] × [fh] – titulky se z jeho místa nečtou. */
     fun boxVeSnimku(fw: Int, fh: Int): FloatArray? {
@@ -85,16 +112,18 @@ internal class TelefonPc(
      * Jedna kontrola (nejvýš 1× za 1 s, ukázaný telefon 0,6 s); [helper] čte z posledního snímku (jen obraz hry bez
      * černých pruhů, [PhoneHelper.rozmer]). [pismo] / [pozadi] = vzhled pruhu pro panel v TV.
      */
-    fun tick(now: Long, helper: PhoneHelper, pismo: Int, pozadi: Int, send: (String) -> Unit) {
+    fun tick(now: Long, helper: PhoneHelper, pismo: Int, pozadi: Int, send: (String) -> Unit, snimekAt: Long = now) {
         if (!zapnuto) return
         if (schovat) { schovat = false; open.reset(); displej = null; schovej(send); checkAt = now; return }
+        val hned = chciKontrolu
         // ukázaný překlad: jen ikonu ovládání vpravo dole hlídat často (levné) – po zavření telefonu pryč hned,
         // ne až po dalším celém čtení (majitel 25. 11. 2026: „když telefon schovám, dlouho ještě zůstane překlad“)
-        if (shown && now - checkAt < 600 && now - iconAt >= 200) {
+        if (shown && now - checkAt < 600 && (now - iconAt >= 200 || hned)) {
             iconAt = now
             val v0 = helper.rozmer() ?: return
             val (ib, n) = PhoneGate.iconBox(v0[2], v0[3])
             val ikona = helper.mrizka(ib, n, n)?.let { PhoneGate.icon(it, n) } ?: return
+            chciKontrolu = false; ikonaNaposled = ikona; stavAt = snimekAt
             iconMiss = if (ikona) 0 else iconMiss + 1
             if (iconMiss >= 2) {
                 iconMiss = 0; open.reset(); displej = null; grid = null; tracker = PhoneTracker()
@@ -102,8 +131,10 @@ internal class TelefonPc(
             }
             return
         }
-        if (now - checkAt < (if (shown) 600 else 1000)) return
+        // nový obsah se potvrzuje druhým čtením – to přijde hned, ne až za sekundu (telefon se překládal pomalu)
+        if (!hned && now - checkAt < (if (tracker.waiting) 250 else if (shown) 600 else 1000)) return
         checkAt = now
+        chciKontrolu = false
         val v = helper.rozmer() ?: return
         video = v
         val fw = v[2]; val fh = v[3]
@@ -111,6 +142,7 @@ internal class TelefonPc(
         val G = PhoneGate
         val (iconBox, iconN) = G.iconBox(fw, fh)
         val icon = helper.mrizka(iconBox, iconN, iconN)?.let { G.icon(it, iconN) } ?: return
+        ikonaNaposled = icon; stavAt = snimekAt
         val quad = if (!icon) null else helper.mrizka(PhoneZone.WIDE, G.COLS, G.ROWS)?.let { G.quad(it, fw, fh, spots) }
         if (open.update(icon, quad)) log("TELEFON brana " + if (open.open) "otevreny" else "zavreny (${open.reason})")
         val b = open.box
