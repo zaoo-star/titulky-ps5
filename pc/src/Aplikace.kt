@@ -643,7 +643,7 @@ private class Aplikace {
 
     /** Překlad a hra – stejné řádky pro hraní na PC i čtečku pro TV. */
     private fun obnovPreklad(s: Stav, pripravuje: Boolean, pripraveno: Boolean) {
-        val rezim = if (deeplZapnuty()) "DeepL online + offline" else "offline"
+        val rezim = if (!deeplZapnuty()) "offline" else if (nast.deeplJenTelefon) "offline · telefon DeepL" else "DeepL online + offline"
         when {
             pripravuje -> rPreklad.nastav(B.MUTED, "Překlad · ${jazyk().label} · stahování")
             pripraveno && deeplZapnuty() && s.deeplChyba == Deepl.Problem.BAD_KEY ->
@@ -959,6 +959,7 @@ private class Aplikace {
             zmena = { s -> stav = s; SwingUtilities.invokeLater { obnovDomu() } },
             chyby = Nastroje.chyby,
             deepl = deeplZapnuty(),
+            deeplJenTelefon = nast.deeplJenTelefon,
             zaznamy = if (nast.zaznamHry) Nastroje.zaznamy() else null,
             hra = nast.hra,
             pokyny = nast.pokyny,
@@ -1135,7 +1136,7 @@ private class Aplikace {
         out += when {
             deeplZapnuty() && s.deeplChyba == Deepl.Problem.BAD_KEY -> "pozor" to "DeepL · neplatný klíč"
             deeplZapnuty() && s.deeplChyba == Deepl.Problem.QUOTA -> "pozor" to "DeepL · vyčerpaný limit · offline"
-            deeplZapnuty() -> "ok" to "${jazyk().label} · DeepL online + offline"
+            deeplZapnuty() -> "ok" to "${jazyk().label} · " + (if (nast.deeplJenTelefon) "offline · telefon DeepL" else "DeepL online + offline")
             else -> "ok" to "${jazyk().label} · offline"
         }
         if (nast.hra != "all") out += "ok" to nazevHry(nast.hra)
@@ -1236,8 +1237,9 @@ private class Aplikace {
             add(Radek("Příprava", { if (Nastroje.pripraveno(nast.jazyk)) "hotová" else "chybí" }) { pripravit() }.also { radky += it })
         }
         val deeplKarta = Karta().apply {
-            add(volba("DeepL online", listOf("Ne", "Ano"), { if (nast.deepl) 1 else 0 }) {
-                nast.deepl = it == 1
+            add(volba("DeepL online", listOf("Ne", "Ano", "Jen telefon"), { if (!nast.deepl) 0 else if (nast.deeplJenTelefon) 2 else 1 }) {
+                nast.deepl = it >= 1
+                nast.deeplJenTelefon = it == 2
                 if (nast.deepl && !DeeplPc.ma()) zadatKlic() else restart()
             })
             add(Radek("Klíč DeepL", { popisKlice() }) { zadatKlic() }.also { radky += it })

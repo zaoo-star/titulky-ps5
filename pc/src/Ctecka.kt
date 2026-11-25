@@ -252,6 +252,8 @@ class Ctecka(
     private val chyby: File? = null,
     /** Překládat přes DeepL (klíč v [DeeplPc]); offline zůstává jako záloha. */
     private val deepl: Boolean = false,
+    /** DeepL jen pro telefon ve hře, titulky a ostatní offline (šetří limit znaků). */
+    private val deeplJenTelefon: Boolean = false,
     /**
      * Záznam pro ladění: každé spuštění čtení dostane vlastní složku `pc-<čas>` s `zaznam.txt`
      * (co se přečetlo a kde, co se vzalo, překlady) a barevnými snímky celé hry (`cteni.py`).
@@ -411,12 +413,12 @@ class Ctecka(
 
         // Jako na Androidu od 0.97.2: s DeepL se počká na jeho překlad (nejvýš ~2,5 s) a ukáže se jen
         // jedna varianta; offline jen když DeepL nepomůže. Krátká slova ze slovníčku zůstávají offline.
-        fun translateSegments(text: String): List<Segment>? {
+        fun translateSegments(text: String, sDeepl: Boolean = deepl && !deeplJenTelefon): List<Segment>? {
             val parts = TextLogic.segments(text).let { if (profil.prompts) TextLogic.markPrompt(it) else it }
             val bodies = parts.map { TextLogic.normalizeCase(it.body) }
             val quick = bodies.map { QuickWords.lookup(jazyk, it) }
             val ask = bodies.indices.filter { quick[it] == null && slovnik.sentence(TextLogic.forTranslator(bodies[it])) == null }
-            val online = if (deepl && ask.isNotEmpty()) {
+            val online = if (sDeepl && ask.isNotEmpty()) {
                 val t0 = System.currentTimeMillis()
                 DeeplPc.preloz(lang, ask.map { TextLogic.forTranslator(bodies[it]) }, slovnik)?.also {
                     stav = stav.copy(deeplMs = System.currentTimeMillis() - t0, deeplChyba = null)
@@ -455,7 +457,7 @@ class Ctecka(
 
         // telefon ve hře (GTA VI): čte se jen pro TV – panel s překladem kreslí aplikace v TV
         val telefon = if (sender != null) TelefonPc(profil, lang, { t ->
-            translateSegments(t)?.let { TextLogic.joinSegments(it) }?.replace('\n', ' ') ?: t
+            translateSegments(t, sDeepl = deepl)?.let { TextLogic.joinSegments(it) }?.replace('\n', ' ') ?: t
         }, { m -> zapis(m); if (m.startsWith("TELEFON brana") || (m.startsWith("TELEFON ") && "→" in m)) log(m) }).takeIf { it.zapnuto } else null
         fun telefonPryc() { if (sender != null) telefon?.schovej { sender.sendPhone(it) } }
 
