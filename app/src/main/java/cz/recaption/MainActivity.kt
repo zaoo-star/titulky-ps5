@@ -510,9 +510,9 @@ class MainActivity : Activity() {
     /** Řada tlačítek; na úzké obrazovce jsou tlačítka pod sebou, aby se vešla. */
     private fun row(): LinearLayout = if (narrow) ui.vbox() else ui.hbox()
 
-    private fun menuLp() = if (narrow)
-        LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { rightMargin = ui.dp(6) }
-        else ui.lp(top = 4)
+    // Titulky PS5: menu je všude nahoře v řadě (jako menu PS5), na televizi i v telefonu
+    private fun menuLp() =
+        LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { rightMargin = ui.dp(if (narrow) 6 else 10) }
 
     private fun buildNarrowShell() {
         // clipChildren: posuvná část se nesmí kreslit přes lištu (ui.vbox() má ořez vypnutý kvůli zvětšení vybraného prvku)
@@ -523,7 +523,7 @@ class MainActivity : Activity() {
         }
         val logoRow = ui.hbox()
         logoRow.addView(ImageView(this).apply { setImageResource(R.drawable.ic_logo) }, LinearLayout.LayoutParams(ui.dp(36), ui.dp(36)))
-        logoRow.addView(ui.text("ReCaption", 19f, Theme.TEXT, bold = true).apply { setPadding(ui.dp(10), 0, ui.dp(10), 0) })
+        logoRow.addView(ui.text("Titulky PS5", 19f, Theme.TEXT, bold = true).apply { setPadding(ui.dp(10), 0, ui.dp(10), 0) })
         logoRow.addView(ui.text(Prefs.lang(this).label, 13f, Theme.ACCENT, bold = true))
         logoRow.addView(View(this), LinearLayout.LayoutParams(0, 1, 1f))
         gear = ui.hbox()
@@ -554,38 +554,35 @@ class MainActivity : Activity() {
     }
 
     private fun buildShell() {
-        if (narrow) { sideScroll = null; buildNarrowShell(); return }
-        menuScroll = null
+        sideScroll = null
+        if (narrow) { buildNarrowShell(); return }
         val root = ui.hbox().apply {
             setBackgroundColor(Theme.BG)
             gravity = Gravity.TOP
         }
 
-        val side = ui.vbox().apply {
+        // Titulky PS5: lišta nahoře jako menu PS5 – logo, záložky v řadě, ⚙ Nastavení vpravo; obsah přes celou šířku
+        root.orientation = LinearLayout.VERTICAL
+        val top = ui.hbox().apply {
             setBackgroundColor(Theme.SIDEBAR)
-            setPadding(ui.dp(26), ui.dp(30), ui.dp(18), ui.dp(24))
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(ui.dp(40), ui.dp(18), ui.dp(40), ui.dp(14))
         }
-        val logoRow = ui.hbox()
-        logoRow.addView(ImageView(this).apply { setImageResource(R.drawable.ic_logo) }, LinearLayout.LayoutParams(ui.dp(56), ui.dp(56)))
-        val names = ui.vbox().apply { setPadding(ui.dp(12), 0, 0, 0) }
-        names.addView(ui.text("ReCaption", 21f, Theme.TEXT, bold = true))
+        top.addView(ImageView(this).apply { setImageResource(R.drawable.ic_logo) }, LinearLayout.LayoutParams(ui.dp(48), ui.dp(48)))
+        val names = ui.vbox().apply { setPadding(ui.dp(12), 0, ui.dp(28), 0) }
+        names.addView(ui.text("Titulky PS5", 20f, Theme.TEXT, bold = true))
         names.addView(ui.text(Prefs.lang(this).label, 13f, Theme.ACCENT, bold = true))
-        logoRow.addView(names)
-        side.addView(logoRow)
-
-        menu = ui.vbox()
-        // menu v posuvném sloupci: 9 kroků průvodce se na nízkou obrazovku (telefon na šířku) celé nevejde
-        val sideList = ScrollView(this).apply {
-            isVerticalScrollBarEnabled = false
+        top.addView(names)
+        menu = ui.hbox().apply { clipChildren = false; clipToPadding = false; setPadding(ui.dp(6), ui.dp(6), ui.dp(6), ui.dp(6)) }
+        menuScroll = HorizontalScrollView(this).apply {
+            isHorizontalScrollBarEnabled = false; clipChildren = false; clipToPadding = false
             isFocusable = false   // v průvodci nesmí vzít výběr ovladače (kroky nejsou k výběru)
-            clipChildren = false; clipToPadding = false
             addView(menu)
         }
-        sideScroll = sideList
-        side.addView(sideList, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f).apply { topMargin = ui.dp(18) })
-        gear = ui.vbox()
-        side.addView(gear, ui.lp())
-        root.addView(side, LinearLayout.LayoutParams(ui.dp(280), LinearLayout.LayoutParams.MATCH_PARENT))
+        top.addView(menuScroll, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        gear = ui.hbox()
+        top.addView(gear, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { leftMargin = ui.dp(16) })
+        root.addView(top, ui.lp())
 
         val column = ui.vbox().apply { clipChildren = true }
         pinned = ui.vbox().apply { setBackgroundColor(Theme.BG); setPadding(ui.dp(48), ui.dp(34), ui.dp(64), ui.dp(10)); visibility = View.GONE }
@@ -596,7 +593,7 @@ class MainActivity : Activity() {
         scroll.addView(content)
         pageScroll = scroll
         column.addView(scroll, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
-        root.addView(column, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f))
+        root.addView(column, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
         setContentView(root)
     }
 
@@ -623,25 +620,27 @@ class MainActivity : Activity() {
                 })
                 continue
             }
-            val item = ui.hbox().apply {
+            // záložka jako v menu PS5: text, pod vybranou modrá čárka
+            val item = ui.vbox().apply {
                 isFocusable = true
                 isClickable = true
+                gravity = Gravity.CENTER_HORIZONTAL
                 background = ui.focusBg(if (active) Theme.CARD else Theme.SIDEBAR, radius = 10)
                 ui.pop(this)
-                setPadding(ui.dp(14), ui.dp(9), ui.dp(14), ui.dp(9))
+                setPadding(ui.dp(18), ui.dp(9), ui.dp(18), ui.dp(7))
+                val label = if (s == Section.SETTINGS) "⚙  " + t(s.menuKey) else ct(s.menuKey)
+                addView(ui.text(label, 17f, if (active) Theme.TEXT else Theme.MUTED, bold = active))
                 addView(View(this@MainActivity).apply {
                     background = GradientDrawable().apply {
-                        setColor(if (active) Theme.ACCENT else Theme.SIDEBAR)
+                        setColor(if (active) Theme.ACCENT else android.graphics.Color.TRANSPARENT)
                         cornerRadius = ui.dp(2).toFloat()
                     }
-                }, LinearLayout.LayoutParams(ui.dp(4), ui.dp(22)).apply { rightMargin = ui.dp(12) })
-                val label = if (s == Section.SETTINGS) "⚙  " + t(s.menuKey) else ct(s.menuKey)
-                addView(ui.text(label, 17f, if (active) Theme.ACCENT else Theme.TEXT, bold = active))
+                }, LinearLayout.LayoutParams(ui.dp(28), ui.dp(3)).apply { topMargin = ui.dp(5) })
                 setOnClickListener { section = s; render(keepFocus = true) }
                 tag = "menu_${s.name}"
             }
-            if (s == Section.SETTINGS) gear.addView(item, ui.lp()) else menu.addView(item, menuLp())
-            if (active && narrow) scrollTabIntoView(menuScroll, item)
+            if (s == Section.SETTINGS) gear.addView(item) else menu.addView(item, menuLp())
+            if (active) scrollTabIntoView(menuScroll, item)
         }
         if (!narrow) linkGear()
     }
@@ -653,8 +652,8 @@ class MainActivity : Activity() {
         val g = gear.getChildAt(0) ?: return
         if (last.id == View.NO_ID) last.id = View.generateViewId()
         if (g.id == View.NO_ID) g.id = View.generateViewId()
-        last.nextFocusDownId = g.id
-        g.nextFocusUpId = last.id
+        last.nextFocusRightId = g.id
+        g.nextFocusLeftId = last.id
     }
 
     /** Překreslí menu i obsah (po každé změně – je to rychlé a nic se nerozsynchronizuje). */
@@ -790,15 +789,15 @@ class MainActivity : Activity() {
                 addView(ui.text("${i + 1}", if (narrow) 15f else 14f, if (i <= curGroup) Theme.ACCENT else Theme.MUTED, bold = true),
                     LinearLayout.LayoutParams(ui.dp(24), LinearLayout.LayoutParams.WRAP_CONTENT))
                 addView(ui.text(groupName(grp), if (narrow) 16f else 15f, if (active) Theme.ACCENT else if (i < curGroup) Theme.TEXT else Theme.MUTED, bold = active).apply {
-                    if (!narrow) { maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END }
+                    maxLines = 1
                 })
             }
             if (active) activeStep = item
-            menu.addView(item, if (narrow) menuLp() else ui.lp(top = 2))
+            menu.addView(item, menuLp())
         }
         // nízká obrazovka: aktuální krok vidět (seznam se posune)
         sideScroll?.let { sc -> activeStep?.let { a -> sc.post { sc.scrollTo(0, maxOf(0, a.top - (sc.height - a.height) / 2)) } } }
-        if (narrow) scrollTabIntoView(menuScroll, activeStep, smooth = false)
+        scrollTabIntoView(menuScroll, activeStep, smooth = false)
         content.removeAllViews(); closeNests()
         remoteBar()
         content.addView(ui.text(t("wz_title"), 15f, Theme.ACCENT, bold = true))
@@ -1401,6 +1400,7 @@ class MainActivity : Activity() {
         // telefon, který nastavuje TV, sám nepřekládá – Spustit je v TV
         // tlačítka nahoře nad přehledem (od 0.97.129, přání majitele)
         if (!remote) add(buttons, 14)
+        if (!remote && !narrow) homeTiles()
         val status = ui.card()
         // velký nadpis jen, když je potřeba něco vědět (připojuje se, PS5 spí, chyba, čeká na TV…); „Překlad běží“ a „Připraveno“
         // ne – to ukazují tlačítka nahoře a body přehledu (od 0.97.129, přání majitele)
@@ -1427,6 +1427,31 @@ class MainActivity : Activity() {
 
         // upozornění, která nejsou v přehledu (končící vývojářský režim LG, licence)
         warnings()
+    }
+
+    /** Titulky PS5: velké dlaždice jako v menu PS5 – rychlý skok na Vzhled titulků, Konzoli, Nápovědu a Nastavení. */
+    private fun homeTiles() {
+        val tiles = ui.hbox()
+        fun tile(icon: String, title: String, sub: String, tag: String, go: () -> Unit) {
+            val v = ui.vbox().apply {
+                isFocusable = true; isClickable = true
+                background = ui.focusBg(Theme.CARD, radius = 16)
+                ui.pop(this)
+                setPadding(ui.dp(20), ui.dp(18), ui.dp(20), ui.dp(18))
+                addView(ui.text(icon, 30f, Theme.ACCENT, bold = true))
+                addView(ui.text(title, 18f, Theme.TEXT, bold = true).apply { maxLines = 1 }, ui.lp(top = 10))
+                addView(ui.text(sub, 14f, Theme.MUTED).apply { maxLines = 2 }, ui.lp(top = 2))
+                setOnClickListener { go() }
+            }
+            tiles.addView(tagged(v, tag), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f).apply {
+                if (tiles.childCount > 0) leftMargin = ui.dp(14)
+            })
+        }
+        tile("Aa", ct("m_look"), "Písmo, barvy, úkoly, mobil", "tile_look") { section = Section.LOOK; render() }
+        tile("◎", ct("c_console"), consoleName() ?: "PS5", "tile_console") { section = Section.PS5; render() }
+        tile("?", ct("m_help"), "Návody a řešení potíží", "tile_help") { section = Section.HELP; render() }
+        tile("⚙", t("m_settings"), "Jazyk, aktualizace, další", "tile_settings") { section = Section.SETTINGS; render() }
+        add(tiles, 16)
     }
 
     /**
@@ -1631,11 +1656,10 @@ class MainActivity : Activity() {
         }
         // zkratka pro ladění (⚙ → Experimentální → „Snímky na Domů“): úplně dole, jen tlačítka ▶ / ■ Snímky a Odeslat (od 0.97.119)
         if (!remote && Prefs.snapHome(this)) snapHomeRow(card, running) { c, text, tag -> row(c, text, tag) }
-        // Podpořit ReCaption ☕ (od ReCaptionu 1.00, přání majitele): úplně dole nenápadný šedý řádek; telefon = prohlížeč, TV = čtvereček
+        // Titulky PS5: místo „Podpořit“ a Facebooku ReCaptionu původ aplikace (AGPL-3.0) – úplně dole nenápadný šedý řádek
         card.addView(View(this).apply { setBackgroundColor(Theme.SIDEBAR) }, ui.lp(h = ui.dp(1), top = 6))
-        row(Theme.MUTED, t("sup_row"), "hsupport", onClick = { openSupport() })
-        // ReCaption na Facebooku (od 1.0.7, přání majitele): telefon = prohlížeč / aplikace Facebook, TV = čtvereček
-        row(Theme.MUTED, t("fb_row"), "hfacebook", onClick = { openLink(cz.recaption.core.HelpLinks.FACEBOOK, t("fb_row")) })
+        row(Theme.MUTED, "Úprava aplikace ReCaption (VeksCZ) · zdrojový kód", "hsource",
+            onClick = { openLink("https://github.com/zaoo-star/titulky-ps5", "Titulky PS5") })
     }
 
     /**

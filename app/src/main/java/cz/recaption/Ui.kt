@@ -13,18 +13,20 @@ import android.widget.TextView
 
 /** Jednotný vzhled aplikace – barvy, písmo a prvky ovladatelné ovladačem od TV. */
 object Theme {
-    val BG = Color.rgb(0x0E, 0x10, 0x14)
-    val SIDEBAR = Color.rgb(0x14, 0x17, 0x1D)
-    val CARD = Color.rgb(0x1B, 0x1F, 0x27)
-    /** Plocha vybraného prvku – výrazně světlejší, do zlatova. */
-    val FOCUS = Color.rgb(0x4A, 0x40, 0x22)
-    val ACCENT_FOCUS = Color.rgb(0xFF, 0xE3, 0x8F)
-    val TEXT = Color.rgb(0xF2, 0xF2, 0xF2)
-    val MUTED = Color.rgb(0x9A, 0xA4, 0xAE)
-    val ACCENT = Color.rgb(0xF2, 0xC1, 0x4E)
-    val ACCENT_DARK = Color.rgb(0x1A, 0x14, 0x05)
-    val OK = Color.rgb(0x4A, 0xDE, 0x80)
-    val WARN = Color.rgb(0xF5, 0x9E, 0x0B)
+    // Titulky PS5: barvy ve stylu menu PS5 (tmavě modrá, modrý výběr).
+    val BG = Color.rgb(0x05, 0x0A, 0x1A)
+    val SIDEBAR = Color.rgb(0x0B, 0x18, 0x38)
+    val CARD = Color.rgb(0x10, 0x20, 0x48)
+    /** Plocha vybraného prvku – výrazně světlejší modrá. */
+    val FOCUS = Color.rgb(0x1E, 0x3F, 0x8F)
+    val ACCENT_FOCUS = Color.rgb(0x5C, 0x8D, 0xFF)
+    val TEXT = Color.rgb(0xF2, 0xF5, 0xFF)
+    val MUTED = Color.rgb(0x9A, 0xA8, 0xC8)
+    val ACCENT = Color.rgb(0x2F, 0x6B, 0xFF)
+    /** Text na ploše barvy [ACCENT] (modrá → bílý text). */
+    val ACCENT_DARK = Color.WHITE
+    val OK = Color.rgb(0x3D, 0xDC, 0x84)
+    val WARN = Color.rgb(0xFF, 0xD4, 0x5C)
     val BAD = Color.rgb(0xEF, 0x44, 0x44)
 }
 

@@ -177,7 +177,7 @@ class PhoneHelperActivity : Activity() {
         val head = ui.hbox()
         head.addView(ImageView(this).apply { setImageResource(R.drawable.ic_logo) }, LinearLayout.LayoutParams(ui.dp(48), ui.dp(48)))
         val names = ui.vbox().apply { setPadding(ui.dp(12), 0, 0, 0) }
-        names.addView(ui.text("ReCaption", 22f, Theme.TEXT, bold = true))
+        names.addView(ui.text("Titulky PS5", 22f, Theme.TEXT, bold = true))
         names.addView(ui.text(t("hp_title"), 14f, Theme.ACCENT, bold = true))
         head.addView(names)
         content.addView(head)

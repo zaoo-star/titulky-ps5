@@ -188,12 +188,19 @@ object I18n {
         val p = PS[key] ?: S[key] ?: return key
         // jazyk jen pro překlad (bez textů aplikace) = anglicky, ne česky
         val l = if (lang.ui) lang else Lang.EN
-        return when (l) {
+        return rename(when (l) {
             Lang.CS -> p.first
             Lang.SK -> p.second
             else -> PX[l]?.get(key) ?: (if (PS.containsKey(key)) null else EXTRA[l]?.get(key)) ?: p.first
-        }
+        })
     }
+
+    /** Jméno aplikace v textech (Titulky PS5 je úprava ReCaptionu). */
+    const val APP_NAME = "Titulky PS5"
+    private val OLD_NAME = Regex("ReCaption(?:u|em|ovi)?(?![-\\w]|\\.apk)")
+
+    /** „ReCaption“ v textech → [APP_NAME]; názvy souborů (ReCaption-arm64.apk, ReCaption.apk) zůstávají. */
+    fun rename(text: String): String = if ("ReCaption" in text) OLD_NAME.replace(text, APP_NAME) else text
 
     /** Pro testy: má jazyk vlastní překlad daného textu? */
     fun hasOwn(lang: Lang, key: String): Boolean =

@@ -159,9 +159,9 @@ class SubtitleOverlay(
                 else setShadowLayer(3f, 0f, 1f, Color.BLACK)
                 setLineSpacing(0f, 1.08f)
                 setPadding(dp(22), dp(7), dp(22), dp(9))
-                // černý podklad s lehce zaoblenými rohy
+                // Titulky PS5: tmavě modrý podklad (styl menu PS5) s lehce zaoblenými rohy
                 background = GradientDrawable().apply {
-                    setColor(Color.argb(bgAlpha, 0, 0, 0))
+                    setColor(Color.argb(bgAlpha, 5, 10, 26))
                     cornerRadius = dp(14).toFloat()
                 }
                 visibility = View.GONE
@@ -180,7 +180,7 @@ class SubtitleOverlay(
                 if (opacityPercent < 60) setShadowLayer(dp(4).toFloat(), 0f, dp(1).toFloat(), Color.BLACK)
                 else setShadowLayer(3f, 0f, 1f, Color.BLACK)
                 background = GradientDrawable().apply {
-                    setColor(Color.argb(objAlpha, 0, 0, 0))
+                    setColor(Color.argb(objAlpha, 5, 10, 26))
                     cornerRadius = dp(10).toFloat()
                 }
                 visibility = View.GONE
@@ -506,6 +506,15 @@ class SubtitleOverlay(
             }
             sb
         } ?: text
+        // Titulky PS5: žlutý štítek „ÚKOL“ před přeloženým úkolem (jen tady v pruhu, do TV a záznamu jde text beze změny)
+        val labeled = SpannableStringBuilder().apply {
+            append("ÚKOL")
+            setSpan(ForegroundColorSpan(OBJ_LABEL), 0, length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            setSpan(android.text.style.StyleSpan(Typeface.BOLD), 0, length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            setSpan(android.text.style.RelativeSizeSpan(0.72f), 0, length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            append("   ")
+            append(shown)
+        }
         main.post {
             val v = objView ?: return@post
             val lp = objParams ?: return@post
@@ -514,7 +523,7 @@ class SubtitleOverlay(
             // menší okraj nad a pod textem (od 0.97.138, přání majitele – řádek úkolu jde níž)
             v.includeFontPadding = false
             v.setPadding((em * 0.6f).toInt(), 0, (em * 0.6f).toInt(), (em * 0.04f).toInt())
-            v.text = shown
+            v.text = labeled
             v.bidiFor(shown)
             v.measure(View.MeasureSpec.makeMeasureSpec((screenW * 0.9f).toInt(), View.MeasureSpec.AT_MOST),
                 View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED))
@@ -759,6 +768,8 @@ class SubtitleOverlay(
      */
     @Volatile private var phoneOwnRgb = cz.recaption.core.PhoneScreen.OWN_COLOR
     @Volatile private var phoneInRgb = cz.recaption.core.PhoneScreen.IN_COLOR
+    /** Titulky PS5: barva štítku „ÚKOL“. */
+    private val OBJ_LABEL = Color.rgb(0xFF, 0xD4, 0x5C)
     private val PHONE_OWN_BUBBLE get() = bubble(phoneOwnRgb)
     private val PHONE_IN_BUBBLE get() = bubble(phoneInRgb)
 
@@ -812,7 +823,7 @@ class SubtitleOverlay(
                 val pad = (px * 0.6f).toInt()
                 root.setPadding(pad, pad, pad, pad)
                 root.background = GradientDrawable().apply {
-                    setColor(Color.argb(alpha, 18, 20, 26)); cornerRadius = px * 0.9f
+                    setColor(Color.argb(alpha, 11, 24, 56)); cornerRadius = px * 0.9f
                     setStroke(maxOf(1, dp(1)), Color.argb(40, 255, 255, 255))
                 }
                 if (!title.isNullOrBlank()) root.addView(TextView(host).apply {
