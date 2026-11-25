@@ -188,14 +188,14 @@ class Parovani(
         }
         val qr = server?.let { s -> mojeAdresa(ps5?.adresa)?.let { PhoneLogin.pageUrl(PhoneLogin.Target(it, s.port, s.key)) } }
         val telefon = sloupec(
-            popisek("Telefonem", 17, B.ACCENT, true).vlevo(),
+            popisek("Telefonem", 17, B.LINK, true).vlevo(),
             Box.createVerticalStrut(8),
             (qr?.let { JLabel(ImageIcon(ctverecek(it))) } ?: popisek("Stránka pro telefon · nedostupná", 15, B.MUTED)).vlevo(),
             Box.createVerticalStrut(6),
             popisek("Fotoaparát · stejná Wi-Fi", 14, B.MUTED).vlevo(),
         )
         val pc = sloupec(
-            popisek(Os.text("V tomto PC"), 17, B.ACCENT, true).vlevo(),
+            popisek(Os.text("V tomto PC"), 17, B.LINK, true).vlevo(),
             Box.createVerticalStrut(10),
             object : JPanel(FlowLayout(FlowLayout.LEFT, 0, 0)) {
                 override fun getMaximumSize() = Dimension(Int.MAX_VALUE, preferredSize.height)

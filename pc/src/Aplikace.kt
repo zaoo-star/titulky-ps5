@@ -63,18 +63,21 @@ import kotlin.concurrent.thread
 
 /** Barvy aplikace – stejné jako `Theme` v aplikaci pro Android. */
 internal object B {
-    val BG = Color(0x0E, 0x10, 0x14)
-    val SIDEBAR = Color(0x14, 0x17, 0x1D)
-    val CARD = Color(0x1B, 0x1F, 0x27)
-    val CARD2 = Color(0x24, 0x29, 0x33)
-    val FOCUS = Color(0x4A, 0x40, 0x22)
-    val ACCENT_FOCUS = Color(0xFF, 0xE3, 0x8F)
-    val TEXT = Color(0xF2, 0xF2, 0xF2)
-    val MUTED = Color(0x9A, 0xA4, 0xAE)
-    val ACCENT = Color(0xF2, 0xC1, 0x4E)
-    val ACCENT_DARK = Color(0x1A, 0x14, 0x05)
-    val OK = Color(0x4A, 0xDE, 0x80)
-    val WARN = Color(0xF5, 0x9E, 0x0B)
+    // Titulky PS5: barvy ve stylu menu PS5 – stejné jako aplikace v TV (tmavě modrá, modrý výběr, bílý text na modré)
+    val BG = Color(0x05, 0x0A, 0x1A)
+    val SIDEBAR = Color(0x0B, 0x18, 0x38)
+    val CARD = Color(0x10, 0x20, 0x48)
+    val CARD2 = Color(0x1A, 0x2E, 0x62)
+    val FOCUS = Color(0x1E, 0x3F, 0x8F)
+    val ACCENT_FOCUS = Color(0x5C, 0x8D, 0xFF)
+    val TEXT = Color(0xF2, 0xF5, 0xFF)
+    val MUTED = Color(0x9A, 0xA8, 0xC8)
+    val ACCENT = Color(0x2F, 0x6B, 0xFF)
+    val ACCENT_DARK = Color(0xFF, 0xFF, 0xFF)
+    val OK = Color(0x3D, 0xDC, 0x84)
+    val WARN = Color(0xFF, 0xB0, 0x3A)
+    /** Světle modrá pro hodnoty a texty na tmavé ploše (sytá modrá [ACCENT] by na kartě splývala). */
+    val LINK = Color(0x9C, 0xC3, 0xFF)
 }
 
 internal fun pismo(size: Int, tucne: Boolean = false) = Font(Os.PISMO, if (tucne) Font.BOLD else Font.PLAIN, size)
@@ -121,9 +124,9 @@ internal class Tlacitko(text: String, private val hlavni: Boolean = false, akce:
         isFocusPainted = false
         isBorderPainted = false
         isRolloverEnabled = true
-        font = pismo(if (hlavni) 18 else 15, true)
+        font = pismo(if (hlavni) 20 else 15, true)
         foreground = if (hlavni) B.ACCENT_DARK else B.TEXT
-        border = EmptyBorder(if (hlavni) 12 else 7, if (hlavni) 34 else 16, if (hlavni) 12 else 7, if (hlavni) 34 else 16)
+        border = EmptyBorder(if (hlavni) 18 else 7, if (hlavni) 44 else 16, if (hlavni) 18 else 7, if (hlavni) 44 else 16)
         cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
         addActionListener { akce() }
         addFocusListener(object : FocusAdapter() {
@@ -143,7 +146,7 @@ internal class Tlacitko(text: String, private val hlavni: Boolean = false, akce:
         }
         g2.fillRoundRect(0, 0, width, height, 20, 20)
         if (isFocusOwner) {
-            g2.color = if (hlavni) Color.WHITE else B.ACCENT
+            g2.color = if (hlavni) Color.WHITE else B.LINK
             g2.stroke = BasicStroke(3f)
             g2.drawRoundRect(1, 1, width - 3, height - 3, 20, 20)
         }
@@ -153,7 +156,7 @@ internal class Tlacitko(text: String, private val hlavni: Boolean = false, akce:
 
 /** Řádek nastavení: název vlevo, hodnota a „›“ vpravo; klik / Enter = [akce]. */
 internal class Radek(nazev: String, private val hodnota: () -> String, private val akce: (Radek) -> Unit) : JPanel(BorderLayout()) {
-    private val vpravo = popisek("", 16, B.ACCENT)
+    private val vpravo = popisek("", 16, B.LINK)
     private val vlevo = popisek(nazev, 16)
     private var nad = false
     /** Popisek řádku (mění se jen u řádku, který závisí na hře). */
@@ -258,7 +261,7 @@ internal fun vyber(kde: Component, moznosti: List<String>, aktualni: Int, vybran
         menu.add(JMenuItem((if (i == aktualni) "✔  " else "     ") + m).apply {
             font = Font(Os.PISMO_ZNAKY, if (i == aktualni) Font.BOLD else Font.PLAIN, 16)
             background = B.CARD2
-            foreground = if (i == aktualni) B.ACCENT else B.TEXT
+            foreground = if (i == aktualni) B.LINK else B.TEXT
             border = EmptyBorder(8, 12, 8, 24)
             addActionListener { vybrano(i) }
         })
@@ -482,7 +485,7 @@ private class Aplikace {
         panel.layout = BoxLayout(panel, BoxLayout.Y_AXIS)
         panel.border = EmptyBorder(24, 14, 20, 14)
         panel.preferredSize = Dimension(220, 0)
-        panel.add(popisek("Titulky PS5", 26, B.ACCENT, true).vlevo().apply { border = EmptyBorder(0, 12, 26, 0) })
+        panel.add(popisek("Titulky PS5", 26, B.TEXT, true).vlevo().apply { border = EmptyBorder(0, 12, 26, 0) })
         listOf("Domů", "Titulky").forEach { panel.add(polozkaMenu(it, it)) }
         panel.add(Box.createVerticalGlue())
         panel.add(polozkaMenu("⚙  Nastavení", "Nastavení"))
@@ -496,11 +499,11 @@ private class Aplikace {
                 val vybrana = stranka == cil
                 if (!vybrana && !nad && !isFocusOwner) return
                 val g2 = g.hladce()
-                g2.color = if (vybrana || isFocusOwner) B.FOCUS else B.CARD
+                // vybraná stránka plnou modrou jako v menu PS5, výběr klávesnicí bílým rámečkem
+                g2.color = if (vybrana) B.ACCENT else if (isFocusOwner) B.FOCUS else B.CARD
                 g2.fillRoundRect(0, 0, width, height, 18, 18)
-                if (vybrana) { g2.color = B.ACCENT; g2.fillRoundRect(0, 8, 5, height - 16, 4, 4) }
                 if (isFocusOwner) {
-                    g2.color = B.ACCENT; g2.stroke = BasicStroke(3f); g2.drawRoundRect(1, 1, width - 3, height - 3, 18, 18)
+                    g2.color = Color.WHITE; g2.stroke = BasicStroke(3f); g2.drawRoundRect(1, 1, width - 3, height - 3, 18, 18)
                 }
             }
             override fun getMaximumSize() = Dimension(Int.MAX_VALUE, preferredSize.height)
