@@ -200,9 +200,32 @@ object I18n {
     private val OLD_FILE = Regex("ReCaption((?:-[A-Za-z0-9]+)?\\.(?:apk|zip|exe|txt))")
     private val OLD_NAME = Regex("ReCaption(?:u|em|ovi|om)?")
 
-    /** Jméno původní aplikace v textech → [APP_NAME], názvy souborů → TitulkyPS5….apk (jako ve vydáních tohoto repa). */
-    fun rename(text: String): String = if ("ReCaption" !in text) text
-        else OLD_NAME.replace(OLD_FILE.replace(text) { "TitulkyPS5" + it.groupValues[1] }, APP_NAME)
+    /** Nápověda Titulků PS5 (GitHub Pages ze složky docs/). */
+    const val HELP_SITE = "zaoo-star.github.io/titulky-ps5"
+    private const val RELEASES = "github.com/zaoo-star/titulky-ps5/releases/download/"
+
+    /**
+     * Adresy a kód Downloaderu původní aplikace → naše (kód 8438934 by v Downloaderu stáhl původní ReCaption,
+     * ne Titulky PS5). Delší napřed.
+     */
+    private val OLD_LINKS = listOf(
+        "recaption.pages.dev/stahnout/pc" to RELEASES + "pc/TitulkyPS5-PC.zip",
+        "recaption.pages.dev/stahnout" to RELEASES + "latest/TitulkyPS5.apk",
+        "recaption.pages.dev/tv" to HELP_SITE,
+        "recaption.pages.dev/" to "$HELP_SITE/",
+        "recaption.pages.dev" to HELP_SITE,
+        "kód 8438934" to "adresu $HELP_SITE", "kód <span class=\"kod\">8438934</span>" to "adresu <span class=\"kod\">$HELP_SITE</span>",
+        "the code 8438934" to "the address $HELP_SITE",
+        "8438934" to HELP_SITE,
+    )
+
+    /** Jméno původní aplikace v textech → [APP_NAME], názvy souborů → TitulkyPS5….apk, adresy → naše. */
+    fun rename(text: String): String {
+        var t = text
+        if ("recaption.pages.dev" in t || "8438934" in t) for ((a, b) in OLD_LINKS) t = t.replace(a, b)
+        if ("ReCaption" !in t) return t
+        return OLD_NAME.replace(OLD_FILE.replace(t) { "TitulkyPS5" + it.groupValues[1] }, APP_NAME)
+    }
 
     /** Pro testy: má jazyk vlastní překlad daného textu? */
     fun hasOwn(lang: Lang, key: String): Boolean =

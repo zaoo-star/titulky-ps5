@@ -146,7 +146,7 @@ class PhoneHelperActivity : Activity() {
             Intent.ACTION_VIEW -> {
                 val link = i.dataString
                 // čtvereček „Nastavit z telefonu“ v Android TV: celá aplikace v režimu „Nastavuji TV“ (RemoteClient)
-                if (link?.startsWith("recaption://tv") == true) { connectTv(link); return }
+                if (link?.startsWith("titulkyps5://tv") == true) { connectTv(link); return }
                 val tg = PhoneLogin.parseAppLink(link)
                 log("link " + if (tg != null) "ok" else "bad")
                 if (tg != null) {
@@ -313,7 +313,7 @@ class PhoneHelperActivity : Activity() {
     // ---------------- nastavení Android TV z telefonu (RemoteClient) ----------------
 
     /**
-     * Odkaz `recaption://tv?…` ze stránky z TV: stáhnout nastavení TV a otevřít celou aplikaci v režimu
+     * Odkaz `titulkyps5://tv?…` ze stránky z TV: stáhnout nastavení TV a otevřít celou aplikaci v režimu
      * „Nastavuji TV“. Když to nejde, zůstane pomocník s krátkou hláškou (jiná Wi-Fi, starší ReCaption v TV…).
      */
     private fun connectTv(text: String?) {

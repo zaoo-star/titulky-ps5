@@ -75,15 +75,15 @@ class RemoteSetupTest {
         assertEquals(t, l.target)
         assertEquals("Sony Bravia & Co", l.tvName)
         // adresa mimo domácí síť, špatný klíč nebo jiný odkaz – nic
-        assertNull(RemoteSetup.parseLink("recaption://tv?h=8.8.8.8&p=8766&k=abcdefgh"))
-        assertNull(RemoteSetup.parseLink("recaption://tv?h=192.168.1.20&p=8766&k=a"))
-        assertNull(RemoteSetup.parseLink("recaption://login?h=192.168.1.20&p=8766&k=abcdefgh"))
+        assertNull(RemoteSetup.parseLink("titulkyps5://tv?h=8.8.8.8&p=8766&k=abcdefgh"))
+        assertNull(RemoteSetup.parseLink("titulkyps5://tv?h=192.168.1.20&p=8766&k=a"))
+        assertNull(RemoteSetup.parseLink("titulkyps5://login?h=192.168.1.20&p=8766&k=abcdefgh"))
     }
 
     @Test fun pageHasAppButtonInEveryLanguage() {
         for (lang in Lang.uiLangs) {
-            val html = RemoteSetup.page(lang, "recaption://tv?h=192.168.1.20&p=8766&k=abcdefgh&n=TV")
-            assertTrue(html.contains("href=\"recaption://tv?h=192.168.1.20&amp;p=8766"))
+            val html = RemoteSetup.page(lang, "titulkyps5://tv?h=192.168.1.20&p=8766&k=abcdefgh&n=TV")
+            assertTrue(html.contains("href=\"titulkyps5://tv?h=192.168.1.20&amp;p=8766"))
             assertTrue(html.contains(PhoneLogin.esc(I18n.t(lang, "rs_page_app"))))
         }
     }

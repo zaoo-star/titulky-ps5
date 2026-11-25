@@ -1,0 +1,87 @@
+<!doctype html>
+<!-- Vzhled návodů (pomoc/*.md) – stejný tmavý jako úvodní stránka index.html (od 1.00-rc7, přání majitele: návody
+     nemají skočit na černobílou stránku). Přebíjí výchozí vzhled tématu jekyll-theme-primer. -->
+{%- assign jazyk = page.lang | default: site.lang | default: 'cs' -%}
+{%- assign stranka = page.url | split: '/' | last | default: 'index.html' -%}
+{%- if jazyk == 'en' -%}{%- assign r = '../' -%}{%- assign cs_url = '../' | append: stranka -%}{%- assign en_url = stranka -%}
+{%- else -%}{%- assign r = '' -%}{%- assign cs_url = stranka -%}{%- assign en_url = 'en/' | append: stranka -%}{%- endif -%}
+<html lang="{{ jazyk }}">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="{{ r }}obrazky/ikona.svg" type="image/svg+xml">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% if page.title %}{{ page.title }} · {% endif %}Titulky PS5</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#050a1a;--bg2:#0b1838;--karta:#102048;--cara:#1e3060;--text:#f2f5ff;--slaby:#9aa8c8;--zluta:#5c8dff;--modra:#5ab0ff}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.65 Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--zluta)}
+.lista{position:sticky;top:0;z-index:10;background:rgba(13,15,20,.9);backdrop-filter:blur(10px);border-bottom:1px solid var(--cara)}
+.lista .obal{display:flex;align-items:center;gap:18px;height:58px;max-width:900px;margin:0 auto;padding:0 20px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;color:var(--text);text-decoration:none}
+.logo img{width:32px;height:32px;display:block;border:0;border-radius:0}
+.lista nav{margin-left:auto;display:flex;gap:16px}
+.lista nav a{color:var(--slaby);text-decoration:none;font-weight:500;font-size:15px}
+.lista nav a:hover{color:var(--text)}
+.lista nav .jazyk{color:var(--slaby);font-weight:600;font-size:14px;white-space:nowrap;border:1px solid var(--cara);border-radius:8px;padding:4px 8px}
+.lista nav .jazyk a{color:var(--slaby);font-size:14px}
+.lista nav .jazyk a.on{color:var(--text)}
+.lista nav a.kafe{color:var(--zluta);white-space:nowrap}
+.lista nav a.fb{color:#1877F2;display:inline-flex;align-items:center}
+.lista nav a.fb:hover{color:#4a95f5}
+.lista nav .tl{background:#2f6bff;color:#fff;padding:7px 14px;border-radius:10px;font-weight:600}
+@media (max-width:720px){.lista nav > a:not(.vzdy){display:none}}
+@media (max-width:440px){.lista .obal{gap:10px;padding:0 12px}.lista nav{gap:10px}.lista nav .kt{display:none}.logo{font-size:16px}}
+main{max-width:900px;margin:0 auto;padding:32px 20px 64px}
+h1{font-size:clamp(28px,4vw,40px);line-height:1.15;letter-spacing:-.015em;margin:8px 0 18px;font-weight:800}
+h2{font-size:24px;margin:40px 0 12px;padding-top:12px;border-top:1px solid var(--cara)}
+h3{font-size:19px;margin:28px 0 8px}
+p,li{color:#d5dae4}
+strong,b{color:var(--text)}
+ul,ol{padding-left:1.4em}
+li{margin:4px 0}
+code{background:var(--karta);border:1px solid var(--cara);border-radius:6px;padding:1px 6px;font-size:.9em}
+pre{background:var(--karta);border:1px solid var(--cara);border-radius:12px;padding:14px;overflow:auto}
+pre code{border:0;padding:0}
+table{border-collapse:collapse;width:100%;margin:16px 0;font-size:15px;display:block;overflow-x:auto}
+th,td{border:1px solid var(--cara);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:var(--karta)}
+img{max-width:100%;border-radius:12px;border:1px solid var(--cara)}
+blockquote{margin:16px 0;padding:10px 16px;border-left:4px solid var(--zluta);background:var(--karta);border-radius:0 12px 12px 0}
+hr{border:0;border-top:1px solid var(--cara);margin:32px 0}
+em{color:var(--slaby)}
+details{background:var(--karta);border:1px solid var(--cara);border-radius:12px;padding:12px 16px;margin:12px 0}
+summary{cursor:pointer;font-weight:600}
+/* volby a cesty ve stránce zacit.md */
+.volby button{background:var(--karta)!important;color:var(--text)!important;border-color:var(--cara)!important}
+.volby button.on{border-color:var(--zluta)!important;background:#221f17!important}
+.volby small{color:var(--slaby)}
+.cesta{background:var(--karta);border-radius:0 14px 14px 0;padding:6px 18px 10px!important}
+#vyber{color:var(--slaby)!important}
+footer{border-top:1px solid var(--cara);color:var(--slaby);font-size:13px}
+footer .obal{max-width:900px;margin:0 auto;padding:24px 20px 40px}
+footer a{color:var(--slaby)}
+</style>
+</head>
+<body>
+<header class="lista">
+  <div class="obal">
+    <a class="logo" href="./"><img src="obrazky/ikona.svg" alt="">Titulky PS5</a>
+    <nav>
+      <a href="ps5.html">Příprava PS5</a>
+      <a href="android-tv.html">Android TV</a>
+      <a href="pc.html">Překlad z PC</a>
+      <a class="vzdy tl" href="https://github.com/zaoo-star/titulky-ps5/releases/download/latest/TitulkyPS5.apk">Stáhnout</a>
+    </nav>
+  </div>
+</header>
+<main>
+{{ content }}
+</main>
+<footer><div class="obal"><a href="./">Titulky PS5</a> · <a href="ps5.html">Příprava PS5</a> · <a href="https://github.com/zaoo-star/titulky-ps5">Zdrojový kód (AGPL-3.0)</a> · Aplikace není produktem společnosti Sony Interactive Entertainment ani Microsoftu.</div></footer>
+</body>
+</html>

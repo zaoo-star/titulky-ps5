@@ -17,7 +17,7 @@ import java.util.concurrent.Executors
  * Nastavení Android TV z telefonu – strana telefonu, režim „Nastavuji TV“ (3. díl návrhu
  * `navrhy/nastaveni-z-telefonu.md`; televize = [RemoteHost]).
  *
- * Odkaz `recaption://tv?…` ze stránky z TV otevře pomocníka ([PhoneHelperActivity]), ten zavolá [connect]:
+ * Odkaz `titulkyps5://tv?…` ze stránky z TV otevře pomocníka ([PhoneHelperActivity]), ten zavolá [connect]:
  * telefon stáhne celé nastavení TV (TV je hlavní) do vlastního souboru [TV_FILE] a dokud je režim zapnutý,
  * čte i zapisuje [Prefs] jen tam ([on]) – vlastní nastavení telefonu (čtečka pro LG/Samsung) zůstává
  * nedotčené v `test_preklad`. Každá změna přenášené volby ([RemoteSetup.transfers]) odejde po

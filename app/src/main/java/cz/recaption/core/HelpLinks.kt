@@ -12,7 +12,8 @@ object HelpLinks {
      * nemá být GitHub; nahrává `.github/workflows/pomoc.yml`), do 1.00-rc1 GitHub Pages – obyčejný web bez přihlášení.
      * Dřív github.com/…/blob/…: telefon s aplikací GitHub ji otevřel v ní a ta chtěla přihlášení.
      */
-    const val BASE = "https://recaption.pages.dev/"
+    // Titulky PS5: vlastní nápověda (složka docs/ → GitHub Pages), ne stránky původní aplikace
+    const val BASE = "https://zaoo-star.github.io/titulky-ps5/"
 
     val LG_ACCOUNT = page("lg", "ucet")
     val PS5_PREP = page("ps5", "ucet")
@@ -28,14 +29,14 @@ object HelpLinks {
      * Dobrovolná podpora vývoje (řádek dole na Domů a čtvereček v TV, od ReCaptionu 1.00): krátká adresa, která přesměruje
      * na stránku s příspěvkem (QR platba převodem) – cíl se mění jen v `pomoc/kafe.html`, bez nového APK.
      */
-    val SUPPORT = BASE + "kafe.html"
+    val SUPPORT = BASE
     /** Stránka ReCaptionu na Facebooku (od 1.0.7, přání majitele) – Domů a stránka nastavení z TV. */
-    const val FACEBOOK = "https://www.facebook.com/ReCaptionTV"
+    const val FACEBOOK = BASE
     /**
      * iPhone: zkratka „ReCaption“ (Sdílet na stránce „redirect“ → adresa jde do TV bez kopírování). Stránka si z odkazu
      * `?tv=` zapamatuje stránku TV a s `?u=` na ni adresu „redirect“ přepošle (`pomoc/zkratka.md`, od 0.97.63).
      */
-    val IPHONE_SHORTCUT = BASE + "zkratka.html"
+    val IPHONE_SHORTCUT = page("telefon")
 
     fun page(name: String, anchor: String? = null) = BASE + name + ".html" + (anchor?.let { "#$it" } ?: "")
 }

@@ -167,14 +167,14 @@ object RemoteSetup {
 
     /** Odkaz, kterým stránka z TV otevře ReCaption v telefonu v režimu „Nastavuji TV“. */
     fun appLink(t: PhoneLogin.Target, tvName: String) =
-        "recaption://tv?h=${t.host}&p=${t.port}&k=${t.key}&n=" + java.net.URLEncoder.encode(tvName, "UTF-8")
+        "titulkyps5://tv?h=${t.host}&p=${t.port}&k=${t.key}&n=" + java.net.URLEncoder.encode(tvName, "UTF-8")
 
     data class Link(val target: PhoneLogin.Target, val tvName: String)
 
     /** Odkaz z čtverečku → kam se telefon připojí. Jen adresy v domácí síti (nikdy do internetu). */
     fun parseLink(link: String?): Link? {
         val s = link?.trim() ?: return null
-        if (!s.startsWith("recaption://tv?")) return null
+        if (!s.startsWith("titulkyps5://tv?")) return null
         val q = PhoneLogin.parseForm(s.substringAfter('?').substringBefore('#'))
         val host = q["h"] ?: return null
         val port = q["p"]?.toIntOrNull() ?: return null

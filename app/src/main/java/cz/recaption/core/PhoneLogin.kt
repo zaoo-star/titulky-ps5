@@ -40,7 +40,7 @@ object PhoneLogin {
 
     /** Odkaz, kterým stránka v telefonu otevře ReCaption v telefonu (nese i jazyk televize). */
     fun appLink(t: Target, lang: Lang? = null, self: Boolean = false) =
-        "recaption://login?h=${t.host}&p=${t.port}&k=${t.key}" + (lang?.let { "&l=" + it.code } ?: "") + (if (self) "&s=1" else "")
+        "titulkyps5://login?h=${t.host}&p=${t.port}&k=${t.key}" + (lang?.let { "&l=" + it.code } ?: "") + (if (self) "&s=1" else "")
 
     /**
      * Odkaz z vlastní aplikace v tomtéž telefonu (ReCaption jako čtečka, krok přihlášení – [appLink] se `self`):
@@ -55,7 +55,7 @@ object PhoneLogin {
      */
     fun appIntentLink(t: Target, lang: Lang?, apkUrl: String): String =
         "intent://login?h=${t.host}&p=${t.port}&k=${t.key}" + (lang?.let { "&l=" + it.code } ?: "") +
-            "#Intent;scheme=recaption;package=$PACKAGE;S.browser_fallback_url=" + java.net.URLEncoder.encode(apkUrl, "UTF-8") + ";end"
+            "#Intent;scheme=titulkyps5;package=$PACKAGE;S.browser_fallback_url=" + java.net.URLEncoder.encode(apkUrl, "UTF-8") + ";end"
 
     const val PACKAGE = "cz.titulkyps5"
 
@@ -71,7 +71,7 @@ object PhoneLogin {
      */
     fun parseAppLink(link: String?): Target? {
         val s = link?.trim() ?: return null
-        if (!s.startsWith("recaption://login?")) return null
+        if (!s.startsWith("titulkyps5://login?")) return null
         val q = parseForm(s.substringAfter('?').substringBefore('#'))
         val host = q["h"] ?: return null
         val port = q["p"]?.toIntOrNull() ?: return null

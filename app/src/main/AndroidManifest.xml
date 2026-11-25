@@ -81,14 +81,14 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="recaption" android:host="login" />
+                <data android:scheme="titulkyps5" android:host="login" />
             </intent-filter>
             <!-- čtvereček „Nastavit z telefonu“ v Android TV: ReCaption v telefonu nastaví TV (RemoteClient) -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="recaption" android:host="tv" />
+                <data android:scheme="titulkyps5" android:host="tv" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
@@ -125,7 +125,7 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="recaption" android:host="kod" />
+                <data android:scheme="titulkyps5" android:host="kod" />
             </intent-filter>
         </activity>
 

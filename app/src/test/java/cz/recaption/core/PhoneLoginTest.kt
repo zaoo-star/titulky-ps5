@@ -32,7 +32,7 @@ class PhoneLoginTest {
     }
 
     @Test fun appLinkAcceptsOnlyHomeNetwork() {
-        fun link(h: String, p: String = "8765", k: String = "abcd2345") = "recaption://login?h=$h&p=$p&k=$k"
+        fun link(h: String, p: String = "8765", k: String = "abcd2345") = "titulkyps5://login?h=$h&p=$p&k=$k"
         assertNotNull(PhoneLogin.parseAppLink(link("10.0.2.15")))
         assertNotNull(PhoneLogin.parseAppLink(link("172.20.1.1")))
         assertNull(PhoneLogin.parseAppLink(link("8.8.8.8")))               // internet
@@ -93,7 +93,7 @@ class PhoneLoginTest {
             assertTrue("$lang chování stránky", ask.contains("id=\"l\"") && ask.contains("window.sonyTab") && ask.contains("XMLHttpRequest"))
             // Android: odkaz otevře ReCaption v telefonu, bez něj prohlížeč stáhne aplikaci (od 0.97.57)
             assertTrue("$lang odkaz do aplikace", ask.contains("intent://login?h=192.168.1.20&amp;p=8765&amp;k=abcd2345&amp;l=${lang.code}" +
-                "#Intent;scheme=recaption;package=cz.titulkyps5;S.browser_fallback_url=https%3A%2F%2Fexample.com%2FReCaption.apk;end"))
+                "#Intent;scheme=titulkyps5;package=cz.titulkyps5;S.browser_fallback_url=https%3A%2F%2Fexample.com%2FReCaption.apk;end"))
             // aplikace je na stránce první, přihlášení v prohlížeči je záloha (sbalitelná, bez skriptu rozbalená)
             assertTrue("$lang pořadí", ask.indexOf("id=\"app\"") in 0 until ask.indexOf("id=\"web\" open"))
             assertTrue("$lang texty", ask.contains(PhoneLogin.esc(I18n.t(lang, "wp_send"))) && ask.contains(PhoneLogin.esc(I18n.t(lang, "wp_app_btn"))))
@@ -109,7 +109,7 @@ class PhoneLoginTest {
         assertTrue(PhoneLogin.page(Lang.CS, PhoneLogin.Page.DONE, t.key, t, "x", "y").contains("class=\"ok\""))
         // bez adresy televize v domácí síti se odkaz do aplikace nenabízí, formulář ale funguje
         val noApp = PhoneLogin.page(Lang.CS, PhoneLogin.Page.BAD, t.key, null, "x", "y")
-        assertFalse(noApp.contains("intent://") || noApp.contains("recaption://"))
+        assertFalse(noApp.contains("intent://") || noApp.contains("titulkyps5://"))
         assertTrue(noApp.contains("action=\"/p/abcd2345\"") && noApp.contains(I18n.t(Lang.CS, "wp_bad")))
         assertEquals("&lt;b&gt;&amp;&quot;", PhoneLogin.esc("<b>&\""))
     }

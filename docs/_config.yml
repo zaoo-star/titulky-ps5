@@ -1,0 +1,8 @@
+# Titulky PS5 – nápověda (GitHub Pages ze složky docs/ ve větvi main). Markdown → stránky .html.
+title: Titulky PS5 – nápověda
+lang: cs
+theme: jekyll-theme-primer
+plugins:
+  - jekyll-optional-front-matter
+  - jekyll-relative-links
+  - jekyll-titles-from-headings

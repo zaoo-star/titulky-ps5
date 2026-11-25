@@ -37,7 +37,7 @@ object Chiaki {
     private const val REPO = "streetpea/chiaki-ng"
     private const val REG = "Software\\Chiaki\\Chiaki"
     /** Profil chiaki-ng pro čtečku pro TV (vlastní spárované konzole a nastavení). */
-    const val PROFIL_CTECKY = "recaption"
+    const val PROFIL_CTECKY = "titulkyps5"
 
     /** Klíč nastavení profilu v registru (Qt: aplikace „Chiaki-<profil>“); null = výchozí profil chiaki-ng. */
     private fun reg(profil: String?) = if (profil.isNullOrEmpty()) REG else "$REG-$profil"

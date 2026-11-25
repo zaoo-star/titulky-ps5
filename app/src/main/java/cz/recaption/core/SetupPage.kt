@@ -41,22 +41,22 @@ object SetupPage {
             ",\"deepl\":" + s.deepl + (if (s.multiPs5) ",\"multi\":true" else "") + "}"
 
     /**
-     * Odkaz `recaption://…` jako odkaz pro prohlížeč Androidu: ReCaption v telefonu je → otevře se, není → stáhne se
+     * Odkaz `titulkyps5://…` jako odkaz pro prohlížeč Androidu: ReCaption v telefonu je → otevře se, není → stáhne se
      * [apkUrl]. (Pro tlačítko „Nastavit vše v aplikaci“ a „📷 Načíst kamerou“.)
      */
     fun intentLink(recaptionLink: String, apkUrl: String): String {
-        val rest = recaptionLink.removePrefix("recaption://")
-        return "intent://" + rest + "#Intent;scheme=recaption;package=" + PhoneLogin.PACKAGE +
+        val rest = recaptionLink.removePrefix("titulkyps5://")
+        return "intent://" + rest + "#Intent;scheme=titulkyps5;package=" + PhoneLogin.PACKAGE +
             ";S.browser_fallback_url=" + java.net.URLEncoder.encode(apkUrl, "UTF-8") + ";end"
     }
 
     /** Odkaz pro čtečku kódu z PS5 v ReCaptionu v telefonu: přečte osmimístné číslo kamerou a pošle ho téhle TV. */
-    fun scanLink(t: PhoneLogin.Target): String = "recaption://kod?h=${t.host}&p=${t.port}&k=${t.key}"
+    fun scanLink(t: PhoneLogin.Target): String = "titulkyps5://kod?h=${t.host}&p=${t.port}&k=${t.key}"
 
     /** Odkaz čtečky → kam poslat přečtené číslo. Jen adresa v domácí síti (nikdy do internetu). */
     fun parseScanLink(link: String?): PhoneLogin.Target? {
         val s = link?.trim() ?: return null
-        if (!s.startsWith("recaption://kod?")) return null
+        if (!s.startsWith("titulkyps5://kod?")) return null
         val q = PhoneLogin.parseForm(s.substringAfter('?').substringBefore('#'))
         val host = q["h"] ?: return null
         val port = q["p"]?.toIntOrNull() ?: return null

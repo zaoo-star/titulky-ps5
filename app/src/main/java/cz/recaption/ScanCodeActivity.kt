@@ -11,7 +11,7 @@ import cz.recaption.core.SetupPage
 
 /**
  * ReCaption v telefonu: přečte kamerou osmimístné číslo z obrazovky PS5 a pošle ho TV (od 0.97.64). Otevírá ho tlačítko
- * „📷 Načíst kamerou“ na stránce „Nastavení TV“ v prohlížeči telefonu (odkaz `recaption://kod?h=&p=&k=`,
+ * „📷 Načíst kamerou“ na stránce „Nastavení TV“ v prohlížeči telefonu (odkaz `titulkyps5://kod?h=&p=&k=`,
  * [SetupPage.scanLink]); TV pak spáruje sama ([RemoteHost], `op=kod`) a stránka v prohlížeči to po návratu ukáže.
  * Bez vlastního vzhledu: povolení kamery → čtečka [LgScanActivity] (`MODE_PS5`) → odeslat → zavřít (zpět do prohlížeče).
  * Číslo posílá jen na adresu v domácí síti ([SetupPage.parseScanLink]).
