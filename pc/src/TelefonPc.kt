@@ -54,6 +54,9 @@ internal class TelefonPc(
         private set
     private var iconAt = 0L
     private var iconMiss = 0
+    /** Měření zpoždění pro záznam: kdy brána poprvé viděla otevřený telefon a kdy ikona poprvé chyběla. */
+    private var otevrenoAt = 0L
+    private var chybiOd = 0L
 
     /** Obraz hry v posledním snímku (x0, y0, šířka, výška) – okno chiaki-ng mívá černé pruhy. */
     @Volatile private var video: IntArray? = null
@@ -128,9 +131,12 @@ internal class TelefonPc(
             val ikona = helper.mrizka(ib, n, n)?.let { PhoneGate.icon(it, n) } ?: return
             chciKontrolu = false; ikonaNaposled = ikona; stavAt = snimekAt
             iconMiss = if (ikona) 0 else iconMiss + 1
+            if (!ikona && (iconMiss == 1 || chybiOd == 0L)) chybiOd = snimekAt
+            if (ikona) chybiOd = 0L
             if (iconMiss >= 2) {
                 iconMiss = 0; open.reset(); displej = null; grid = null; tracker = PhoneTracker()
-                shown = false; shownBase = null; send(TvSender.PHONE_HIDE); log("TELEFON brana zavreny (ovladani) – schovan hned")
+                shown = false; shownBase = null; send(TvSender.PHONE_HIDE)
+                log("TELEFON brana zavreny (ovladani) – schovan hned (${now - chybiOd} ms od prvni chybejici ikony)")
             }
             return
         }
@@ -147,7 +153,13 @@ internal class TelefonPc(
         val icon = helper.mrizka(iconBox, iconN, iconN)?.let { G.icon(it, iconN) } ?: return
         ikonaNaposled = icon; stavAt = snimekAt
         val quad = if (!icon) null else helper.mrizka(PhoneZone.WIDE, G.COLS, G.ROWS)?.let { G.quad(it, fw, fh, spots) }
-        if (open.update(icon, quad)) log("TELEFON brana " + if (open.open) "otevreny" else "zavreny (${open.reason})")
+        if (!icon && (iconMiss == 0 || chybiOd == 0L)) chybiOd = snimekAt
+        if (icon) chybiOd = 0L
+        if (open.update(icon, quad)) {
+            if (open.open) otevrenoAt = snimekAt
+            log("TELEFON brana " + (if (open.open) "otevreny" else "zavreny (${open.reason})") +
+                (if (!open.open && shown && chybiOd > 0) " (${now - chybiOd} ms od prvni chybejici ikony)" else ""))
+        }
         val b = open.box
         displej = if (open.open) b else null
         if (!open.open || b == null) {
@@ -200,13 +212,16 @@ internal class TelefonPc(
             S.withBubbleColors(read0, read0.boxes.map { b -> b?.let { helper.pixely(it)?.let { px -> S.blueness(px) } } })
         } catch (_: Exception) { read0 }).let { bezUseknute(it) }
         if (read.paragraphs.isEmpty()) return
+        val prekladOd = System.currentTimeMillis()
         pripravPreklady(read)
+        val prekladMs = System.currentTimeMillis() - prekladOd
         val texts = if (read.card) paras.map { karta(it) } else read.paragraphs.indices.map { i -> odstavec(read, i, read.paragraphs[i]) }
         val title = if (read.card) read.title?.let { karta(it) } else read.title
         val msg = zprava(read, texts, title, pismo, pozadi) ?: return
         send(msg)
         shown = true; shownBase = read; shownTexts = texts; shownTitle = title
         log("TELEFON " + read.paragraphs.indices.joinToString(" ¦ ") { i -> read.paragraphs[i].take(80) + " → " + texts.getOrElse(i) { "" }.take(80) }.take(700))
+        log("TELEFON cas: cteni ${crop.ms} ms, preklad $prekladMs ms" + (if (otevrenoAt > 0) ", od otevreni ${System.currentTimeMillis() - otevrenoAt} ms" else ""))
     }
 
     /** Seznam konverzací (řádky se jmény kontaktů), ne otevřená konverzace. */
