@@ -205,7 +205,13 @@ sealed class PcMessage {
     data class Show(val id: Long, val segments: List<Segment>, val original: String?,
                     val top: Float, val bottom: Float, val left: Float, val right: Float,
                     /** Vzhled pruhu z PC (vše se nastavuje na PC); null = PC ho neposlalo, platí nastavení v TV. */
-                    val look: PcLook? = null) : PcMessage()
+                    val look: PcLook? = null,
+                    /** Předčítání (přání majitele 26. 11. 2026): rychlost hlasu v % (0 = nečíst) a jazyk hlasu (kód, např. „cs“). */
+                    val speechRate: Int = 0, val speechLang: String? = null) : PcMessage() {
+        /** Co se přečte: repliky bez jmen mluvčích, bez voleb a pokynů hry. */
+        val speechText: String get() = segments.filter { !it.choice && !it.prompt }
+            .joinToString(" ") { it.body.trim() }.replace(Regex("\\s+"), " ").trim()
+    }
     data class Hide(val id: Long) : PcMessage()
     /** Úkol; prázdný [text] = schovat. [box] = kde byl anglický úkol. */
     data class Objective(val text: String, val box: FloatArray?) : PcMessage()
@@ -244,7 +250,9 @@ sealed class PcMessage {
                     val lr = ok && t!!.size >= 4 && t[3] > t[2]
                     Show(id, segments, str(look?.get("original"))?.takeIf { it.isNotBlank() },
                         if (ok) t!![0] else -1f, if (ok) t!![1] else -1f, if (lr) t!![2] else -1f, if (lr) t!![3] else -1f,
-                        look?.let { PcLook.parse(it) })
+                        look?.let { PcLook.parse(it) },
+                        speechRate = ((look?.get("hlas") as? Number)?.toInt() ?: 0).coerceIn(0, 200),
+                        speechLang = (look?.get("hlasJazyk") as? String)?.takeIf { Regex("[a-z]{2,3}").matches(it) })
                 }
                 "ukol" -> Objective(str(m["text"]) ?: "", box(m["misto"]))
                 "telefon" -> {

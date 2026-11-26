@@ -971,6 +971,7 @@ private class Aplikace {
             ukol = nast.ukol,
             menu = nast.menuHry,
             vzhled = { pruh.vzhled },
+            hlas = { nast.hlas },
             zmenaZTv = ::zmenaZTv,
             stavTv = ::stavProTv,
         )
@@ -1095,6 +1096,9 @@ private class Aplikace {
         karta.add(volba("Okraj pruhu", (0..3).map { "$it" }, { nast.okraj }) { nast.okraj = it; zmenaVzhledu() })
         karta.add(volba("Poloha", Poloha.values().map { it.nazev }, { nast.poloha.ordinal }) { nast.poloha = Poloha.values()[it]; zmenaVzhledu() })
         karta.add(volba("Originál pod překladem", listOf("Ne", "Ano"), { if (nast.original) 1 else 0 }) { nast.original = it == 1; zmenaVzhledu() })
+        // Titulky PS5: TV (Android TV) překlad i přečte – hlas jde z TV, i do sluchátek připojených k TV
+        karta.add(volba("Předčítat překlad v TV", listOf("Ne", "Ano", "Ano · rychleji"),
+            { Nastaveni.HLAS.indexOf(nast.hlas).coerceAtLeast(0) }) { nast.hlas = Nastaveni.HLAS[it] })
         karta.add(Radek("Zkušební pruh", { "" }) { zkusebniPruh() }.also { radky += it })
         return stranka(
             popisek("Hra", 15, B.MUTED, true).vlevo(), Box.createVerticalStrut(8), hra,

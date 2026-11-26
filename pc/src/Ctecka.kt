@@ -273,6 +273,8 @@ class Ctecka(
     private val menu: Boolean = false,
     /** Aktuální vzhled pruhu – posílá se i do TV (mění se za běhu). */
     private val vzhled: () -> Vzhled = { Vzhled() },
+    /** Předčítání překladu v TV: 0 = ne, jinak rychlost hlasu v % (mění se za běhu). */
+    private val hlas: () -> Int = { 0 },
     /** Vzhled změněný ovladačem TV (OK při hře) – uložit jako z okna PC. */
     private val zmenaZTv: (TvSettings.Change) -> Unit = {},
     /** Řádky stavu pro TV vlevo nahoře (barva „ok“/„pozor“/„info“, text) – jako Domů. */
@@ -458,16 +460,19 @@ class Ctecka(
         }
 
         /** Vzhled pro TV (`TvLook`) – stejné volby jako pruh na PC; [box] = překlad menu vedle menu. */
-        fun look(original: String?, box: Pair<Float, Float>? = null): String {
+        fun look(original: String?, box: Pair<Float, Float>? = null, mluvit: Boolean = false): String {
             val v = vzhled()
             val matched = if (v.pismo == 0 && spot.radek > 0f) MatchSize.textPx(spot.radek, TvLook.SCREEN_H) else 0
             val tvOriginal = original?.takeIf { v.original }?.let { o ->
                 TextLogic.segments(o).joinToString("\n") { s -> (s.speaker?.let { TextLogic.normalizeName(it) + ": " } ?: "") + s.body }
             }
-            return TvLook.json(
+            val json = TvLook.json(
                 v.layout(), v.pozadi, TvLook.textPx(if (v.pismo > 0) v.pismo else 22, matched), v.barva.rgb, v.tucne,
                 spot.nahore, spot.dole, spotLR.first, spotLR.second, tvOriginal, v.okraj, box,
             )
+            // předčítání v TV (Android TV od 1.3-z7; LG/Samsung pole přeskočí): rychlost a jazyk hlasu
+            val h = if (mluvit) hlas() else 0
+            return if (h > 0 && json.endsWith("}")) json.dropLast(1) + ",\"hlas\":$h,\"hlasJazyk\":\"$jazyk\"}" else json
         }
 
         fun hide() { if (shown) { shown = false; sender?.hide(); pruh?.schovej() } }
@@ -704,7 +709,7 @@ class Ctecka(
                                 barvaJmena(r, action.text)
                                 val text = TextLogic.joinSegments(segs)
                                 val colors = speakerColors.colorsFor(segs)
-                                sender?.show(text, TvSender.partsJson(segs, colors), look(action.text))
+                                sender?.show(text, TvSender.partsJson(segs, colors), look(action.text, mluvit = true))
                                 pruh?.ukaz(segs, colors, spot, action.text.replace('\n', ' '))
                                 val orig = action.text.replace('\n', ' ')
                                 val prel = text.replace('\n', ' ')

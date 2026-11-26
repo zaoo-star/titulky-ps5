@@ -103,6 +103,7 @@ class PcReceiverService : Service() {
         client?.close()
         worker?.interrupt()
         overlay?.destroy(); overlay = null
+        speech?.shutdown(); speech = null
         state = State.OFF; pcAddress = null; pairRequest = null
         log("zastaveno")
         super.onDestroy()
@@ -152,6 +153,7 @@ class PcReceiverService : Service() {
             } catch (_: Throwable) {}
             c.close(); client = null
             overlay?.hide(); overlay?.hideObjective(); overlay?.hidePhone()
+            speech?.stop()
             if (running) { log("spojení s PC se ztratilo, hledám znovu"); sleep(2000) }
         }
     }
@@ -169,6 +171,8 @@ class PcReceiverService : Service() {
                 } else o
                 // originál posílá PC jen se zapnutou volbou na PC; bez vzhledu z PC (starší PC) podle nastavení v TV
                 use.show(m.segments, if (lk != null || Prefs.showOriginal(this)) m.original else null, m.top, m.bottom, m.left, m.right)
+                // předčítání zapnuté na PC (Předčítat překlad v TV)
+                if (m.speechRate > 0) (speech ?: PcSpeech(this).also { speech = it }).say(m.speechText, m.speechLang, m.speechRate)
                 shownCount++
                 c.send(PcMessage.done(m.id))
             }
@@ -188,6 +192,9 @@ class PcReceiverService : Service() {
     }
 
     private fun sleep(ms: Long) { try { Thread.sleep(ms) } catch (_: InterruptedException) {} }
+
+    /** Hlas pro předčítání překladu – vznikne až s první větou, kterou má PC zapnuté číst. */
+    @Volatile private var speech: PcSpeech? = null
 
     /** Poslední vzhled z PC (null = zatím žádný, platí nastavení v TV). */
     @Volatile private var look: cz.recaption.core.PcLook? = null

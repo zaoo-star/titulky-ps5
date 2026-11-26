@@ -81,6 +81,11 @@ class Nastaveni(private val soubor: File = File(Nastroje.slozka, "aplikace.prope
     var okraj: Int get() = cislo("okraj", 1).coerceIn(0, 3); set(v) = nastav("okraj", v)
     /** Anglický originál pod překladem. */
     var original: Boolean get() = text("original", "false") == "true"; set(v) = nastav("original", v)
+    /**
+     * Předčítání překladu v TV (Android TV, přání majitele 26. 11. 2026): 0 = vypnuto (výchozí), jinak rychlost hlasu v %
+     * ([HLAS]). Hlas mluví TV, takže jde i do sluchátek připojených k TV.
+     */
+    var hlas: Int get() = text("hlas", "0").toIntOrNull()?.takeIf { it in HLAS } ?: 0; set(v) = nastav("hlas", "$v")
 
     /** Profil hry (`core/GameProfiles.kt`); „all“ = univerzální. */
     var hra: String get() = text("hra", "all"); set(v) = nastav("hra", v)
@@ -110,6 +115,8 @@ class Nastaveni(private val soubor: File = File(Nastroje.slozka, "aplikace.prope
         /** Mac je hlavně čtečka pro TV (hra běží na PS5 v TV) – tam je výchozí; ve Windows zůstává hraní na PC. */
         // Titulky PS5: hlavní cesta je PC jako čtečka pro TV (přání majitele 25. 11. 2026 – „PC dělá vše“)
         val VYCHOZI_POUZITI = "ctecka"
+        /** Předčítání: vypnuto, normálně, rychleji (rychlost hlasu v %). */
+        val HLAS = listOf(0, 100, 130)
         /** Stejné hodnoty jako na Androidu a v TV (`TvSettings.TEXT_SIZES`, `TvSettings.OPACITIES`). */
         val PISMA = cz.recaption.core.TvSettings.TEXT_SIZES
         val POZADI = cz.recaption.core.TvSettings.OPACITIES
