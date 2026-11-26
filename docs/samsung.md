@@ -17,13 +17,15 @@ Nejjednodušší je zdarma aplikace **Apps2Samsung** v telefonu s Androidem (bez
    z [nejnovějšího vydání na GitHubu](https://github.com/Apps2Samsung/Apps2Samsung/releases/latest): dole v části
    **Assets** soubor končící na **`-android.apk`**, otevřít ho a povolit instalaci. Antivirus může hlásit varování –
    podle autora Apps2Samsungu falešné.
-3. V Apps2Samsung přidat zdroj **https://github.com/zaoo-star/titulky-ps5**
-   ([otevřít v Apps2Samsung](apps2samsung://source?url=https%3A%2F%2Fgithub.com%2Fzaoo-star%2Ftitulky-ps5)).
-4. Vybrat **Titulky PS5** a **Install**. Po chvíli je aplikace v seznamu aplikací TV.
+3. Do téhož telefonu stáhnout balíček Titulků PS5 pro Samsung:
+   [TitulkyPS5-Samsung.wgt](https://github.com/zaoo-star/titulky-ps5/releases/download/latest/TitulkyPS5-Samsung.wgt).
+4. V Apps2Samsung najít TV (prohledá síť sama, jinak zadat IP adresu TV), zvolit **Custom WGT / TPK**,
+   vybrat stažený soubor **TitulkyPS5-Samsung.wgt** a potvrdit instalaci. Po chvíli je aplikace v seznamu aplikací TV.
 
-Bez telefonu s Androidem jde balíček
-[TitulkyPS5-Samsung.wgt](https://github.com/zaoo-star/titulky-ps5/releases/download/latest/TitulkyPS5-Samsung.wgt)
-nahrát z PC přes Tizen Studio (s certifikátem Samsung pro tuto TV) – je to složitější cesta.
+Novou verzi Titulků PS5 v TV nahrát stejně: stáhnout znovu `.wgt` a nainstalovat ho přes **Custom WGT / TPK**.
+
+Bez telefonu s Androidem jde týž balíček nahrát z PC přes Tizen Studio (s certifikátem Samsung pro tuto TV) –
+je to složitější cesta.
 
 <a id="hrat"></a>
 ## 2. Hrát
