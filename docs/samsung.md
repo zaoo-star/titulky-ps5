@@ -13,6 +13,10 @@ Nejjednodušší je zdarma aplikace **Apps2Samsung** v telefonu s Androidem (bez
 1. V TV otevřít **Aplikace**, na ovladači zadat **1 2 3 4 5**, zapnout **Developer mode** a jako **Host PC IP**
    zadat IP adresu **telefonu** (Nastavení telefonu → Wi-Fi → připojená síť). TV restartovat.
 2. Do telefonu nainstalovat **Apps2Samsung** a přihlásit se v něm účtem Samsung (vyrobí podpis pro tuto TV).
+   Apps2Samsung **není v Google Play** (co se tam najde pod podobným jménem, je něco jiného). Stáhnout se dá
+   z [nejnovějšího vydání na GitHubu](https://github.com/Apps2Samsung/Apps2Samsung/releases/latest): dole v části
+   **Assets** soubor končící na **`-android.apk`**, otevřít ho a povolit instalaci. Antivirus může hlásit varování –
+   podle autora Apps2Samsungu falešné.
 3. V Apps2Samsung přidat zdroj **https://github.com/zaoo-star/titulky-ps5**
    ([otevřít v Apps2Samsung](apps2samsung://source?url=https%3A%2F%2Fgithub.com%2Fzaoo-star%2Ftitulky-ps5)).
 4. Vybrat **Titulky PS5** a **Install**. Po chvíli je aplikace v seznamu aplikací TV.
