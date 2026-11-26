@@ -1580,6 +1580,8 @@ class MainActivity : Activity() {
                     PcReceiverService.stop(this); main.postDelayed({ render(true) }, 300)
                 }
             }
+            // nová verze appky v TV (majitel 26. 11. 2026: „nevím, jak aktualizovat apku na TV“ – v režimu z PC nebyla nikde)
+            update?.let { o -> if (!Updater.busy) tl += HomeTile("⬆", t("upd_btn") + " · " + o.remote.name, "tile_update") { startUpdate(o) } }
             // vše ostatní (PS5, hra, mobil, DeepL) se nastavuje v programu na PC
             tl += HomeTile("⚙", t("m_settings"), "tile_settings") { section = Section.SETTINGS; render() }
             tl += HomeTile("?", ct("m_help"), "tile_help") { section = Section.HELP; render() }
@@ -1616,6 +1618,27 @@ class MainActivity : Activity() {
         Prefs.pcAddress(this)?.let { line(Theme.MUTED, "Poslední PC · $it", "pclast") }
         line(Theme.MUTED, if (Prefs.pcMac(this) != null) "Probuzení PC ze spánku · zapnuto" else "Probuzení PC ze spánku · po prvním spojení", "pcwake")
         line(Theme.MUTED, "Vzhled titulků, hra, DeepL · nastavuje se na PC", "pcsettings")
+        // verze appky v TV: aktuální šedě, novější oranžově s Aktualizovat a průběhem (jako na Domů bez PC)
+        val me = "Titulky PS5 ${BuildInfo.VERSION.removePrefix("verze ")}"
+        val upd = update
+        if (upd == null) line(Theme.MUTED, me, "hver")
+        else {
+            line(Theme.WARN, me + " · " + t("h_ver_new").replace("%s", upd.remote.name), "hver") { if (!Updater.busy) startUpdate(upd) }
+            if (!Updater.busy) card.addView(tagged(ui.smallButton(t("upd_btn")) { startUpdate(upd) }, "pcupd"),
+                LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { leftMargin = ui.dp(30); bottomMargin = ui.dp(4) })
+            when (Updater.state) {
+                Updater.State.DOWNLOADING -> {
+                    card.addView(ui.text(t("upd_down") + (if (Updater.percent >= 0) " ${Updater.percent} %" else "…"), 14f, Theme.MUTED), ui.lp(top = 2))
+                    card.addView(ui.progress(if (Updater.percent >= 0) Updater.percent / 100f else null), ui.lp(h = ui.dp(8), top = 4))
+                }
+                Updater.State.INSTALLING -> {
+                    card.addView(ui.text(Updater.text(this, "upd_inst"), 14f, Theme.MUTED), ui.lp(top = 2))
+                    card.addView(ui.progress(null), ui.lp(h = ui.dp(8), top = 4))
+                }
+                Updater.State.FAILED -> card.addView(ui.text(UpdateCheck.url(upd.channel, "TitulkyPS5.apk"), 13f, Theme.ACCENT), ui.lp(top = 4))
+                else -> {}
+            }
+        }
         if (narrow) { add(card, 18); return }
         val (title, color) = when {
             !overlayOk -> "Chybí povolení" to Theme.WARN
@@ -4181,6 +4204,6 @@ class MainActivity : Activity() {
 }
 
 object BuildInfo {
-    const val VERSION = "verze 1.3-z8"
-    const val VERSION_CODE = 325
+    const val VERSION = "verze 1.3-z9"
+    const val VERSION_CODE = 326
 }
