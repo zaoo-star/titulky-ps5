@@ -92,7 +92,6 @@ class SubtitleOverlay(
         private val MENU_BG_BESIDE = Color.argb(255 * cz.recaption.core.GameMenu.SETTINGS_BG / 100, 0, 0, 0)
         /** Náhledy seznamu zpráv vedle telefonu: písmo o tolik větší než řádek v telefonu. */
         private const val PHONE_BESIDE_GROW = 1.25f
-        private fun bubble(rgb: Int) = Color.argb(255 * cz.recaption.core.GameMenu.SETTINGS_BG / 100, rgb shr 16 and 0xFF, rgb shr 8 and 0xFF, rgb and 0xFF)
         /** Pozadí oken překladu menu Nastavení (nadpis, popis, seznam) – [cz.recaption.core.GameMenu.SETTINGS_BG] (od 1.00-rc24 40 %, od 0.97.143 30 %, dřív 70 %). */
         private val MENU_ALPHA = 255 * cz.recaption.core.GameMenu.SETTINGS_BG / 100
 
@@ -770,8 +769,11 @@ class SubtitleOverlay(
     @Volatile private var phoneInRgb = cz.recaption.core.PhoneScreen.IN_COLOR
     /** Titulky PS5: barva štítku „ÚKOL“. */
     private val OBJ_LABEL = Color.rgb(0xFF, 0xD4, 0x5C)
-    private val PHONE_OWN_BUBBLE get() = bubble(phoneOwnRgb)
-    private val PHONE_IN_BUBBLE get() = bubble(phoneInRgb)
+    /** Titulky PS5: panel telefonu jako skutečný chat – plné barvy (vlastní = modrá z profilu hry, příchozí bílá). */
+    private val PHONE_CHAT_OWN get() = Color.rgb(phoneOwnRgb shr 16 and 0xFF, phoneOwnRgb shr 8 and 0xFF, phoneOwnRgb and 0xFF)
+    private val PHONE_CHAT_IN = Color.WHITE
+    /** Displej chatu jen málo průhledný (92 %) – čitelný jako telefon, hra pod ním trochu prosvítá. */
+    private val PHONE_CHAT_ALPHA = 235
 
     fun phoneColors(own: Int, incoming: Int) {
         phoneOwnRgb = if (own != 0) own else cz.recaption.core.PhoneScreen.OWN_COLOR
@@ -820,18 +822,35 @@ class SubtitleOverlay(
             val alpha = (255 * opacity / 100).coerceIn(0, 255)
             fun build(px: Float, from: Int) {
                 root.removeAllViews()
-                val pad = (px * 0.6f).toInt()
-                root.setPadding(pad, pad, pad, pad)
+                // Titulky PS5 (přání majitele 26. 11. 2026: „ať to vypadá jako reálný mobil s chatem“): tmavý rám telefonu,
+                // světlý displej chatu, nahoře lišta se jménem kontaktu, bubliny vlevo / vpravo s tmavým / bílým písmem
+                root.clipToPadding = false
+                val frame = (px * 0.35f).toInt().coerceAtLeast(dp(3))
+                val pad = (px * 0.55f).toInt()
+                root.setPadding(pad + frame, frame, pad + frame, pad + frame)
                 root.background = GradientDrawable().apply {
-                    setColor(Color.argb(alpha, 11, 24, 56)); cornerRadius = px * 0.9f
-                    setStroke(maxOf(1, dp(1)), Color.argb(40, 255, 255, 255))
+                    setColor(Color.argb(maxOf(alpha, PHONE_CHAT_ALPHA), 0xEC, 0xEF, 0xF4)); cornerRadius = px * 1.6f
+                    setStroke(frame, Color.rgb(0x16, 0x18, 0x1C))
                 }
-                if (!title.isNullOrBlank()) root.addView(TextView(host).apply {
-                    text = title; setTextColor(Color.WHITE); setTextSize(TypedValue.COMPLEX_UNIT_PX, px)
-                    typeface = Typeface.create("sans-serif-medium", Typeface.BOLD); gravity = Gravity.CENTER
-                    maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END
-                    setPadding(0, 0, 0, (px * 0.4f).toInt())
-                }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
+                if (!title.isNullOrBlank()) {
+                    root.addView(TextView(host).apply {
+                        text = "‹   $title"; setTextColor(Color.rgb(0x11, 0x14, 0x1A)); setTextSize(TypedValue.COMPLEX_UNIT_PX, px)
+                        typeface = Typeface.create("sans-serif-medium", Typeface.BOLD); gravity = Gravity.CENTER_VERTICAL
+                        maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END
+                        setPadding((px * 0.5f).toInt(), (px * 0.55f).toInt(), (px * 0.5f).toInt(), (px * 0.55f).toInt())
+                        background = GradientDrawable().apply {
+                            setColor(Color.WHITE)
+                            val rr = px * 1.2f
+                            cornerRadii = floatArrayOf(rr, rr, rr, rr, 0f, 0f, 0f, 0f)
+                        }
+                    }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+                        leftMargin = -pad; rightMargin = -pad
+                    })
+                    root.addView(View(host).apply { setBackgroundColor(Color.rgb(0xD5, 0xD9, 0xE0)) },
+                        LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, maxOf(1, dp(1))).apply {
+                            leftMargin = -pad; rightMargin = -pad; bottomMargin = (px * 0.2f).toInt()
+                        })
+                } else root.setPadding(pad + frame, pad + frame, pad + frame, pad + frame)
                 for (i in from until msgs.size) {
                     val (t, side) = msgs[i]
                     // čára místo obrázku (příspěvek, fotka) – tenká světlá linka
@@ -847,7 +866,7 @@ class SubtitleOverlay(
                             }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, maxOf(1, ih)).apply { topMargin = (px * 0.4f).toInt() })
                             continue
                         }
-                        root.addView(View(host).apply { setBackgroundColor(Color.argb(56, 255, 255, 255)) },
+                        root.addView(View(host).apply { setBackgroundColor(Color.rgb(0xC9, 0xCE, 0xD6)) },
                             LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, maxOf(1, dp(1))).apply {
                                 topMargin = (px * 0.6f).toInt(); leftMargin = (w * 0.08f).toInt(); rightMargin = (w * 0.08f).toInt()
                             })
@@ -862,7 +881,7 @@ class SubtitleOverlay(
                         root.addView(android.widget.ImageView(host).apply {
                             setImageBitmap(emoji); scaleType = android.widget.ImageView.ScaleType.FIT_CENTER
                             background = GradientDrawable().apply {
-                                setColor(if (side == 'p') PHONE_OWN_BUBBLE else PHONE_IN_BUBBLE)
+                                setColor(if (side == 'p') PHONE_CHAT_OWN else PHONE_CHAT_IN)
                                 cornerRadii = if (side == 'p') floatArrayOf(r, r, r, r, small, small, r, r) else floatArrayOf(r, r, r, r, r, r, small, small)
                             }
                             setPadding((px * 0.3f).toInt(), (px * 0.2f).toInt(), (px * 0.3f).toInt(), (px * 0.2f).toInt())
@@ -878,12 +897,12 @@ class SubtitleOverlay(
                         // modré bubliny byly tmavší než originál a neprůhledné) světle modrá jako ve hře (změřeno v dávce 6RKU-RZW3 –
                         // displej ztlumený na ~60 %, převedeno na plný jas) a obě bubliny průhledné jako ostatní překlady
                         // ([cz.recaption.core.GameMenu.SETTINGS_BG]); přes průhlednou bublinu je čitelné jen světlé písmo se stínem
-                        setTextColor(if (side == 's') Color.rgb(0xE6, 0xE8, 0xEC) else Color.WHITE)
-                        setShadowLayer(px * 0.15f, 0f, 0f, Color.BLACK)
+                        // Titulky PS5: jako v telefonu – vlastní modrá s bílým písmem, příchozí bílá s tmavým, ostatní text tmavý
+                        setTextColor(if (side == 'p') Color.WHITE else Color.rgb(0x11, 0x14, 0x1A))
                         if (side != 's') {
                             val r = px * 0.8f; val small = px * 0.2f
                             background = GradientDrawable().apply {
-                                setColor(if (side == 'p') PHONE_OWN_BUBBLE else PHONE_IN_BUBBLE)
+                                setColor(if (side == 'p') PHONE_CHAT_OWN else PHONE_CHAT_IN)
                                 cornerRadii = if (side == 'p') floatArrayOf(r, r, r, r, small, small, r, r) else floatArrayOf(r, r, r, r, r, r, small, small)
                             }
                             setPadding((px * 0.6f).toInt(), (px * 0.35f).toInt(), (px * 0.6f).toInt(), (px * 0.35f).toInt())

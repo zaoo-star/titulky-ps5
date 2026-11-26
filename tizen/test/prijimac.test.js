@@ -343,7 +343,7 @@ function zkus(platforma, verze, dalsi) {
       assert.strictEqual(telefon.style.width, Math.round(0.25 * 1920) + 'px');
       assert.strictEqual(telefon.style.maxHeight, Math.round(0.5 * 1080) + 'px');
       assert.strictEqual(telefon.style.fontSize, '30px', 'vejde se – písmo beze změny');
-      assert.strictEqual(telefon.style.background, 'rgba(18,20,26,0.8)');
+      assert.strictEqual(telefon.style.background, 'rgba(236,239,244,0.92)', 'světlý displej jako telefon (nejméně 92 %)');
       assert.ok(bub.every(function (b) { return b.style.display !== 'none'; }), 'vejde se – všechny zprávy');
       assert.strictEqual(tv.prvky.titulek.textContent.indexOf('jedu'), -1, 'telefon nejde do pruhu');
       // nejvýš 12 zpráv (posledních), bez nadpisu

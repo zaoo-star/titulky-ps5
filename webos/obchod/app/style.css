@@ -402,11 +402,12 @@ h1 { margin: 10px 0 20px 0; font-size: 68px; font-weight: bold; color: #FFFFFF; 
   box-sizing: border-box;
   z-index: 4;
   overflow: hidden;
-  padding: 0.5em 0.55em 0.6em;
-  color: #FFFFFF;
-  background: rgba(18, 20, 26, 0.9);
-  border: 2px solid rgba(255, 255, 255, 0.12);
-  border-radius: 18px;
+  padding: 0 0.55em 0.6em;
+  color: #11141A;
+  /* Titulky PS5 (přání majitele 26. 11. 2026: „ať to vypadá jako reálný mobil s chatem“): světlý displej, tmavý rám */
+  background: rgba(236, 239, 244, 0.92);
+  border: 0.35em solid #16181C;
+  border-radius: 1.6em;
   line-height: 1.25;
   pointer-events: none;
 }
@@ -416,16 +417,18 @@ h1 { margin: 10px 0 20px 0; font-size: 68px; font-weight: bold; color: #FFFFFF; 
   transition: left 0.3s linear, top 0.3s linear;
 }
 #telefon .tel-nadpis {
-  margin: 0 0 0.45em;
-  padding-bottom: 0.35em;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+  margin: 0 -0.55em 0.45em;
+  padding: 0.55em 0.6em;
+  background: #FFFFFF;
+  border-bottom: 1px solid #D5D9E0;
   font-weight: bold;
-  font-size: 0.9em;
-  text-align: center;
+  font-size: 0.95em;
+  text-align: left;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+#telefon .tel-nadpis:before { content: '\2039'; margin-right: 0.8em; font-weight: normal; }
 #telefon .tel-zprava {
   box-sizing: border-box;
   margin-top: 0.4em;
@@ -438,31 +441,29 @@ h1 { margin: 10px 0 20px 0; font-size: 68px; font-weight: bold; color: #FFFFFF; 
   width: fit-content;
   max-width: 82%;
   padding: 0.35em 0.6em;
-  color: #FFFFFF;
   border-radius: 14px;
 }
 /* Barvy jako telefon ve hře (od 1.5.30): příchozí světle šedá, vlastní modrá. Od ReCaption 1.00-rc21 (přání majitele: modrá byla
    tmavší než ve hře a neprůhledná) světle modrá jako ve hře a obě bubliny průhledné jako ostatní překlady (40 % jako menu), písmo bílé se stínem. */
 #telefon .tel-l {
   margin-right: auto;
-  text-shadow: 0 0 3px #000000;
-  background: rgba(157, 178, 210, 0.4);
+  color: #11141A;
+  background: #FFFFFF;
   border-bottom-left-radius: 4px;
 }
 #telefon .tel-p {
   margin-left: auto;
-  text-shadow: 0 0 3px #000000;
-  background: rgba(58, 120, 216, 0.4);
+  color: #FFFFFF;
+  background: #3A78D8;
   border-bottom-right-radius: 4px;
 }
 #telefon .tel-emoji img { display: block; height: 1.6em; }
 #telefon .tel-obrazek { display: block; width: 100%; max-height: 9em; margin: 0.4em 0 0 0; border-radius: 0.5em; }
-#telefon .tel-cara { height: 0; margin: 0.6em 8%; border-top: 2px solid rgba(255, 255, 255, 0.22); }
+#telefon .tel-cara { height: 0; margin: 0.6em 8%; border-top: 2px solid #C9CED6; }
 #telefon .tel-s {
   width: 100%;
   padding: 0.1em 0.2em;
-  color: #E6E8EC;
-  text-shadow: 0 0 3px #000000;
+  color: #11141A;
 }
 
 /* Ukázka v nápovědě (od 1.5.17) vlevo od tlačítka Zpět */

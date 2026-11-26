@@ -72,7 +72,7 @@
 
   window.ReCaptionTv = {
     platforma: 'webos',
-    verze: '1.5.61',
+    verze: '1.5.62',
 
     // hotovo(model, system) – jen když televize odpoví
     zjistiTelevizi: function (hotovo) {

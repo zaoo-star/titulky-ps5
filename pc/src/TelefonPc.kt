@@ -210,7 +210,7 @@ internal class TelefonPc(
         // vlastní zprávy (modrá bublina) vpravo, příchozí vlevo – podle barvy pozadí odstavce jako v aplikaci (`withPhoneColors`)
         val read = (if (read0.card || read0.feed) read0 else try {
             S.withBubbleColors(read0, read0.boxes.map { b -> b?.let { helper.pixely(it)?.let { px -> S.blueness(px) } } })
-        } catch (_: Exception) { read0 }).let { bezUseknute(it) }
+        } catch (_: Exception) { read0 }).let { stranyPodlePolohy(it) }.let { bezUseknute(it) }
         if (read.paragraphs.isEmpty()) return
         val prekladOd = System.currentTimeMillis()
         pripravPreklady(read)
@@ -221,7 +221,28 @@ internal class TelefonPc(
         send(msg)
         shown = true; shownBase = read; shownTexts = texts; shownTitle = title
         log("TELEFON " + read.paragraphs.indices.joinToString(" ¦ ") { i -> read.paragraphs[i].take(80) + " → " + texts.getOrElse(i) { "" }.take(80) }.take(700))
-        log("TELEFON cas: cteni ${crop.ms} ms, preklad $prekladMs ms" + (if (otevrenoAt > 0) ", od otevreni ${System.currentTimeMillis() - otevrenoAt} ms" else ""))
+        log("TELEFON strany ${read.sides.joinToString("")} · cas: cteni ${crop.ms} ms, preklad $prekladMs ms" + (if (otevrenoAt > 0) ", od otevreni ${System.currentTimeMillis() - otevrenoAt} ms" else ""))
+    }
+
+    /**
+     * Konverzace, kde barvy bublin nevyšly (žádná strana vlevo / vpravo, přání majitele 26. 11. 2026: „ať to vypadá jako
+     * reálný mobil s chatem“ – na fotce z TV byl jen seznam): strana podle polohy bubliny v displeji – vlastní zprávy
+     * jsou zarovnané doprava, příchozí doleva. Jen u konverzace s nadpisem (jméno kontaktu), ne u karty ani příspěvku.
+     */
+    private fun stranyPodlePolohy(r: PhoneRead): PhoneRead {
+        if (r.card || r.feed || r.title == null || r.sides.any { it == 'p' || it == 'l' }) return r
+        val sirka = r.right - r.left
+        if (sirka <= 0f || r.boxes.size != r.sides.size) return r
+        val strany = r.sides.indices.map { i ->
+            val b = r.boxes[i]
+            if (r.sides[i] == 'c' || b == null) r.sides[i]
+            else {
+                val vlevo = b[0] - r.left; val vpravo = r.right - b[2]
+                // zarovnání na jednu stranu výrazně (široká zpráva přes celý displej zůstane příchozí)
+                if (vpravo < vlevo - sirka * 0.08f) 'p' else 'l'
+            }
+        }
+        return r.copy(sides = strany)
     }
 
     /** Seznam konverzací (řádky se jmény kontaktů), ne otevřená konverzace. */

@@ -985,7 +985,8 @@
   function telBarva(d, barvy, strana) {
     var b = barvy && (strana === 'p' || strana === 'l') ? barvy[strana] : null;
     if (typeof b !== 'string' || !/^#[0-9A-Fa-f]{6}$/.test(b)) { return; }
-    d.style.background = 'rgba(' + parseInt(b.substr(1, 2), 16) + ', ' + parseInt(b.substr(3, 2), 16) + ', ' + parseInt(b.substr(5, 2), 16) + ', 0.4)';
+    // Titulky PS5: plné barvy jako v telefonu (příchozí zůstává bílá – na světlém displeji je čitelnější)
+    if (strana === 'p') { d.style.background = b; }
   }
 
   function telefonUkaz(z) {
@@ -1063,7 +1064,8 @@
     s.width = Math.max(1, Math.round((m[2] - m[0]) * W)) + 'px';
     s.maxHeight = vyska + 'px';
     s.fontSize = pismo + 'px';
-    s.background = 'rgba(18,20,26,' + (cislo(z.pozadi, 0, 100, 90) / 100) + ')';
+    // Titulky PS5: displej chatu jen málo průhledný (jako telefon), nejméně 92 %
+    s.background = 'rgba(236,239,244,' + (Math.max(92, cislo(z.pozadi, 0, 100, 92)) / 100) + ')';
     s.display = 'block';
     // nevejde se: nejdřív menší písmo (nejvýš na 70 %), pak pryč nejstarší zprávy – poslední zůstane vždy
     h = u.offsetHeight || 0;

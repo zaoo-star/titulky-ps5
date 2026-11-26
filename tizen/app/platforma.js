@@ -54,7 +54,7 @@
     neusinat();
   })();
 
-  var VERZE = '1.5.61';
+  var VERZE = '1.5.62';
   // Pořadové číslo požadavku na obraz: odpověď na starší (uživatel mezitím odešel) se zahodí.
   var obrazPokus = 0;
 
