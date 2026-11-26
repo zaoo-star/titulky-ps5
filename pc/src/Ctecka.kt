@@ -45,7 +45,7 @@ import kotlin.math.min
 private const val STALE_MS = 15_000L      // text, který stojí beze změny déle, je nápis nebo menu
 private const val HOLD_MS = 1_000L        // překlad zůstane chvíli po zmizení angličtiny, ať se dá dočíst
 private const val INTERVAL_MS = 120L
-private const val TELEFON_TITULKY_MS = 1_500L  // titulky při otevřeném telefonu ve hře (procesor patří telefonu)
+private const val TELEFON_TITULKY_MS = 3_000L  // titulky při otevřeném telefonu ve hře (procesor patří telefonu)
 /** Okno, které neexistuje: čtečka pro TV běží (TV připojená, modely načtené) a čeká na chiaki-ng. */
 const val CEKA_NA_OKNO = "pid:0"
 /** Úkol pod titulky (GTA) jen úplně dole – jako `TranslatorService.OBJECTIVE_ZONE_TOP` (`TextLogic.OBJECTIVE_ZONE_TOP`). */
@@ -623,15 +623,17 @@ class Ctecka(
                     pad = v.okraj, colorIndex = Nastaveni.BARVY.indexOfFirst { it.second == (v.barva.rgb and 0xFFFFFF) }.coerceAtLeast(0)))
                 if (now - statusAt > 2000) { statusAt = now; sender.sendStatus(TvSender.statusMessage(stavTv())) }
             }
-            // otevřený telefon ve hře: titulky se čtou jen 1× za 1,5 s – jinak čtení spodní třetiny (bubliny telefonu)
+            // otevřený telefon ve hře: titulky se čtou jen 3 s po minulém čtení – jinak čtení spodní třetiny (bubliny telefonu)
             // a čtení telefonu běží souběžně a dělí se o procesor (záznam majitele 26. 11. 2026: telefon 5–10 s místo ~1 s)
-            if (telefon != null && (telefon.shown || telefon.ikonaVidet) && now - cteniPriTelefonu < TELEFON_TITULKY_MS) {
+            // (pauza se počítá od KONCE čtení – čtení titulků trvá přes 1 s, s pauzou od začátku běželo skoro pořád)
+            val telefonOtevreny = telefon != null && (telefon.shown || telefon.ikonaVidet)
+            if (telefonOtevreny && now - cteniPriTelefonu < TELEFON_TITULKY_MS) {
                 Thread.sleep(100)
                 continue
             }
-            cteniPriTelefonu = now
             val demoText = if (demo) DemoGame.subtitleAt(now - start) else null
             val r = helper.read(force = !tracker.isSettled, demoText = demoText)
+            cteniPriTelefonu = System.currentTimeMillis()
             // menu hry otevřené → jeho překlad vedle menu, titulky se nečtou
             if (r !is Helper.Read.Error && menu(now)) {
                 telefonPryc()

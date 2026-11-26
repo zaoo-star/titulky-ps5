@@ -173,7 +173,8 @@ internal class TelefonPc(
         grid = g
         // beze změny obrazu displeje se znovu čte až po 15 s (dřív po 3 s – čtení trvalo 5–10 s, takže telefon četl pořád
         // dokola a zdržoval nový obsah i titulky; záznam majitele 26. 11. 2026); změna displeje (nová zpráva, posun) hned
-        if (!PhoneScreen.changed(prev, g) && !tracker.waiting && now - readAt < CTENI_BEZ_ZMENY_MS) return
+        // tolerance 20 (ne 10): telefon v ruce se při chůzi a dechu houpe a mřížka 6 × 6 se mění o ~10, nová bublina o víc
+        if (!PhoneScreen.changed(prev, g, ZMENA_DISPLEJE) && !tracker.waiting && now - readAt < CTENI_BEZ_ZMENY_MS) return
         readAt = now
         val crop = helper.telefon(z) ?: return
         val S = PhoneScreen
@@ -262,6 +263,7 @@ internal class TelefonPc(
 
     private companion object {
         const val CTENI_BEZ_ZMENY_MS = 15_000L
+        const val ZMENA_DISPLEJE = 20
         /** Nadpisy oddílů seznamu zpráv v telefonu – nepřekládají se ani neukazují. */
         val ODDIL = Regex("(?i)(suggested|messages|contacts|recent|favorites)")
     }

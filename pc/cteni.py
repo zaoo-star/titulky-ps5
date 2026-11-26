@@ -708,14 +708,11 @@ def main():
     p.add_argument("--zaznam", default="", help="složka pro snímky hry (ladění); bez toho se nic neukládá")
     p.add_argument("--zaznam-s", type=float, default=2.0, help="nejkratší odstup snímků záznamu v sekundách")
     p.add_argument("--vedlejsi", action="store_true",
-                   help="druhý pomocník (telefon, menu): nižší priorita a méně vláken, ať nebrzdí čtení titulků")
+                   help="druhý pomocník (telefon, menu): vlastní čtečka textu se 4 vlákny")
     a = p.parse_args()
-    if a.vedlejsi and sys.platform == "win32":
-        try:
-            import ctypes
-            ctypes.windll.kernel32.SetPriorityClass(ctypes.windll.kernel32.GetCurrentProcess(), 0x4000)  # BELOW_NORMAL
-        except Exception:
-            pass
+    # Titulky PS5: druhý pomocník (telefon) už NEMÁ sníženou prioritu – při plně vytíženém procesoru (titulky + obraz
+    # z PS5) dostával zbytky a čtení displeje telefonu trvalo 4–8 s (záznam majitele 26. 11. 2026). Titulky se při
+    # otevřeném telefonu čtou jen občas (Ctecka.kt, TELEFON_TITULKY_MS), takže si nepřekážejí.
     if a.okna:
         import Quartz
         print("povolení Nahrávání obrazovky:", bool(Quartz.CGPreflightScreenCaptureAccess()))
@@ -727,7 +724,8 @@ def main():
     # delší strana nejvýš 1280 bodů: čtení pásu s titulky pak trvá asi pětinu sekundy
     if a.vedlejsi:
         try:
-            ocr = RapidOCR(det_limit_side_len=1280, det_limit_type="max", intra_op_num_threads=2, inter_op_num_threads=1)
+            # telefon ve hře: 4 vlákna (dřív 2 – čtení displeje trvalo 4–8 s; titulky při otevřeném telefonu skoro stojí)
+            ocr = RapidOCR(det_limit_side_len=1280, det_limit_type="max", intra_op_num_threads=4, inter_op_num_threads=1)
         except TypeError:
             ocr = RapidOCR(det_limit_side_len=1280, det_limit_type="max")
     else:
