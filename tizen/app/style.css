@@ -453,8 +453,8 @@ h1 { margin: 10px 0 20px 0; font-size: 68px; font-weight: bold; color: #FFFFFF; 
 }
 #telefon .tel-p {
   margin-left: auto;
-  color: #FFFFFF;
-  background: #3A78D8;
+  color: #11141A;
+  background: #C6D8F7; /* světle modrá s tmavým písmem jako telefon v GTA (26. 11. 2026) */
   border-bottom-right-radius: 4px;
 }
 #telefon .tel-emoji img { display: block; height: 1.6em; }

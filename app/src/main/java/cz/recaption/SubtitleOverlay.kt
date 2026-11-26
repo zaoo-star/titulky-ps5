@@ -760,23 +760,28 @@ class SubtitleOverlay(
     }
 
     /** [free] = panel na volné straně obrazu ([cz.recaption.core.PhoneFreeSide]) – do TV `volna`, přesun na druhou stranu dojede plynule. */
+    /** Výchozí vlastní bublina: světle modrá s tmavým písmem jako telefon v GTA (přání majitele 26. 11. 2026: „mohlo by to vypadat líp“). */
+    private val PHONE_OWN_LIGHT = 0xC6D8F7
     /**
      * Bubliny překladu telefonu (0xRRGGBB z profilu hry, [cz.recaption.core.GameProfile.phoneOwn]): od 1.0.10 modré
      * (koordinátor: „telefon celý modře, už nikdy zpět na růžovou“ – příchozí světle šedá F2F0F2 působila do růžova),
      * průhledné jako menu. 0 = výchozí z [cz.recaption.core.PhoneScreen].
      */
-    @Volatile private var phoneOwnRgb = cz.recaption.core.PhoneScreen.OWN_COLOR
+    @Volatile private var phoneOwnRgb = PHONE_OWN_LIGHT
     @Volatile private var phoneInRgb = cz.recaption.core.PhoneScreen.IN_COLOR
     /** Titulky PS5: barva štítku „ÚKOL“. */
     private val OBJ_LABEL = Color.rgb(0xFF, 0xD4, 0x5C)
     /** Titulky PS5: panel telefonu jako skutečný chat – plné barvy (vlastní = modrá z profilu hry, příchozí bílá). */
     private val PHONE_CHAT_OWN get() = Color.rgb(phoneOwnRgb shr 16 and 0xFF, phoneOwnRgb shr 8 and 0xFF, phoneOwnRgb and 0xFF)
     private val PHONE_CHAT_IN = Color.WHITE
+    /** Písmo vlastní bubliny podle jasu její barvy: na světle modré (výchozí, jako v GTA) tmavé, na sytě modré bílé. */
+    private val PHONE_OWN_TEXT get() = if (((phoneOwnRgb shr 16 and 0xFF) * 3 + (phoneOwnRgb shr 8 and 0xFF) * 6 + (phoneOwnRgb and 0xFF)) / 10 > 150)
+        Color.rgb(0x11, 0x14, 0x1A) else Color.WHITE
     /** Displej chatu jen málo průhledný (92 %) – čitelný jako telefon, hra pod ním trochu prosvítá. */
     private val PHONE_CHAT_ALPHA = 235
 
     fun phoneColors(own: Int, incoming: Int) {
-        phoneOwnRgb = if (own != 0) own else cz.recaption.core.PhoneScreen.OWN_COLOR
+        phoneOwnRgb = if (own != 0) own else PHONE_OWN_LIGHT
         phoneInRgb = if (incoming != 0) incoming else cz.recaption.core.PhoneScreen.IN_COLOR
     }
 
@@ -898,7 +903,7 @@ class SubtitleOverlay(
                         // displej ztlumený na ~60 %, převedeno na plný jas) a obě bubliny průhledné jako ostatní překlady
                         // ([cz.recaption.core.GameMenu.SETTINGS_BG]); přes průhlednou bublinu je čitelné jen světlé písmo se stínem
                         // Titulky PS5: jako v telefonu – vlastní modrá s bílým písmem, příchozí bílá s tmavým, ostatní text tmavý
-                        setTextColor(if (side == 'p') Color.WHITE else Color.rgb(0x11, 0x14, 0x1A))
+                        setTextColor(if (side == 'p') PHONE_OWN_TEXT else Color.rgb(0x11, 0x14, 0x1A))
                         if (side != 's') {
                             val r = px * 0.8f; val small = px * 0.2f
                             background = GradientDrawable().apply {

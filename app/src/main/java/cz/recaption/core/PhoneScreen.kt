@@ -201,7 +201,10 @@ object PhoneScreen {
         // za denního světla hra tónuje obraz do žluta (dávka F6PV-UY39: světle modrá vlastní bublina −10, šedá příchozí −35,
         // obě pod [BLUE]) – SMS pak neměly bubliny vlevo / vpravo. Proto i o [BLUE_REL] modřejší než nejméně modrý odstavec.
         val least = texts.minOf { blue[it]!! }
-        val own = texts.filter { blue[it]!! >= BLUE || blue[it]!! - least >= BLUE_REL }
+        // v noci je celý displej do modra (Titulky PS5, záznam 26. 11. 2026 21:58: bílé příchozí +10…+12, světle modré vlastní
+        // +27…+33 – všechny přes [BLUE], v TV pak všechno vpravo modré): jsou-li vidět dvě skupiny, rozhoduje jen rozdíl
+        val spread = texts.maxOf { blue[it]!! } - least
+        val own = texts.filter { if (spread >= BLUE_REL) blue[it]!! - least >= BLUE_REL else blue[it]!! >= BLUE }
         // SMS, nebo jiná aplikace? (od 1.00-rc21, majitel: „neumíš poznat, co je sms a co ne“) – zprávy jsou v bublinách:
         // vlastní modrá, příchozí světlejší než pozadí displeje ([lift] = o kolik je okraj kolem textu světlejší než okraj
         // displeje). Nadpis nahoře mají i jiné aplikace (zprávy z novin), proto bez modré bubliny jen s bublinami příchozími.

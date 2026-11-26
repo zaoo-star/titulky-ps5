@@ -45,4 +45,14 @@ class PhoneDayTest {
         val d = PhoneScreen.withBubbleColors(r, listOf(-34, -35, -33))
         assertFalse('p' in d.sides)
     }
+
+    @Test fun nightBlueScreenKeepsIncomingLeft() {
+        // v noci (záznam 26. 11. 2026 21:58, Donnie): celý displej do modra – příchozí bílé +10…+12, vlastní +27…+33
+        val r = PhoneRead(listOf("Map Pin Expired", "I'll smooth this over", "Good luck", "Im the Don", "Lmk how it goes", "Dropped that", "Left you"),
+            0.4f, 0.2f, 0.6f, 0.8f, List(7) { 's' }, "Donnie")
+        val c = PhoneScreen.withBubbleColors(r, listOf(12, 10, 27, 12, 30, 33, 30))
+        assertEquals(listOf('l', 'l', 'p', 'l', 'p', 'p', 'p'), c.sides)
+        // jen vlastní (všechny modré, malý rozdíl) – zůstávají vlastní
+        assertEquals(List(3) { 'p' }, PhoneScreen.withBubbleColors(r.copy(paragraphs = r.paragraphs.take(3), sides = List(3) { 's' }), listOf(28, 30, 33)).sides)
+    }
 }

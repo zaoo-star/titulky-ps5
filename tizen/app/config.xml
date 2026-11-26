@@ -3,7 +3,7 @@
      (hlídá sestavení APK). Balíček ReCaption je 10 písmen/číslic podle pravidel Tizenu;
      id aplikace = balíček + "." + název. Podpis (author + distributor) do balíčku přidává až
      nástroj Samsung u uživatele – viz tizen/CTI-ME.md. -->
-<widget xmlns="http://www.w3.org/ns/widgets" xmlns:tizen="http://tizen.org/ns/widgets" id="https://github.com/adusa89/ReCaption/tizen" version="1.5.62" viewmodes="maximized">
+<widget xmlns="http://www.w3.org/ns/widgets" xmlns:tizen="http://tizen.org/ns/widgets" id="https://github.com/adusa89/ReCaption/tizen" version="1.5.63" viewmodes="maximized">
     <tizen:application id="ReCaption1.ReCaption" package="ReCaption1" required_version="2.3"/>
     <content src="index.html"/>
     <feature name="http://tizen.org/feature/screen.size.all"/>

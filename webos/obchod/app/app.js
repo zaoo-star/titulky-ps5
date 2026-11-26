@@ -986,7 +986,12 @@
     var b = barvy && (strana === 'p' || strana === 'l') ? barvy[strana] : null;
     if (typeof b !== 'string' || !/^#[0-9A-Fa-f]{6}$/.test(b)) { return; }
     // Titulky PS5: plné barvy jako v telefonu (příchozí zůstává bílá – na světlém displeji je čitelnější)
-    if (strana === 'p') { d.style.background = b; }
+    if (strana === 'p') {
+      d.style.background = b;
+      // písmo podle jasu bubliny: na světlé tmavé, na sytě modré bílé
+      var r = parseInt(b.substr(1, 2), 16), g = parseInt(b.substr(3, 2), 16), m = parseInt(b.substr(5, 2), 16);
+      d.style.color = (r * 3 + g * 6 + m) / 10 > 150 ? '#11141A' : '#FFFFFF';
+    }
   }
 
   function telefonUkaz(z) {
